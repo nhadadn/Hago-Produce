@@ -17,11 +17,42 @@ El objetivo principal es reemplazar el uso de **QuickBooks** y **Google Sheets**
 
 - **Frontend:** Next.js 14, TailwindCSS, shadcn/ui.
 - **Backend:** Next.js API Routes (Monorepo).
-- **Base de Datos:** PostgreSQL (Supabase).
+- **Base de Datos:** PostgreSQL (Railway Managed).
 - **ORM:** Prisma.
-- **Autenticación:** Supabase Auth (JWT + Roles).
+- **Autenticación:** NextAuth.js / Supabase Auth.
 - **IA / Agente:** OpenAI API (GPT-4o-mini).
-- **Infraestructura:** Vercel (Frontend) + Supabase (DB/Auth).
+- **Infraestructura:** Railway (App + DB).
+
+## 🚀 Instalación y Setup
+
+```bash
+# Clonar el repositorio
+git clone <repo-url>
+cd hago-produce
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env.local
+
+# Levantar entorno de desarrollo
+npm run dev
+```
+
+## 📁 Estructura del Proyecto
+
+```
+/
+├── src/                # Código fuente (Frontend + Backend)
+├── docs/               # Documentación del proyecto
+├── .github/            # CI/CD Workflows
+├── scripts/            # Scripts de utilidad
+├── docker/             # Configuración Docker
+├── DocumentacionHagoProduce/ # Documentación original (Legacy/Ref)
+├── public/             # Archivos estáticos
+└── README.md
+```
 
 ## 📦 Módulos Principales (MVP)
 
@@ -38,15 +69,15 @@ El objetivo principal es reemplazar el uso de **QuickBooks** y **Google Sheets**
 - **Gerencia:** Visualización de reportes y KPIs.
 - **Clientes Externos:** Acceso de lectura a sus propias facturas y estados de cuenta.
 
-## 📁 Documentación
+## 📄 Licencia
 
-La documentación detallada del proyecto se encuentra en la carpeta `DocumentacionHagoProduce`:
-- `00_prompt_maestro_hago_produce.md`: Contexto completo del proyecto.
-- `01_architecture_c4.md`: Arquitectura técnica (C4 Model).
-- `02_data_model.md`: Modelo de datos y esquema de base de datos.
-- `03_api_contracts.md`: Especificaciones de API REST.
-- `04_roadmap.md`: Plan de implementación y fases.
-- `05_project_brief.md`: Resumen ejecutivo.
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
 
----
-*Proyecto desarrollado para Hago Produce.*
+## 📚 Documentación de Fase 0 (Foundation)
+
+- [Resumen de Fase 0](docs/phase0/summary.md)
+- [Lecciones Aprendidas](docs/phase0/lessons-learned.md)
+- [Handoff a Fase 1A](docs/phase0/handoff.md)
+- [Onboarding Guide](docs/onboarding/nadir.md)
+- [Arquitectura (Review)](docs/architecture/phase0-review.md)
+- [Seguridad (Checklist)](docs/security/checklist.md)
