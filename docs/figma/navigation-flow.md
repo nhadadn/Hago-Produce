@@ -1,35 +1,52 @@
-# Navigation Flow
+# Navigation Flow (Hago Produce) - Complete
 
-## 🗺️ Sitemap
+## 🗺️ Sitemap & Wireframe Index
 
 1.  **Public**
-    - Login / Register (Tenant Selection)
-    - Forgot Password
+    - **Authentication:**
+        - [Login / Register](wireframes/00_auth.md)
+        - Forgot Password / Reset Password
 
-2.  **Admin / Management (Dashboard)**
-    - **Overview:** KPI Cards (Open Pedimentos, Compliance Alerts, Recent Activity)
-    - **Pedimentos:**
-        - List View (Filterable by Date, Clave, Status)
-        - Detail View (Tabs: General, Partidas, Anexos, Documents)
-        - Import/Sync (VUCEM/XML)
-    - **Inventario (Anexo 24):**
-        - Temporal Import Inventory
-        - Historical Log
-        - Compliance Check
-    - **Reportes:**
-        - Anexo 31 (Saldos)
-        - Data Stage Reports
+2.  **Admin / Management (Internal Dashboard)**
+    - **Overview:**
+        - [Dashboard](wireframes/01_dashboard.md) (KPI Cards, Activity Feed)
+    - **Invoices:**
+        - [Invoice List](wireframes/02_invoice_list.md) (All, Draft, Unpaid, Paid, Overdue)
+        - [Create/Edit Invoice](wireframes/11_create_invoice.md) (Complex Form)
+        - [Invoice Detail](wireframes/02_invoice_detail.md) (View, Send, PDF, History)
+    - **Products:**
+        - [Product List & Detail](wireframes/03_product_list.md) (Catalog, Prices, Stock)
+        - Categories Management
+    - **Clients (Customers):**
+        - [Client Management](wireframes/09_client_management.md) (List, Detail, Profile, Statement)
+    - **Suppliers:**
+        - [Supplier Management](wireframes/10_supplier_management.md) (List, Detail, Products, POs)
+    - **Reports & Analytics:**
+        - [Reports Dashboard](wireframes/07_reports.md) (Sales, Inventory, Financials)
+    - **AI Assistant:**
+        - [AI Chat Interface](wireframes/06_ai_chat.md) (Price check, Quick actions)
     - **Settings:**
-        - Tenant Config
-        - User Management
+        - [System Configuration](wireframes/12_settings.md) (Company, Users, Integrations)
 
-## 🔄 User Flows
+3.  **Customer Portal (External)**
+    - [Customer Dashboard & Invoices](wireframes/04_customer_portal.md)
+    - **My Invoices:** List, Filter, Download PDF
+    - **Account Statement:** Payment history
+    - **Profile:** Manage contact info
 
-### 1. Pedimento Review Flow
-`Dashboard` -> `Pedimentos List` -> `Select Pedimento` -> `Review Validation Status` -> `Check Anexo 24 Compliance` -> `Approve/Flag`
+## 🔄 Core User Flows
 
-### 2. Manual Adjustment Flow
-`Inventario` -> `Search Item` -> `View Details` -> `Adjust Balance` -> `Add Justification` -> `Save (Audit Logged)`
+### 1. Create Invoice Flow (Admin)
+`Dashboard` -> `Invoices` -> `[Create New]` (See [Wireframe 11](wireframes/11_create_invoice.md)) -> `Select Customer` -> `Add Products (Autocomplete)` -> `Review Totals` -> `Save/Send`
 
-### 3. Compliance Audit Flow
-`Dashboard` -> `Reportes` -> `Generate Data Stage` -> `Review Discrepancies` -> `Drill down to Pedimento`
+### 2. Product Price Check Flow (Admin - Chat)
+`Dashboard` -> `Chat` -> `Type Query ("Price of Apples?")` -> `View AI Answer` -> `Click Source Product` (See [Wireframe 06](wireframes/06_ai_chat.md))
+
+### 3. Customer Payment Review (Customer)
+`Login` -> `My Invoices` -> `Filter by "Unpaid"` -> `Select Invoice` -> `Download PDF` (See [Wireframe 04](wireframes/04_customer_portal.md))
+
+### 4. New Supplier Onboarding (Admin)
+`Settings` -> `Suppliers` -> `Add Supplier` -> `Enter Details` -> `Link Products` -> `Set Initial Prices` (See [Wireframe 10](wireframes/10_supplier_management.md))
+
+### 5. Monthly Closing (Accounting)
+`Reports` -> `Financial Health` -> `Filter: Last Month` -> `Export PDF` -> `Review Outstanding Invoices` -> `Send Reminders` (See [Wireframe 07](wireframes/07_reports.md))
