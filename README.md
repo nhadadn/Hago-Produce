@@ -78,6 +78,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 - [Resumen de Fase 0](docs/phase0/summary.md)
 - [Lecciones Aprendidas](docs/phase0/lessons-learned.md)
 - [Handoff a Fase 1A](docs/phase0/handoff.md)
-- [Onboarding Guide](docs/onboarding/nadir.md)
+- [Onboarding Guide (Dev)](docs/onboarding/nadir.md)
+- [Onboarding Guide (Security/Arch)](docs/onboarding/arthur.md)
 - [Arquitectura (Review)](docs/architecture/phase0-review.md)
 - [Seguridad (Checklist)](docs/security/checklist.md)

@@ -28,7 +28,7 @@
 | # | Tarea | Detalle | Criterio de aceptación |
 |---|-------|---------|----------------------|
 | 0.1 | Setup del repositorio | Monorepo Next.js 14 + TailwindCSS + shadcn/ui. Estructura de carpetas definida. | Repo en GitHub con README, .env.example, estructura base. |
-| 0.2 | Configuración de Supabase | Proyecto creado en Supabase. PostgreSQL configurado. Auth habilitado. | Conexión exitosa desde local. Migraciones iniciales corriendo. |
+| 0.2 | Configuración de railway | Proyecto creado en railway. PostgreSQL configurado. Auth habilitado. | Conexión exitosa desde local. Migraciones iniciales corriendo. |
 | 0.3 | CI/CD básico | GitHub Actions: lint, test, deploy a Vercel (preview en PR, production en main). | PR genera preview URL. Merge a main despliega automáticamente. |
 | 0.4 | Diseño UI/UX en Figma | Wireframes de las pantallas principales: Login, Dashboard, Lista de facturas, Crear factura, Detalle de factura, Productos, Chat. | Figma con vistas por rol aprobadas por stakeholders. |
 | 0.5 | Modelo de datos implementado | Migraciones de Prisma con todas las tablas del ERD. Seed data para desarrollo. | `npx prisma migrate dev` ejecuta sin errores. Seed crea datos de prueba. |
@@ -142,7 +142,7 @@
 | Retraso en aprobación de diseños Figma | Media | Alto | Iterar rápido con wireframes low-fi. No esperar diseño perfecto para empezar backend. |
 | Integración con Make.com más compleja de lo esperado | Baja | Medio | Webhook simple como primer paso. Documentar formato exacto de datos que Make envía hoy. |
 | Resistencia al cambio (dejar QuickBooks) | Media | Alto | Período de uso paralelo (2-4 semanas). Capacitación al equipo. Migración gradual. |
-| Presupuesto limitado para hosting | Baja | Bajo | Supabase + Vercel free tiers cubren el volumen inicial. Escalar solo cuando sea necesario. |
+| Presupuesto limitado para hosting | Baja | Bajo | railway + Vercel free tiers cubren el volumen inicial. Escalar solo cuando sea necesario. |
 | Complejidad del agente de chat | Media | Medio | Empezar con intents simples y respuestas estructuradas. No intentar NLU complejo en V1. |
 | Disponibilidad del equipo de desarrollo | Media | Alto | Priorizar features por impacto. Mantener scope controlado. Usar IA para acelerar desarrollo. |
 

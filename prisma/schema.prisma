@@ -1,0 +1,168 @@
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  ACCOUNTING
+  MANAGEMENT
+  CUSTOMER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  isActive  Boolean  @default(true) @map("is_active")
+  role      Role     @default(MANAGEMENT)
+  customerId String? @map("customer_id")
+  
+  customer  Customer? @relation(fields: [customerId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Supplier {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  contactName String?  @map("contact_name")
+  email       String?
+  phone       String?
+  address     String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  prices      ProductPrice[]
+
+  @@map("suppliers")
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  name        String
+  nameEs      String?   @map("name_es")
+  description String?
+  category    String?
+  unit        String    @default("unit")
+  sku         String?   @unique
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  prices      ProductPrice[]
+  invoiceItems InvoiceItem[]
+
+  @@map("products")
+  @@index([name])
+  @@index([sku])
+  @@index([category])
+  @@index([isActive])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PENDING
+  PAID
+  CANCELLED
+  OVERDUE
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  number        String        @unique
+  customerId    String        @map("customer_id")
+  status        InvoiceStatus @default(DRAFT)
+  issueDate     DateTime      @map("issue_date")
+  dueDate       DateTime      @map("due_date")
+  subtotal      Decimal       @db.Decimal(10, 2)
+  taxRate       Decimal       @default(0.13) @map("tax_rate") @db.Decimal(5, 4)
+  taxAmount     Decimal       @map("tax_amount") @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  notes         String?
+  
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  items         InvoiceItem[]
+
+  @@map("invoices")
+  @@index([customerId])
+  @@index([status])
+  @@index([issueDate])
+  @@index([number])
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String   @map("invoice_id")
+  productId   String   @map("product_id")
+  description String?
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @map("unit_price") @db.Decimal(10, 2)
+  totalPrice  Decimal  @map("total_price") @db.Decimal(10, 2)
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@map("invoice_items")
+  @@index([invoiceId])
+  @@index([productId])
+}
+
+model ProductPrice {
+  id            String   @id @default(uuid())
+  productId     String   @map("product_id")
+  supplierId    String   @map("supplier_id")
+  costPrice     Decimal  @map("cost_price") @db.Decimal(10, 2)
+  sellPrice     Decimal? @map("sell_price") @db.Decimal(10, 2)
+  currency      String   @default("USD")
+  effectiveDate DateTime @default(now()) @map("effective_date")
+  isCurrent     Boolean  @default(true) @map("is_current")
+  source        String?  @default("manual") // manual, make_automation
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  product       Product  @relation(fields: [productId], references: [id])
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+
+  @@map("product_prices")
+  @@index([productId])
+  @@index([supplierId])
+  @@index([isCurrent])
+}
+
+model Customer {
+  id          String   @id @default(uuid())
+  name        String
+  taxId       String   @unique @map("tax_id")
+  email       String?
+  phone       String?
+  address     String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  invoices    Invoice[]
+  users       User[]
+
+  @@map("customers")
+  @@index([name])
+  @@index([taxId])
+  @@index([isActive])
+}
