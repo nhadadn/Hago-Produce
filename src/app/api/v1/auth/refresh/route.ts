@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { refreshToken } = validation.data;
-    const decoded = verifyToken(refreshToken);
+    const { refresh_token } = validation.data;
+    const decoded = verifyToken(refresh_token);
 
     if (!decoded) {
       return NextResponse.json(
@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
       {
         success: true,
         data: {
-          accessToken: newAccessToken,
+          access_token: newAccessToken,
+          token_type: 'Bearer',
+          expires_in: 3600,
         },
       },
       { status: 200 }

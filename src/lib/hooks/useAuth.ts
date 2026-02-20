@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 
 export interface User {
   id: string;
@@ -41,8 +41,26 @@ export function useAuth() {
       });
       if (res.ok) {
         const data = await res.json();
+        const apiUser = data.data as {
+          id: string;
+          email: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          role: string;
+          language?: string;
+          is_active?: boolean;
+          last_login_at?: string | null;
+        };
+
+        const uiUser = {
+          id: apiUser.id,
+          email: apiUser.email,
+          name: apiUser.first_name ?? undefined,
+          role: apiUser.role.toUpperCase() as User['role'],
+        };
+
         setAuthState({
-          user: data.data.user,
+          user: uiUser,
           accessToken: token,
           isLoading: false,
         });

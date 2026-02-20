@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
         lastName: true,
         role: true,
         createdAt: true,
+        isActive: true,
       },
     });
 
@@ -32,7 +33,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: { user },
+        data: {
+          id: user.id,
+          email: user.email,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          role: user.role.toLowerCase(),
+          language: 'es',
+          is_active: user.isActive,
+          last_login_at: null,
+        },
       },
       { status: 200 }
     );

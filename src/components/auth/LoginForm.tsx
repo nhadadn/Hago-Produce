@@ -35,7 +35,23 @@ export function LoginForm() {
         throw new Error(data.error?.message || 'Error al iniciar sesión');
       }
 
-      login(data.data.tokens.accessToken, data.data.user);
+      const apiUser = data.data.user as {
+        id: string;
+        email: string;
+        first_name?: string | null;
+        last_name?: string | null;
+        role: string;
+        language?: string;
+      };
+
+      const uiUser = {
+        id: apiUser.id,
+        email: apiUser.email,
+        name: apiUser.first_name ?? undefined,
+        role: apiUser.role.toUpperCase(),
+      } as const;
+
+      login(data.data.access_token as string, uiUser);
       
       // Redirect based on role
       // For now, redirect to home/dashboard

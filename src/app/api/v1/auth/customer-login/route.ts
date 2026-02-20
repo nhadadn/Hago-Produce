@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { comparePassword } from '@/lib/auth/password';
-import { generateAccessToken, generateRefreshToken } from '@/lib/auth/jwt';
-import { loginSchema } from '@/lib/validation/auth';
+import { generateAccessToken } from '@/lib/auth/jwt';
+import { customerLoginSchema } from '@/lib/validation/auth';
+import { Role } from '@prisma/client';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const validation = loginSchema.safeParse(body);
+    const validation = customerLoginSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -16,27 +17,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = validation.data;
+    const { tax_id, password } = validation.data;
 
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const customer = await prisma.customer.findUnique({
+      where: { taxId: tax_id },
     });
 
-    if (!user) {
+    if (!customer || !customer.isActive || !customer.portalPasswordHash) {
       return NextResponse.json(
         { success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Credenciales inválidas' } },
         { status: 401 }
       );
     }
 
-    if (!user.isActive) {
-      return NextResponse.json(
-        { success: false, error: { code: 'ACCOUNT_INACTIVE', message: 'La cuenta ha sido desactivada. Contacte al administrador.' } },
-        { status: 403 }
-      );
-    }
-
-    const isPasswordValid = await comparePassword(password, user.password);
+    const isPasswordValid = await comparePassword(password, customer.portalPasswordHash);
 
     if (!isPasswordValid) {
       return NextResponse.json(
@@ -45,40 +39,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const tokenPayload = { 
-      userId: user.id, 
-      email: user.email, 
-      role: user.role,
-      customerId: user.customerId || undefined
+    const tokenPayload = {
+      userId: customer.id,
+      email: customer.email || `${customer.taxId}@customer.hago.local`,
+      role: Role.CUSTOMER,
+      customerId: customer.id,
     };
+
     const accessToken = generateAccessToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
 
     return NextResponse.json(
       {
         success: true,
         data: {
           access_token: accessToken,
-          refresh_token: refreshToken,
           token_type: 'Bearer',
           expires_in: 3600,
-          user: {
-            id: user.id,
-            email: user.email,
-            first_name: user.firstName,
-            last_name: user.lastName,
-            role: user.role.toLowerCase(),
-            language: 'es',
+          customer: {
+            id: customer.id,
+            company_name: customer.companyName || customer.name,
+            tax_id: customer.taxId,
           },
         },
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Login error:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }
     );
   }
 }
+
