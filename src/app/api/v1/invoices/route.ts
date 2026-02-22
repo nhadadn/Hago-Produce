@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: { code: 'VALIDATION_ERROR', message: validation.error.errors[0].message } }, { status: 400 });
     }
 
-    const invoice = await invoicesService.create(validation.data);
+    const invoice = await invoicesService.create(validation.data, user.userId);
     return NextResponse.json({ success: true, data: invoice }, { status: 201 });
   } catch (error) {
     console.error('[INVOICES_POST]', error);

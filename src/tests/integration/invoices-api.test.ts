@@ -19,6 +19,9 @@ jest.mock('@/lib/db', () => {
       deleteMany: jest.fn(),
       createMany: jest.fn(),
     },
+    auditLog: {
+      create: jest.fn(),
+    },
     $transaction: jest.fn((callback) => callback(mockPrisma)),
   };
   return {

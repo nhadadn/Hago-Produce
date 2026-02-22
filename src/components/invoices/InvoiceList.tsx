@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { fetchInvoices, InvoiceWithDetails } from '@/lib/api/invoices';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchInvoices, InvoiceWithDetails } from "@/lib/api/invoices";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,98 +11,141 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { InvoiceStatus } from '@prisma/client';
-
-import { useAuth } from '@/lib/hooks/useAuth';
-import { Role } from '@prisma/client';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
+import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { InvoiceStatus, Role } from "@prisma/client";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { InvoiceFilters } from "@/components/invoices/InvoiceFilters";
+import { fetchCustomers } from "@/lib/api/customers";
+import type { Customer } from "@prisma/client";
+import { DownloadPDFButton } from "@/components/invoices/DownloadPDFButton";
 
 export default function InvoiceList() {
   const router = useRouter();
   const { user } = useAuth();
+
   const [invoices, setInvoices] = useState<InvoiceWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<InvoiceStatus | 'ALL'>('ALL');
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<InvoiceStatus | "ALL">("ALL");
+  const [customerId, setCustomerId] = useState<string | "ALL">("ALL");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    loadInvoices();
-  }, [page, status, search]); // Re-load when filters change
+    async function loadCustomers() {
+      try {
+        const res = await fetchCustomers({ limit: 100, isActive: true });
+        setCustomers(res.data.data);
+      } catch (error) {
+        console.error("Failed to load customers:", error);
+      }
+    }
+    loadCustomers();
+  }, []);
 
-  // Debounce search
   useEffect(() => {
-    const timer = setTimeout(() => {
-        if(search) loadInvoices();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [search]);
+    const timer = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 300);
 
-  async function loadInvoices() {
-    setLoading(true);
-    try {
-      const res = await fetchInvoices({
-        page,
-        limit: 10,
-        search: search || undefined,
-        status: status === 'ALL' ? undefined : status,
-      });
-      setInvoices(res.data.data);
-      setTotalPages(res.data.meta.totalPages);
-    } catch (error) {
-      console.error('Failed to load invoices:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PAID': return 'bg-green-100 text-green-800';
-      case 'DRAFT': return 'bg-gray-100 text-gray-800';
-      case 'OVERDUE': return 'bg-red-100 text-red-800';
-      default: return 'bg-blue-100 text-blue-800';
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadInvoices() {
+      setLoading(true);
+      try {
+        const res = await fetchInvoices({
+          page,
+          limit: 10,
+          search: search || undefined,
+          status: status === "ALL" ? undefined : status,
+          customerId: customerId === "ALL" ? undefined : customerId,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+        });
+        if (cancelled) return;
+        setInvoices(res.data.data);
+        setTotalPages(res.data.meta.totalPages);
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to load invoices:", error);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
     }
+
+    loadInvoices();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, status, customerId, startDate, endDate, search]);
+
+  const getStatusColor = (invoiceStatus: string) => {
+    switch (invoiceStatus) {
+      case "PAID":
+        return "bg-green-100 text-green-800";
+      case "DRAFT":
+        return "bg-gray-100 text-gray-800";
+      case "OVERDUE":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-blue-100 text-blue-800";
+    }
+  };
+
+  const handleStatusChange = (value: InvoiceStatus | "ALL") => {
+    setStatus(value);
+    setPage(1);
+  };
+
+  const handleCustomerChange = (value: string | "ALL") => {
+    setCustomerId(value);
+    setPage(1);
+  };
+
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    setPage(1);
+  };
+
+  const handleEndDateChange = (value: string) => {
+    setEndDate(value);
+    setPage(1);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="flex gap-2 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por número o cliente..."
-              className="pl-8"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <Select value={status} onValueChange={(v) => setStatus(v as any)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos los estados</SelectItem>
-              {Object.values(InvoiceStatus).map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <InvoiceFilters
+          searchInput={searchInput}
+          status={status}
+          customerId={customerId}
+          startDate={startDate}
+          endDate={endDate}
+          customers={customers}
+          onSearchInputChange={setSearchInput}
+          onStatusChange={handleStatusChange}
+          onCustomerChange={handleCustomerChange}
+          onStartDateChange={handleStartDateChange}
+          onEndDateChange={handleEndDateChange}
+        />
         {user?.role !== Role.CUSTOMER && (
-          <Button onClick={() => router.push('/invoices/new')}>
+          <Button onClick={() => router.push("/invoices/new")}>
             <Plus className="mr-2 h-4 w-4" />
             Nueva Factura
           </Button>
@@ -138,7 +180,15 @@ export default function InvoiceList() {
               </TableRow>
             ) : (
               invoices.map((invoice) => (
-                <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/invoices/${invoice.id}`)}>
+                <TableRow
+                  key={invoice.id}
+                  className={cn(
+                    "cursor-pointer hover:bg-muted/50",
+                    invoice.status === InvoiceStatus.OVERDUE &&
+                      "bg-red-50/60",
+                  )}
+                  onClick={() => router.push(`/invoices/${invoice.id}`)}
+                >
                   <TableCell className="font-medium">{invoice.number}</TableCell>
                   <TableCell>{invoice.customer.name}</TableCell>
                   <TableCell>{formatDate(invoice.issueDate)}</TableCell>
@@ -149,15 +199,38 @@ export default function InvoiceList() {
                       {invoice.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
-                    {user?.role !== Role.CUSTOMER && (
-                      <Button variant="ghost" size="sm" onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/invoices/${invoice.id}/edit`);
-                      }}>
+                  <TableCell className="text-right space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/invoices/${invoice.id}`);
+                      }}
+                    >
+                      Ver
+                    </Button>
+                    {user?.role !== Role.CUSTOMER &&
+                      invoice.status === InvoiceStatus.DRAFT && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/invoices/${invoice.id}/edit`);
+                          }}
+                        >
                           Editar
-                      </Button>
-                    )}
+                        </Button>
+                      )}
+                    <DownloadPDFButton
+                      invoiceId={invoice.id}
+                      variant="ghost"
+                      size="sm"
+                      stopPropagation
+                    >
+                      PDF
+                    </DownloadPDFButton>
                   </TableCell>
                 </TableRow>
               ))

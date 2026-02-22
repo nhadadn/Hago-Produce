@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     try {
-        const invoice = await invoicesService.update(params.id, validation.data);
+        const invoice = await invoicesService.update(params.id, validation.data, user.userId);
         return NextResponse.json({ success: true, data: invoice });
     } catch (error: any) {
         if (error.message.includes('Only draft')) {

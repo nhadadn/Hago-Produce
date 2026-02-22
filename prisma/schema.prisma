@@ -27,6 +27,8 @@ model User {
   
   customer  Customer? @relation(fields: [customerId], references: [id])
 
+  invoiceNotes InvoiceNote[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -81,6 +83,22 @@ enum InvoiceStatus {
   OVERDUE
 }
 
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String   @db.VarChar(50)
+  entityType String   @map("entity_type") @db.VarChar(50)
+  entityId   String   @map("entity_id")
+  changes    Json?    @db.Json
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_log")
+  @@index([entityType])
+  @@index([entityId])
+  @@index([userId])
+}
+
 model Invoice {
   id            String        @id @default(uuid())
   number        String        @unique
@@ -99,6 +117,7 @@ model Invoice {
 
   customer      Customer      @relation(fields: [customerId], references: [id])
   items         InvoiceItem[]
+  notes         InvoiceNote[]
 
   @@map("invoices")
   @@index([customerId])
@@ -122,6 +141,21 @@ model InvoiceItem {
   @@map("invoice_items")
   @@index([invoiceId])
   @@index([productId])
+}
+
+model InvoiceNote {
+  id        String   @id @default(uuid())
+  invoiceId String   @map("invoice_id")
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("invoice_notes")
+  @@index([invoiceId])
+  @@index([userId])
 }
 
 model ProductPrice {

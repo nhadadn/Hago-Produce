@@ -1,5 +1,5 @@
 import { CreateInvoiceInput, InvoiceFilters, UpdateInvoiceInput } from '@/lib/validation/invoices';
-import { Invoice, InvoiceItem, Customer } from '@prisma/client';
+import { Invoice, InvoiceItem, Customer, InvoiceStatus } from '@prisma/client';
 
 export interface InvoiceWithDetails extends Invoice {
   customer: Customer;
@@ -22,6 +22,11 @@ export interface InvoicesResponse {
       totalPages: number;
     };
   };
+}
+
+export interface ChangeInvoiceStatusInput {
+  status: InvoiceStatus;
+  reason?: string;
 }
 
 const getHeaders = () => {
@@ -94,6 +99,25 @@ export async function updateInvoice(id: string, data: UpdateInvoiceInput): Promi
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.error?.message || 'Error al actualizar factura');
+  }
+
+  const result = await res.json();
+  return result.data;
+}
+
+export async function changeInvoiceStatus(
+  id: string,
+  data: ChangeInvoiceStatusInput,
+): Promise<InvoiceWithDetails> {
+  const res = await fetch(`/api/v1/invoices/${id}/status`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || 'Error al cambiar estado de factura');
   }
 
   const result = await res.json();

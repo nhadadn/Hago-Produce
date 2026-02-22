@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CircleUser, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   DropdownMenu,
   DropdownMenuContent,
