@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hago Produce — Dashboard Ejecutivo Fase 2 v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .gradient-text { background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(102,126,234,0.15); }
+        .progress-bar { transition: width 1.2s ease-in-out; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-active { border-bottom: 3px solid #667eea; color: #667eea; font-weight: 600; }
+        .phase-card { transition: all 0.3s ease; }
+        .phase-card:hover { transform: scale(1.02); }
+        .badge-completed { background: #d1fae5; color: #065f46; }
+        .badge-progress { background: #fef3c7; color: #92400e; }
+        .badge-pending { background: #fee2e2; color: #991b1b; }
+        .badge-sprint { background: #ede9fe; color: #5b21b6; }
+        .sprint-card { border-left: 4px solid; }
+        .sprint-done { border-color: #10b981; background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+        .sprint-active { border-color: #667eea; background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
+        .sprint-next { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+        .gap-critical { border-left: 3px solid #ef4444; }
+        .gap-medium { border-left: 3px solid #f59e0b; }
+        .gap-low { border-left: 3px solid #10b981; }
+        .metric-up { color: #10b981; }
+        .metric-down { color: #ef4444; }
+        .tooltip-custom { position: relative; }
+        .tooltip-custom:hover::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 10; }
+        .checklist-item { transition: all 0.2s; }
+        .checklist-item:hover { background: #f9fafb; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-xl">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <span class="text-xl">🥬</span>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold">Hago Produce</h1>
+                            <p class="text-purple-200 text-sm mt-0.5">Dashboard Ejecutivo — Fase 2 · v2.0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-purple-300 uppercase tracking-wide">Última actualización</p>
+                    <p class="font-semibold text-lg" id="currentDate">—</p>
+                    <div class="flex items-center gap-2 mt-1 justify-end">
+                        <span class="w-2 h-2 bg-green-400 rounded-full pulse"></span>
+                        <span class="text-xs text-purple-200">Sprint 2 Completado · Sprint 3 Iniciando</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-1 overflow-x-auto">
+                <button onclick="showTab('overview')" class="tab-btn py-4 px-4 font-medium text-gray-600 hover:text-purple-600 whitespace-nowrap tab-active" data-tab="overview">📊 Resumen</button>
+                <button onclick="showTab('sprints')" class="tab-btn py-4 px-4 font-medium text-gray-600 hover:text-purple-600 whitespace-nowrap" data-tab="sprints">🚀 Sprints</button>
+                <button onclick="showTab('gaps')" class="tab-btn py-4 px-4 font-medium text-gray-600 hover:text-purple-600 whitespace-nowrap" data-tab="gaps">🔴 Gaps</button>
+                <button onclick="showTab('automations')" class="tab-btn py-4 px-4 font-medium text-gray-600 hover:text-purple-600 whitespace-nowrap" data-tab="automations">⚙️ Automatizaciones</button>
+                <button onclick="showTab('metrics')" class="tab-btn py-4 px-4 font-medium text-gray-600 hover:text-purple-600 whitespace-nowrap" data-tab="metrics">📈 Métricas</button>
+                <button onclick="showTab('roadmap')" class="tab-btn py-4 px-4 font-medium text-gray-600 hover:text-purple-600 whitespace-nowrap" data-tab="roadmap">🗓️ Roadmap</button>
+                <button onclick="showTab('checklist')" class="tab-btn py-4 px-4 font-medium text-gray-600 hover:text-purple-600 whitespace-nowrap" data-tab="checklist">✅ Go-Live</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+
+        <!-- ===== TAB: OVERVIEW ===== -->
+        <div id="tab-overview" class="tab-content fade-in">
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white rounded-2xl shadow-md p-5 card-hover">
+                    <p class="text-gray-500 text-xs uppercase tracking-wide">Progreso General</p>
+                    <p class="text-4xl font-bold gradient-text mt-1">85%</p>
+                    <div class="mt-3 bg-gray-100 rounded-full h-2">
+                        <div class="gradient-bg h-2 rounded-full progress-bar" style="width: 85%"></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">↑ +20% vs Sprint 1</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-md p-5 card-hover">
+                    <p class="text-gray-500 text-xs uppercase tracking-wide">Sprints Completados</p>
+                    <p class="text-4xl font-bold text-green-600 mt-1">2/3</p>
+                    <p class="text-xs text-gray-500 mt-3">Sprint 3 en planificación</p>
+                    <div class="flex gap-1 mt-2">
+                        <span class="w-6 h-2 bg-green-500 rounded-full"></span>
+                        <span class="w-6 h-2 bg-green-500 rounded-full"></span>
+                        <span class="w-6 h-2 bg-purple-300 rounded-full"></span>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-md p-5 card-hover">
+                    <p class="text-gray-500 text-xs uppercase tracking-wide">Tests Activos</p>
+                    <p class="text-4xl font-bold text-blue-600 mt-1">35+</p>
+                    <p class="text-xs text-gray-500 mt-3">Unit + Integration + E2E</p>
+                    <p class="text-xs text-yellow-600 mt-1">⚠️ Firefox E2E pendiente</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-md p-5 card-hover">
+                    <p class="text-gray-500 text-xs uppercase tracking-wide">Gaps Pendientes</p>
+                    <p class="text-4xl font-bold text-orange-500 mt-1">10</p>
+                    <p class="text-xs text-gray-500 mt-3">Para Sprint 3</p>
+                    <p class="text-xs text-red-500 mt-1">2 críticos · 6 medios · 2 bajos</p>
+                </div>
+            </div>
+
+            <!-- Phase Progress -->
+            <h2 class="text-xl font-bold text-gray-800 mb-4">🎯 Progreso por Fase</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+                <div class="phase-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-l-4 border-green-500">
+                    <span class="text-xs font-bold text-green-700 uppercase">Fase 0</span>
+                    <p class="text-2xl font-bold text-green-700 mt-1">100%</p>
+                    <p class="text-xs text-green-600 mt-1">Fundación</p>
+                    <span class="badge-completed text-xs px-2 py-0.5 rounded-full mt-2 inline-block">✅ Completa</span>
+                </div>
+                <div class="phase-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-l-4 border-green-500">
+                    <span class="text-xs font-bold text-green-700 uppercase">Fase 1A</span>
+                    <p class="text-2xl font-bold text-green-700 mt-1">100%</p>
+                    <p class="text-xs text-green-600 mt-1">Auth + Core</p>
+                    <span class="badge-completed text-xs px-2 py-0.5 rounded-full mt-2 inline-block">✅ Completa</span>
+                </div>
+                <div class="phase-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-l-4 border-green-500">
+                    <span class="text-xs font-bold text-green-700 uppercase">Fase 1B</span>
+                    <p class="text-2xl font-bold text-green-700 mt-1">100%</p>
+                    <p class="text-xs text-green-600 mt-1">Facturación</p>
+                    <span class="badge-completed text-xs px-2 py-0.5 rounded-full mt-2 inline-block">✅ Completa</span>
+                </div>
+                <div class="phase-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-l-4 border-green-500">
+                    <span class="text-xs font-bold text-green-700 uppercase">Fase 1C</span>
+                    <p class="text-2xl font-bold text-green-700 mt-1">100%</p>
+                    <p class="text-xs text-green-600 mt-1">Chat + Portal</p>
+                    <span class="badge-completed text-xs px-2 py-0.5 rounded-full mt-2 inline-block">✅ Completa</span>
+                </div>
+                <div class="phase-card bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border-l-4 border-purple-500">
+                    <span class="text-xs font-bold text-purple-700 uppercase">Sprint 1</span>
+                    <p class="text-2xl font-bold text-purple-700 mt-1">100%</p>
+                    <p class="text-xs text-purple-600 mt-1">Consolidación</p>
+                    <span class="badge-sprint text-xs px-2 py-0.5 rounded-full mt-2 inline-block">✅ Completo</span>
+                </div>
+                <div class="phase-card bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border-l-4 border-purple-500">
+                    <span class="text-xs font-bold text-purple-700 uppercase">Sprint 2</span>
+                    <p class="text-2xl font-bold text-purple-700 mt-1">100%</p>
+                    <p class="text-xs text-purple-600 mt-1">Integraciones</p>
+                    <span class="badge-sprint text-xs px-2 py-0.5 rounded-full mt-2 inline-block">✅ Completo</span>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Estado de Componentes del Sistema</h3>
+                    <canvas id="componentsChart" height="220"></canvas>
+                </div>
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Distribución de Tests (35+ archivos)</h3>
+                    <canvas id="testsChart" height="220"></canvas>
+                </div>
+            </div>
+
+            <!-- Sprint 2 Achievements -->
+            <h2 class="text-xl font-bold text-gray-800 mb-4">🏆 Logros del Sprint 2</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                <div class="bg-white rounded-xl p-4 border border-green-100 card-hover">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">🔒</span>
+                        <div>
+                            <p class="font-semibold text-gray-800 text-sm">Chat Hardening</p>
+                            <p class="text-xs text-gray-500 mt-1">Rate limiting (20 req/min), validación firma Twilio en producción, ChatSession persistente en DB</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-green-100 card-hover">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">🧠</span>
+                        <div>
+                            <p class="font-semibold text-gray-800 text-sm">RAG Real (8 Intents)</p>
+                            <p class="text-xs text-gray-500 mt-1">price_lookup, best_supplier, invoice_status, customer_balance, product_info, inventory_summary, overdue_invoices, create_order</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-green-100 card-hover">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">⚙️</span>
+                        <div>
+                            <p class="font-semibold text-gray-800 text-sm">Make.com → DB</p>
+                            <p class="text-xs text-gray-500 mt-1">Blueprint V2 con módulo HTTP, webhook idempotente, precios escritos directamente en ProductPrice</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-green-100 card-hover">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">📱</span>
+                        <div>
+                            <p class="font-semibold text-gray-800 text-sm">WhatsApp Producción</p>
+                            <p class="text-xs text-gray-500 mt-1">Notificaciones automáticas por cambio de estado, cron job facturas vencidas, código país +1 Canadá</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-green-100 card-hover">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">📚</span>
+                        <div>
+                            <p class="font-semibold text-gray-800 text-sm">Documentación Maestra</p>
+                            <p class="text-xs text-gray-500 mt-1">8 documentos operacionales: MAKE_SETUP_GUIDE, TWILIO_SETUP_GUIDE, RUNBOOK, GOLIVE_CHECKLIST y más</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-green-100 card-hover">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">🗄️</span>
+                        <div>
+                            <p class="font-semibold text-gray-800 text-sm">15 Modelos en DB</p>
+                            <p class="text-xs text-gray-500 mt-1">ChatSession agregado en Sprint 2. Schema completo con User, Invoice, Product, BotApiKey, WebhookLog, Notification, ReportCache</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: SPRINTS ===== -->
+        <div id="tab-sprints" class="tab-content fade-in hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">🚀 Estado de Sprints</h2>
+
+            <!-- Sprint 1 -->
+            <div class="sprint-card sprint-done rounded-2xl p-6 mb-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-green-800">Sprint 1 — Consolidación Crítica</h3>
+                        <p class="text-sm text-green-600">Completado · 3 días hábiles · Feb 2026</p>
+                    </div>
+                    <span class="badge-completed px-3 py-1 rounded-full text-sm font-semibold">✅ Completado</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white bg-opacity-70 rounded-xl p-4">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">Día 1 — Fundamentos DB</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>✅ Modelo Notification en Prisma</li>
+                            <li>✅ Modelo ReportCache en Prisma</li>
+                            <li>✅ Migraciones ejecutadas</li>
+                            <li>✅ 15 tests de integración</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-4">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">Día 2 — Admin UI</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>✅ Panel /admin/bot-api-keys</li>
+                            <li>✅ CRUD completo + rotación</li>
+                            <li>✅ Rate limiting Token Bucket</li>
+                            <li>✅ Dashboard analytics tiempo real</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-4">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">Día 3 — Chat Universal</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>✅ FloatingChatAssistant</li>
+                            <li>✅ Quick Suggestions contextuales</li>
+                            <li>✅ Historial localStorage</li>
+                            <li>✅ 21 tests (8/9 E2E)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sprint 2 -->
+            <div class="sprint-card sprint-done rounded-2xl p-6 mb-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-green-800">Sprint 2 — Integraciones Externas & Lógica de Negocio</h3>
+                        <p class="text-sm text-green-600">Completado · 8 días hábiles · Feb 2026</p>
+                    </div>
+                    <span class="badge-completed px-3 py-1 rounded-full text-sm font-semibold">✅ Completado</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S2-01 Hardening</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>✅ Rate limit /api/chat</li>
+                            <li>✅ Firma Twilio prod</li>
+                            <li>✅ ChatSession DB</li>
+                            <li>✅ Historial OpenAI</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S2-02 RAG</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>✅ 8 intents</li>
+                            <li>✅ Fuzzy search ILIKE</li>
+                            <li>✅ SSE básico</li>
+                            <li>✅ Function Calling</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S2-03 Make.com</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>✅ Blueprint V2</li>
+                            <li>✅ HTTP → DB</li>
+                            <li>✅ Idempotencia</li>
+                            <li>✅ Tests integración</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S2-04 WhatsApp</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>✅ Código +1 Canadá</li>
+                            <li>✅ Notif. automáticas</li>
+                            <li>✅ Cron vencidas</li>
+                            <li>✅ .env.example</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S2-05 Docs</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>✅ MAKE_SETUP_GUIDE</li>
+                            <li>✅ TWILIO_SETUP</li>
+                            <li>✅ RUNBOOK</li>
+                            <li>✅ GOLIVE_CHECKLIST</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sprint 3 -->
+            <div class="sprint-card sprint-active rounded-2xl p-6 mb-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-purple-800">Sprint 3 — Completitud & Experiencia de Usuario</h3>
+                        <p class="text-sm text-purple-600">Planificado · 8 días hábiles · Próximo</p>
+                    </div>
+                    <span class="badge-sprint px-3 py-1 rounded-full text-sm font-semibold">🎯 Próximo</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S3-P01 create_order</p>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li>⏳ Function Calling real</li>
+                            <li>⏳ Invoice DRAFT en DB</li>
+                            <li>⏳ Flujo confirmación</li>
+                            <li>⏳ 13+ tests</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S3-P02 ReportCache</p>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li>⏳ Caché activo</li>
+                            <li>⏳ TTL por tipo</li>
+                            <li>⏳ &lt;500ms con caché</li>
+                            <li>⏳ Cron limpieza</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S3-P03 E2E Fix</p>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li>⏳ Firefox timeout fix</li>
+                            <li>⏳ Coverage &gt;80%</li>
+                            <li>⏳ Retry en CI</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S3-P04 SPA Pública</p>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li>⏳ Landing page</li>
+                            <li>⏳ Productos desde DB</li>
+                            <li>⏳ Formulario contacto</li>
+                            <li>⏳ Lighthouse &gt;85</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white bg-opacity-70 rounded-xl p-3">
+                        <p class="text-xs font-bold text-gray-600 uppercase mb-2">S3-P05 Portal Cliente</p>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li>⏳ Gráficos compras</li>
+                            <li>⏳ Descarga masiva ZIP</li>
+                            <li>⏳ Notif. tiempo real</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: GAPS ===== -->
+        <div id="tab-gaps" class="tab-content fade-in hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">🔴 Gaps Identificados Post-Sprint 2</h2>
+                <div class="flex gap-2 text-xs">
+                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full">2 Críticos</span>
+                    <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">6 Medios</span>
+                    <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full">2 Bajos</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Critical -->
+                <div class="gap-critical bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-02</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">create_order sin OpenAI Function Calling real</p>
+                                <p class="text-xs text-gray-500 mt-1">El intent existe pero no tiene parsing estructurado de parámetros. No puede extraer cliente, productos y cantidades de forma confiable.</p>
+                                <p class="text-xs text-gray-400 mt-1">📁 src/lib/services/chat/intents/create-order.ts</p>
+                            </div>
+                        </div>
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ S3-P01</span>
+                    </div>
+                </div>
+
+                <div class="gap-critical bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-05</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">classifyChatIntentWithOpenAI sin parámetros ricos</p>
+                                <p class="text-xs text-gray-500 mt-1">La función de clasificación con OpenAI no genera parámetros estructurados para create_order (cliente + items).</p>
+                                <p class="text-xs text-gray-400 mt-1">📁 src/lib/services/chat/intents.ts</p>
+                            </div>
+                        </div>
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ S3-P01</span>
+                    </div>
+                </div>
+
+                <!-- Medium -->
+                <div class="gap-medium bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-07</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">ReportCache existe en DB pero no está activo</p>
+                                <p class="text-xs text-gray-500 mt-1">El modelo ReportCache fue creado en Sprint 1 pero el servicio de reportes no lo usa. Reportes recalculan siempre.</p>
+                                <p class="text-xs text-gray-400 mt-1">📁 src/lib/services/reports/index.ts</p>
+                            </div>
+                        </div>
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ S3-P02</span>
+                    </div>
+                </div>
+
+                <div class="gap-medium bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-03</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">SSE es single-chunk (no streaming real token a token)</p>
+                                <p class="text-xs text-gray-500 mt-1">El protocolo SSE está habilitado pero envía la respuesta completa en un solo evento, no tokens incrementales.</p>
+                                <p class="text-xs text-gray-400 mt-1">📁 src/app/api/chat/route.ts</p>
+                            </div>
+                        </div>
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ S3-P01</span>
+                    </div>
+                </div>
+
+                <div class="gap-medium bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-04</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">E2E Firefox timeout sin resolver</p>
+                                <p class="text-xs text-gray-500 mt-1">1 test E2E falla en Firefox por timeout de infraestructura. Chromium y WebKit pasan. No es error de lógica.</p>
+                                <p class="text-xs text-gray-400 mt-1">📁 tests/chat.spec.ts</p>
+                            </div>
+                        </div>
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ S3-P03</span>
+                    </div>
+                </div>
+
+                <div class="gap-medium bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-06</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">Portal cliente sin notificaciones en tiempo real</p>
+                                <p class="text-xs text-gray-500 mt-1">El portal de cliente no muestra notificaciones de cambios de estado de facturas en tiempo real.</p>
+                                <p class="text-xs text-gray-400 mt-1">📁 src/app/(customer)/</p>
+                            </div>
+                        </div>
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ S3-P05</span>
+                    </div>
+                </div>
+
+                <div class="gap-medium bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-08</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">Rate limiting en memoria (no Redis)</p>
+                                <p class="text-xs text-gray-500 mt-1">El rate limiting usa Map en memoria. No persiste entre instancias del servidor. Problema en producción con múltiples pods.</p>
+                                <p class="text-xs text-gray-400 mt-1">📁 src/lib/utils/rate-limit.ts</p>
+                            </div>
+                        </div>
+                        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ Backlog</span>
+                    </div>
+                </div>
+
+                <!-- Low -->
+                <div class="gap-low bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-09</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">SPA pública no implementada</p>
+                                <p class="text-xs text-gray-500 mt-1">La landing page institucional de HAGO PRODUCE (Fase 2 item 2.5) no existe aún.</p>
+                            </div>
+                        </div>
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ S3-P04</span>
+                    </div>
+                </div>
+
+                <div class="gap-low bg-white rounded-xl p-4 shadow-sm card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">GAP-S2-10</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">Portal cliente sin dashboard de gráficos</p>
+                                <p class="text-xs text-gray-500 mt-1">El portal de cliente tiene funcionalidades básicas pero sin visualizaciones de compras históricas.</p>
+                            </div>
+                        </div>
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full whitespace-nowrap">→ S3-P05</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: AUTOMATIZACIONES ===== -->
+        <div id="tab-automations" class="tab-content fade-in hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">⚙️ Inventario de Automatizaciones</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-white rounded-2xl p-5 shadow-md card-hover border-t-4 border-blue-500">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-2xl">📄</span>
+                        <div>
+                            <p class="font-bold text-gray-800">AUTO-01 — Price Extraction</p>
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Activo</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <p><strong>Plataforma:</strong> Make.com</p>
+                        <p><strong>Trigger:</strong> Nuevo PDF en Google Drive (HAGO_Precios)</p>
+                        <p><strong>Flujo:</strong> Drive → PDF.co → OpenAI → Webhook → ProductPrice DB</p>
+                        <p><strong>Blueprint:</strong> MAKE_BLUEPRINT_V2.json (módulo HTTP id=50)</p>
+                        <p><strong>Frecuencia:</strong> On-demand (al subir PDF)</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 shadow-md card-hover border-t-4 border-green-500">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-2xl">📧</span>
+                        <div>
+                            <p class="font-bold text-gray-800">AUTO-02 — Invoice Notifications</p>
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Activo</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <p><strong>Plataforma:</strong> Internal (Next.js)</p>
+                        <p><strong>Trigger:</strong> Cambio de estado de factura</p>
+                        <p><strong>Flujo:</strong> PATCH /invoices/[id]/status → NotificationsService → Twilio WhatsApp</p>
+                        <p><strong>Fallback:</strong> Email si WhatsApp falla</p>
+                        <p><strong>Frecuencia:</strong> Event-driven</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 shadow-md card-hover border-t-4 border-orange-500">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-2xl">⏰</span>
+                        <div>
+                            <p class="font-bold text-gray-800">AUTO-03 — Overdue Reminders</p>
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Activo</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <p><strong>Plataforma:</strong> Cron Job (Railway)</p>
+                        <p><strong>Trigger:</strong> Diario 9am</p>
+                        <p><strong>Endpoint:</strong> GET /api/v1/cron/overdue-notifications</p>
+                        <p><strong>Seguridad:</strong> Header x-cron-secret</p>
+                        <p><strong>Acción:</strong> WhatsApp a clientes con facturas vencidas</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 shadow-md card-hover border-t-4 border-purple-500">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-2xl">💬</span>
+                        <div>
+                            <p class="font-bold text-gray-800">AUTO-04 — WhatsApp Bot</p>
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Activo</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <p><strong>Plataforma:</strong> Twilio WhatsApp Business</p>
+                        <p><strong>Trigger:</strong> Mensaje entrante</p>
+                        <p><strong>Webhook:</strong> POST /api/v1/bot/webhook/whatsapp</p>
+                        <p><strong>Seguridad:</strong> Validación firma Twilio (prod)</p>
+                        <p><strong>Intents:</strong> 8 intents con RAG + OpenAI</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 shadow-md card-hover border-t-4 border-indigo-500">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-2xl">✈️</span>
+                        <div>
+                            <p class="font-bold text-gray-800">AUTO-05 — Telegram Bot</p>
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">⚠️ Estructura lista</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <p><strong>Plataforma:</strong> Telegram</p>
+                        <p><strong>Trigger:</strong> Mensaje entrante</p>
+                        <p><strong>Webhook:</strong> POST /api/v1/bot/webhook/telegram</p>
+                        <p><strong>Estado:</strong> Estructura implementada, pendiente configuración</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 shadow-md card-hover border-t-4 border-gray-400">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-2xl">🧹</span>
+                        <div>
+                            <p class="font-bold text-gray-800">AUTO-06 — Cache Cleanup (Sprint 3)</p>
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">⏳ Planificado</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <p><strong>Plataforma:</strong> Cron Job (Railway)</p>
+                        <p><strong>Trigger:</strong> Diario (hora configurable)</p>
+                        <p><strong>Endpoint:</strong> GET /api/v1/cron/clean-report-cache</p>
+                        <p><strong>Acción:</strong> Eliminar cachés de reportes expirados</p>
+                        <p><strong>Sprint:</strong> S3-P02-B</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flujo E2E -->
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🔄 Flujo Extremo a Extremo</h3>
+            <div class="bg-gray-900 rounded-2xl p-6 text-green-400 font-mono text-xs overflow-x-auto">
+                <pre>
+[Google Drive PDF] ──► [Make.com] ──► [PDF.co] ──► [OpenAI GPT] ──► [POST /api/v1/webhooks/make] ──► [ProductPrice DB]
+                                                                                ↓ idempotencia
+                                                                          [WebhookLog DB]
+
+[WhatsApp Usuario] ──► [Twilio] ──► [POST /api/v1/bot/webhook/whatsapp] ──► [Bot Query Service]
+                                           ↓ firma validada                        ↓
+                                     [Message DB]                          [OpenAI RAG (8 intents)]
+                                                                                   ↓
+                                                                          [Respuesta al usuario]
+
+[Invoice Status Change] ──► [NotificationsService] ──► [Twilio WhatsApp] ──► [Cliente]
+                                      ↓                        ↓ fallback
+                               [notifications_log]         [Email Cliente]
+
+[Cron 9am Railway] ──► [GET /api/v1/cron/overdue-notifications] ──► [Facturas PENDING vencidas]
+                                                                              ↓
+                                                                    [WhatsApp a clientes]
+
+[Chat Web Usuario] ──► [POST /api/chat] ──► [Rate Limit 20/min] ──► [ChatSession DB]
+                                                                           ↓
+                                                                    [OpenAI + Historial]
+                                                                           ↓
+                                                                    [Respuesta SSE]
+                </pre>
+            </div>
+        </div>
+
+        <!-- ===== TAB: METRICS ===== -->
+        <div id="tab-metrics" class="tab-content fade-in hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">📈 Métricas del Proyecto</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Progreso de Sprints</h3>
+                    <canvas id="sprintProgressChart" height="250"></canvas>
+                </div>
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Modelos de Base de Datos</h3>
+                    <canvas id="dbModelsChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Metrics Table -->
+            <div class="bg-white rounded-2xl shadow-md p-6 mb-6">
+                <h3 class="text-base font-bold text-gray-800 mb-4">📊 Métricas Técnicas Actuales</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="text-left py-2 text-gray-500 font-medium">Métrica</th>
+                                <th class="text-left py-2 text-gray-500 font-medium">Objetivo</th>
+                                <th class="text-left py-2 text-gray-500 font-medium">Actual</th>
+                                <th class="text-left py-2 text-gray-500 font-medium">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">Modelos DB</td><td class="py-2 text-gray-500">15/15</td><td class="py-2 font-semibold text-green-600">15/15</td><td class="py-2"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Completo</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">API Endpoints</td><td class="py-2 text-gray-500">40+</td><td class="py-2 font-semibold text-green-600">40+</td><td class="py-2"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Completo</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">Intents de Chat</td><td class="py-2 text-gray-500">8</td><td class="py-2 font-semibold text-green-600">8</td><td class="py-2"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Completo</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">Archivos de Tests</td><td class="py-2 text-gray-500">35+</td><td class="py-2 font-semibold text-green-600">35+</td><td class="py-2"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Completo</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">Coverage Tests</td><td class="py-2 text-gray-500">&gt;80%</td><td class="py-2 font-semibold text-yellow-600">~60%</td><td class="py-2"><span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">⚠️ Sprint 3</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">E2E Firefox</td><td class="py-2 text-gray-500">100%</td><td class="py-2 font-semibold text-yellow-600">89%</td><td class="py-2"><span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">⚠️ Sprint 3</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">Rate Limiting Chat</td><td class="py-2 text-gray-500">20 req/min</td><td class="py-2 font-semibold text-green-600">20 req/min</td><td class="py-2"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Activo</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">Automatizaciones</td><td class="py-2 text-gray-500">5</td><td class="py-2 font-semibold text-green-600">5 (1 pendiente config)</td><td class="py-2"><span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">⚠️ Telegram</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">Documentos Operacionales</td><td class="py-2 text-gray-500">8</td><td class="py-2 font-semibold text-green-600">8</td><td class="py-2"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Completo</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">ReportCache Activo</td><td class="py-2 text-gray-500">Sí</td><td class="py-2 font-semibold text-red-500">No (modelo existe)</td><td class="py-2"><span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">❌ Sprint 3</span></td></tr>
+                            <tr class="checklist-item"><td class="py-2 text-gray-700">SPA Pública</td><td class="py-2 text-gray-500">Sí</td><td class="py-2 font-semibold text-red-500">No implementada</td><td class="py-2"><span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">❌ Sprint 3</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: ROADMAP ===== -->
+        <div id="tab-roadmap" class="tab-content fade-in hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">🗓️ Roadmap Completo</h2>
+            <div class="bg-white rounded-2xl shadow-md p-6 mb-6">
+                <canvas id="roadmapChart" height="200"></canvas>
+            </div>
+
+            <!-- Sprint 3 Timeline -->
+            <h3 class="text-lg font-bold text-gray-800 mb-4">📅 Sprint 3 — Timeline Detallado</h3>
+            <div class="space-y-3">
+                <div class="flex gap-4 items-start">
+                    <div class="w-16 text-center">
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Día 1</span>
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-3 shadow-sm border-l-4 border-red-400">
+                        <p class="font-semibold text-sm text-gray-800">S3-P03 (E2E Firefox) + S3-P01-A inicio (create_order extracción)</p>
+                        <p class="text-xs text-gray-500 mt-1">Fix timeout Firefox · OpenAI Function Calling para extracción de parámetros</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="w-16 text-center">
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Día 2</span>
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-3 shadow-sm border-l-4 border-red-400">
+                        <p class="font-semibold text-sm text-gray-800">S3-P01-B (Invoice DRAFT) + S3-P01-C (Tests) → CHECKPOINT CP1</p>
+                        <p class="text-xs text-gray-500 mt-1">Creación real de factura desde chat · 13+ tests · Checkpoint Día 2</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="w-16 text-center">
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Día 3</span>
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-3 shadow-sm border-l-4 border-yellow-400">
+                        <p class="font-semibold text-sm text-gray-800">S3-P02-A (ReportCache activo) + S3-P04-A inicio (SPA estructura)</p>
+                        <p class="text-xs text-gray-500 mt-1">Activar caché en reportes · TTL por tipo · Estructura SPA pública</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="w-16 text-center">
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Día 4</span>
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-3 shadow-sm border-l-4 border-yellow-400">
+                        <p class="font-semibold text-sm text-gray-800">S3-P02-B (Cron + Tests) + S3-P04-B (SPA contenido) → CHECKPOINT CP2</p>
+                        <p class="text-xs text-gray-500 mt-1">Cron limpieza caché · Secciones Hero, Productos, Contacto · Checkpoint Día 4</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="w-16 text-center">
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Día 5</span>
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-3 shadow-sm border-l-4 border-blue-400">
+                        <p class="font-semibold text-sm text-gray-800">S3-P05-A (Portal dashboard gráficos)</p>
+                        <p class="text-xs text-gray-500 mt-1">Gráficos compras mensuales · Top productos · Estado de cuenta</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="w-16 text-center">
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Día 6</span>
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-3 shadow-sm border-l-4 border-blue-400">
+                        <p class="font-semibold text-sm text-gray-800">S3-P05-B (Historial + descarga masiva ZIP)</p>
+                        <p class="text-xs text-gray-500 mt-1">Historial completo con filtros · Descarga masiva PDFs · Notificaciones tiempo real</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="w-16 text-center">
+                        <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Día 7</span>
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-3 shadow-sm border-l-4 border-gray-300">
+                        <p class="font-semibold text-sm text-gray-800">Testing E2E completo + ajustes finales</p>
+                        <p class="text-xs text-gray-500 mt-1">Validación completa del sistema · Performance · Accesibilidad</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="w-16 text-center">
+                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">Día 8</span>
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-3 shadow-sm border-l-4 border-green-400">
+                        <p class="font-semibold text-sm text-gray-800">CHECKPOINT CP3 — Cierre Oficial Sprint 3</p>
+                        <p class="text-xs text-gray-500 mt-1">Documento de cierre · Métricas finales · Decisión de producción</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: CHECKLIST GO-LIVE ===== -->
+        <div id="tab-checklist" class="tab-content fade-in hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">✅ Checklist de Go-Live</h2>
+            <p class="text-sm text-gray-500 mb-6">Basado en <code class="bg-gray-100 px-1 rounded">GOLIVE_CHECKLIST.md</code> — Marca cada item al verificarlo en producción.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <h3 class="font-bold text-gray-800 mb-4">🔐 Variables de Entorno</h3>
+                    <div class="space-y-2" id="envChecklist">
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">DATABASE_URL apunta a producción</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">OPENAI_API_KEY configurado con créditos</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">TWILIO_ACCOUNT_SID de producción</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">TWILIO_AUTH_TOKEN de producción</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">TWILIO_WHATSAPP_NUMBER (no sandbox)</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">MAKE_WEBHOOK_API_KEY creado en Admin UI</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">CRON_SECRET configurado</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">JWT_SECRET y NEXTAUTH_SECRET (32+ chars)</span></label>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <h3 class="font-bold text-gray-800 mb-4">🔗 Webhooks y Automatizaciones</h3>
+                    <div class="space-y-2">
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">SSL/HTTPS activo en el dominio</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">Webhook Twilio apunta a URL producción</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">Make.com escenario activo con Blueprint V2</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">Cron jobs configurados en Railway</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">TWILIO_SANDBOX_MODE=false</span></label>
+                    </div>
+
+                    <h3 class="font-bold text-gray-800 mb-4 mt-6">🧪 Pruebas Manuales</h3>
+                    <div class="space-y-2">
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">GET /api/health responde 200</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">Test WhatsApp: enviar "hola" al número</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">Test Make.com: subir PDF y verificar en DB</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">Test notificación: cambiar estado de factura</span></label>
+                        <label class="checklist-item flex items-center gap-3 p-2 rounded-lg cursor-pointer"><input type="checkbox" class="w-4 h-4 text-purple-600"><span class="text-sm text-gray-700">Test chat: "precio de mango" → respuesta correcta</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress bar for checklist -->
+            <div class="bg-white rounded-2xl shadow-md p-6 mt-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-gray-800">Progreso del Checklist</h3>
+                    <span id="checklistProgress" class="text-sm font-semibold text-purple-600">0 / 18 completados</span>
+                </div>
+                <div class="bg-gray-100 rounded-full h-3">
+                    <div id="checklistBar" class="gradient-bg h-3 rounded-full progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-xs text-gray-400">
+            <p>Hago Produce — Dashboard Ejecutivo Fase 2 v2.0 · Actualizado: <span id="footerDate">—</span></p>
+            <p class="mt-1">Sprint 1 ✅ · Sprint 2 ✅ · Sprint 3 🎯 · Repositorio: <a href="https://github.com/nhadadn/Hago-Produce" class="text-purple-500 hover:underline">nhadadn/Hago-Produce</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // ===== DATE =====
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('currentDate').textContent = dateStr;
+        document.getElementById('footerDate').textContent = dateStr;
+
+        // ===== TABS =====
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('tab-active');
+        }
+
+        // ===== CHECKLIST PROGRESS =====
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', updateChecklistProgress);
+        });
+        function updateChecklistProgress() {
+            const total = document.querySelectorAll('input[type="checkbox"]').length;
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const pct = Math.round((checked / total) * 100);
+            document.getElementById('checklistProgress').textContent = `${checked} / ${total} completados`;
+            document.getElementById('checklistBar').style.width = pct + '%';
+        }
+
+        // ===== CHARTS =====
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Components Chart
+            new Chart(document.getElementById('componentsChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Auth & Users', 'Productos & Precios', 'Facturación', 'Chat & RAG', 'Bots & Webhooks', 'Reportes', 'Notificaciones', 'Portal Cliente'],
+                    datasets: [{
+                        label: 'Completado (%)',
+                        data: [100, 100, 100, 90, 85, 100, 80, 70],
+                        backgroundColor: ['#10b981','#10b981','#10b981','#667eea','#667eea','#10b981','#f59e0b','#f59e0b'],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } },
+                        x: { ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // Tests Chart
+            new Chart(document.getElementById('testsChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Unit Tests', 'Integration Tests', 'E2E Tests'],
+                    datasets: [{
+                        data: [20, 12, 3],
+                        backgroundColor: ['#667eea', '#10b981', '#f59e0b'],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} archivos` } }
+                    }
+                }
+            });
+
+            // Sprint Progress Chart
+            new Chart(document.getElementById('sprintProgressChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Sprint 1\nConsolidación', 'Sprint 2\nIntegraciones', 'Sprint 3\nUX & Completitud'],
+                    datasets: [
+                        {
+                            label: 'Completado',
+                            data: [100, 100, 0],
+                            backgroundColor: '#10b981',
+                            borderRadius: 6,
+                        },
+                        {
+                            label: 'Pendiente',
+                            data: [0, 0, 100],
+                            backgroundColor: '#e5e7eb',
+                            borderRadius: 6,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, max: 100, ticks: { callback: v => v + '%' } }
+                    },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // DB Models Chart
+            new Chart(document.getElementById('dbModelsChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: ['Core (User, Customer, Supplier)', 'Facturación (Invoice, Item, Note)', 'Productos (Product, Price)', 'Bots & Chat (BotApiKey, Message, ChatSession)', 'Logs (WebhookLog, AuditLog, Notification, ReportCache)'],
+                    datasets: [{
+                        data: [3, 3, 2, 3, 4],
+                        backgroundColor: ['#667eea','#10b981','#f59e0b','#8b5cf6','#6b7280'],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
+                        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} modelos` } }
+                    }
+                }
+            });
+
+            // Roadmap Chart
+            new Chart(document.getElementById('roadmapChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Fase 0', 'Fase 1A', 'Fase 1B', 'Fase 1C', 'Sprint 1', 'Sprint 2', 'Sprint 3'],
+                    datasets: [{
+                        label: 'Semanas',
+                        data: [[0,3],[3,8],[8,13],[13,17],[17,18],[18,20],[20,22]],
+                        backgroundColor: ['#10b981','#10b981','#10b981','#10b981','#10b981','#10b981','#667eea'],
+                        borderRadius: 6,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => ` Semana ${ctx.raw[0]+1} → Semana ${ctx.raw[1]}` } }
+                    },
+                    scales: {
+                        x: { min: 0, max: 22, title: { display: true, text: 'Semanas desde inicio del proyecto' } }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
