@@ -1,4 +1,24 @@
-<h1>🎯 Prompts Sprint 1 - Consolidación Crítica</h1><h2>📋 Estructura de Prompts</h2><p>Cada prompt sigue el formato:</p><ul> <li><strong>Agente Responsable</strong>: Rol específico del equipo</li> <li><strong>Resumen Técnico</strong>: Descripción concisa del objetivo</li> <li><strong>Descripción Detallada</strong>: Requerimiento completo con criterios</li> <li><strong>Criterios de Aceptación</strong>: Lista verificable de entregables</li> <li><strong>Dependencias</strong>: Componentes o tareas previas necesarias</li> </ul><hr><h2>🔴 DÍA 1: Fundamentos de Datos - [INFRA-01]</h2><hr><h3>PROMPT #1 - Implementar Modelo Notification en Prisma Schema</h3><pre><code>PROMPT #1 - Implementar Modelo Notification en Prisma Schema
+# 🎯 Prompts Sprint 1 - Consolidación Crítica
+
+## 📋 Estructura de Prompts
+
+Cada prompt sigue el formato:
+- **Agente Responsable**: Rol específico del equipo
+- **Resumen Técnico**: Descripción concisa del objetivo
+- **Descripción Detallada**: Requerimiento completo con criterios
+- **Criterios de Aceptación**: Lista verificable de entregables
+- **Dependencias**: Componentes o tareas previas necesarias
+
+---
+
+## 🔴 DÍA 1: Fundamentos de Datos - [INFRA-01]
+
+---
+
+### PROMPT #1 - Implementar Modelo Notification en Prisma Schema
+
+```
+PROMPT #1 - Implementar Modelo Notification en Prisma Schema
 ---
 Agente: Desarrollador Backend / Database Engineer
 Resumen: Crear y configurar el modelo Notification en schema.prisma con todas sus relaciones, índices y validaciones necesarias para el sistema de notificaciones.
@@ -47,49 +67,15 @@ Dependencias:
 - Conocimiento del esquema actual de base de datos del proyecto
 - Acceso a archivo schema.prisma
 - Modelo User existente con su estructura actual
-
-RESPUESTA DEL AGENTE :
-
-          
-# Tarea Completada: Implementación del Modelo Notification
-
-He completado la implementación del modelo `Notification` en el esquema de Prisma y actualizado la base de datos.
-
-### 📝 Cambios Realizados
-
-1.  **Actualización de `prisma/schema.prisma`**:
-    *   Se creó el modelo `Notification` con todos los campos requeridos (`id`, `userId`, `type`, `title`, `message`, `isRead`, `createdAt`, `readAt`).
-    *   Se establecieron las restricciones de longitud usando `@db.VarChar(200)` para título y `@db.VarChar(2000)` para mensaje.
-    *   Se configuraron los índices solicitados: `userId`, `isRead` y el índice compuesto `[userId, isRead]`.
-    *   Se actualizó el modelo `User` para incluir la relación inversa `notifications Notification[]`.
-
-2.  **Validación y Generación**:
-    *   Se ejecutó `npx prisma validate` exitosamente.
-    *   Se ejecutó `npx prisma generate` para actualizar el cliente de Prisma.
-
-3.  **Migración de Base de Datos**:
-    *   Se creó y aplicó la migración: `20260223071518_add_notification_model`.
-
-### 🔍 Verificación de Criterios de Aceptación
-
-| Criterio | Estado | Notas |
-| :--- | :--- | :--- |
-| [x] Modelo Notification creado | ✅ Completado | Con `@default(cuid())` como solicitado |
-| [x] Relación con User configurada | ✅ Completado | Bidireccional en ambos modelos |
-| [x] Índices creados | ✅ Completado | Índices simples y compuestos |
-| [x] Validaciones de longitud | ✅ Completado | Usando `@db.VarChar` |
-| [x] Schema validado | ✅ Completado | Sin errores |
-| [x] Generación de cliente exitosa | ✅ Completado | Cliente actualizado |
-
-### 🚀 Estado del Sistema
-
-El servidor de desarrollo (`npm run dev`) ha sido reiniciado y está operativo con los nuevos cambios de esquema. El sistema de notificaciones ahora cuenta con el respaldo de base de datos necesario para funcionar correctamente.
-
-**Code Reference:** [prisma/schema.prisma](file:///c:/Users/nadir/Hago%20Produce/prisma/schema.prisma)
-FIN DE RESPUESTA
+---
+```
 
 ---
-</code></pre><hr><h3>PROMPT #2 - Implementar Modelo ReportCache en Prisma Schema</h3><pre><code>PROMPT #2 - Implementar Modelo ReportCache en Prisma Schema
+
+### PROMPT #2 - Implementar Modelo ReportCache en Prisma Schema
+
+```
+PROMPT #2 - Implementar Modelo ReportCache en Prisma Schema
 ---
 Agente: Desarrollador Backend / Database Engineer
 Resumen: Crear y configurar el modelo ReportCache en schema.prisma para implementar sistema de caché de reportes que optimice el performance de consultas repetitivas.
@@ -137,35 +123,15 @@ Dependencias:
 - Prompts #1 completado (opcional, puede hacerse en paralelo)
 - Conocimiento de los tipos de reportes existentes en el proyecto
 - Estructura actual del sistema de reportes backend
+---
+```
 
-RESPUESTA DEL AGENTE:
-# Tarea Completada: Implementación del Modelo ReportCache
-He completado la implementación del modelo ReportCache en el esquema de Prisma y actualizado la base de datos.
-
-### 📝 Cambios Realizados
-1. Actualización de prisma/schema.prisma :
-   
-   - Se creó el modelo ReportCache con todos los campos requeridos ( id , reportType , parameters , data , expiresAt , createdAt , updatedAt ).
-   - Se definieron los índices para optimización: reportType , expiresAt y el compuesto [reportType, expiresAt] .
-   - Se agregaron comentarios documentando los tipos de reporte soportados (REVENUE, AGING, TOP_PERFORMERS, PRICE_TRENDS).
-2. Validación y Generación :
-   
-   - Se ejecutó npx prisma validate confirmando la corrección del esquema.
-   - Se ejecutó npx prisma generate para actualizar el cliente de Prisma.
-3. Migración de Base de Datos :
-   
-   - Se creó y aplicó exitosamente la migración: 20260223072340_add_report_cache_model .
-### 🔍 Verificación de Criterios de Aceptación
-Criterio Estado Notas [x] Modelo ReportCache creado ✅ Completado Con @default(cuid()) y campos requeridos [x] Índices creados ✅ Completado Índices para búsqueda y limpieza [x] Validaciones configuradas ✅ Completado Usando @db.VarChar y @db.Text para JSON [x] Schema validado ✅ Completado Validación exitosa [x] Generación de cliente ✅ Completado Cliente actualizado [x] Documentación de tipos ✅ Completado Comentarios incluidos en el modelo
-
-### 🚀 Estado del Sistema
-El servidor de desarrollo ha sido reiniciado y está operativo ( Ready in 6.9s ) con los nuevos cambios de esquema integrados.
-
-Code Reference: prisma/schema.prisma
 ---
 
+### PROMPT #3 - Validar Referencias en Código Existente
 
-</code></pre><hr><h3>PROMPT #3 - Validar Referencias en Código Existente</h3><pre><code>PROMPT #3 - Validar Referencias en Código Existente
+```
+PROMPT #3 - Validar Referencias en Código Existente
 ---
 Agente: Desarrollador Backend / Code Reviewer
 Resumen: Realizar búsqueda exhaustiva de referencias a los modelos Notification y ReportCache en el código base para identificar todos los archivos que los utilizan y asegurar compatibilidad.
@@ -219,28 +185,15 @@ Dependencias:
 - Prompts #1 y #2 completados (schemas implementados)
 - Acceso completo al código base del proyecto
 - Herramientas de búsqueda de código (grep, ripgrep, IDE search)
-
-# Tarea Completada: Validación de Referencias
-He completado la búsqueda exhaustiva y validación de referencias para los modelos Notification y ReportCache en el código existente.
-
-### 📝 Resultados de la Búsqueda
-1. Referencias a Notification :
-   
-   - Se encontraron 63 archivos , pero la gran mayoría son de documentación o definiciones de tipos ( types.ts ).
-   - El archivo clave src/lib/services/notifications/service.ts utiliza prisma.auditLog.create para registrar notificaciones, no utiliza el modelo Notification todavía.
-   - No hay conflictos directos de código que impidan la migración, pero el servicio de notificaciones deberá ser actualizado para aprovechar la nueva tabla.
-2. Referencias a ReportCache :
-   
-   - Se encontraron 10 archivos , todos de documentación o scripts de migración.
-   - No existe implementación previa en el código fuente ( src/ ), por lo que la introducción del modelo es completamente segura y no requiere refactorización de código legado.
-### 📊 Reporte Generado
-He creado un reporte detallado con los hallazgos y recomendaciones técnicas en: Code Reference: REPORTE_HALLAZGOS_FASE2.md
-
-### ✅ Conclusión
-La migración de base de datos es segura de ejecutar. El código existente no se romperá, pero se han identificado las áreas ( NotificationsService ) que requerirán actualización en los siguientes pasos para conectar la lógica de negocio con los nuevos modelos de datos.
+---
+```
 
 ---
-</code></pre><hr><h3>PROMPT #4 - Crear y Ejecutar Migración de Base de Datos</h3><pre><code>PROMPT #4 - Crear y Ejecutar Migración de Base de Datos
+
+### PROMPT #4 - Crear y Ejecutar Migración de Base de Datos
+
+```
+PROMPT #4 - Crear y Ejecutar Migración de Base de Datos
 ---
 Agente: Desarrollador Backend / Database Engineer
 Resumen: Generar y ejecutar la migración de Prisma para agregar los modelos Notification y ReportCache a la base de datos de desarrollo.
@@ -299,36 +252,15 @@ Dependencias:
 - Schema validado con `npx prisma validate`
 - Referencias en código validadas y compatibles
 - Entorno de desarrollo configurado con base de datos accesible
-
-RESPUESTA DEL AGENTE:
-INICIO
-# Tarea Completada: Refactorización de NotificationsService
-He completado la refactorización crítica del NotificationsService para utilizar el nuevo modelo Notification de Prisma.
-
-### 📝 Cambios Realizados
-1. Integración con Modelo Notification :
-   
-   - Se actualizó src/lib/services/notifications/service.ts para persistir las notificaciones en la tabla notifications además de mantener el log en AuditLog .
-   - La persistencia ocurre solo cuando el envío es exitoso y específicamente para el canal 'email' (para evitar duplicados lógicos por canal).
-2. Helper getNotificationContent :
-   
-   - Se implementó una función helper que transforma dinámicamente el NotificationPayload en un objeto con title , message y type (INFO, WARNING, ERROR) apropiados para la base de datos.
-   - Soporta triggers: status_change , due_date , overdue .
-3. Resolución de Usuarios :
-   
-   - Se implementó la lógica para buscar todos los usuarios asociados a un customerId ( prisma.user.findMany({ where: { customerId } }) ) y generar una notificación individual para cada uno.
-4. Actualización de Tests :
-   
-   - Se actualizaron los mocks en src/tests/unit/notifications/service.test.ts para incluir prisma.user y prisma.notification .
-   - Se verificó que el test unitario pasa correctamente ( PASS ), validando tanto la creación en AuditLog como en Notification .
-### ✅ Validación
-El servicio ahora es compatible con la nueva estructura de base de datos y aprovecha las tablas creadas en la migración anterior. No se rompió funcionalidad existente y se añadió la capa de persistencia requerida.
-
-Code Reference: src/lib/services/notifications/service.ts
-FIN
+---
+```
 
 ---
-</code></pre><hr><h3>PROMPT #5 - Verificación y Testing de Modelos</h3><pre><code>PROMPT #5 - Verificación y Testing de Modelos
+
+### PROMPT #5 - Verificación y Testing de Modelos
+
+```
+PROMPT #5 - Verificación y Testing de Modelos
 ---
 Agente: Desarrollador Backend / QA Tester
 Resumen: Crear y ejecutar tests integrales para validar que los modelos Notification y ReportCache funcionan correctamente con todas las operaciones CRUD y relaciones.
@@ -390,42 +322,24 @@ Criterios de aceptación:
 - [ ] Tests de edge cases creados
 - [ ] Tests de performance ejecutados
 - [ ] Todos los tests pasando (100%)
-- [ ] Coverage &gt;80% para nuevos modelos
+- [ ] Coverage >80% para nuevos modelos
 - [ ] Documentación de resultados generada
-- [ ] Tiempos de respuesta &lt;100ms para queries comunes
+- [ ] Tiempos de respuesta <100ms para queries comunes
 
 Dependencias:
 - Prompts #1-4 completados
 - Migración ejecutada exitosamente
 - Framework de testing configurado (Jest, Vitest, etc.)
 - Base de datos de testing configurada
-
-RESPUESTA DEL AGENTE:
-INICIO 
-# Tarea Completada: Verificación y Testing de Modelos
-He completado exitosamente la creación y ejecución de la suite de tests de integración para los nuevos modelos de base de datos.
-
-### 📝 Resultados de Testing
-1. Tests Implementados :
-   
-   - src/tests/integration/notification-model.test.ts : Cubre CRUD, filtros, ordenamiento y validaciones para Notificaciones.
-   - src/tests/integration/report-cache-model.test.ts : Cubre persistencia de JSON, lógica de expiración y manejo de datos para ReportCache.
-2. Ejecución Exitosa :
-   
-   - Se ejecutaron 15 tests en total.
-   - Resultado: 100% Passed (15/15).
-   - Tiempo: ~1.7s.
-3. Documentación :
-   
-   - Se generó el reporte detallado en REPORTE_TESTING_MODELOS_FASE2.md .
-### ✅ Conclusión
-La infraestructura de datos para la Fase 2 está verificada y operativa. Los modelos Notification y ReportCache funcionan correctamente y están listos para soportar las funcionalidades de interfaz de usuario y lógica de negocio avanzada.
-
-Code Reference: REPORTE_TESTING_MODELOS_FASE2.md
-FIN
+---
+```
 
 ---
-</code></pre><hr><h3>CHECKPOINT #1 - Fin del Día 1: Fundamentos de Datos</h3><pre><code>CHECKPOINT #1 - Fin del Día 1: Fundamentos de Datos
+
+### CHECKPOINT #1 - Fin del Día 1: Fundamentos de Datos
+
+```
+CHECKPOINT #1 - Fin del Día 1: Fundamentos de Datos
 ---
 Agente: Tech Lead / Project Manager
 Resumen: Documentar el progreso y estado del Día 1 del Sprint 1, validando que todos los componentes de base de datos están implementados y funcionando correctamente.
@@ -491,7 +405,18 @@ Dependencias:
 - Todos los tests ejecutados
 - Validaciones realizadas
 ---
-</code></pre><hr><h2>🔴 DÍA 2: Admin UI para API Keys - [BOT-01]</h2><hr><h3>PROMPT #6 - Crear Página de Administración de API Keys</h3><pre><code>PROMPT #6 - Crear Página de Administración de API Keys
+```
+
+---
+
+## 🔴 DÍA 2: Admin UI para API Keys - [BOT-01]
+
+---
+
+### PROMPT #6 - Crear Página de Administración de API Keys
+
+```
+PROMPT #6 - Crear Página de Administración de API Keys
 ---
 Agente: Desarrollador Frontend / UI Developer
 Resumen: Crear la página de administración para gestión de API Keys de bots externos, incluyendo lista, creación, edición y revocación de keys.
@@ -560,48 +485,15 @@ Dependencias:
 - Sistema de autenticación con roles (ADMIN)
 - Componentes UI base del proyecto (Table, Button, Modal, etc.)
 - Routing del frontend configurado
-
-RESPUESTA DEL AGENTE:
-INICIO
-He completado la implementación de la Admin UI para API Keys correspondiente al Prompt #6 del Día 2. A continuación, presento el resumen de las actividades y el estado actual.
-
-### 🚀 Actividades Completadas (Día 2 - Parte 1)
-1. Backend (API Routes):
-   
-   - Se crearon los endpoints necesarios para la gestión de claves:
-     - GET /api/bot/keys : Listar todas las claves.
-     - POST /api/bot/keys : Crear nueva clave (valida nombre y límite).
-     - DELETE /api/bot/keys/[id] : Revocar clave (soft delete).
-     - PATCH /api/bot/keys/[id] : Rotar clave (acción rotate ).
-   - Ubicación: src/app/api/bot/keys/route.ts y src/app/api/bot/keys/[id]/route.ts .
-2. Frontend (Interfaz de Usuario):
-   
-   - Se implementó la página de administración en src/app/(admin)/admin/bot-api-keys/page.tsx .
-   - Características:
-     - Listado completo con columnas: Nombre, Límite, Estado, Fechas, Uso.
-     - Filtros y Búsqueda: Implementados en cliente (Búsqueda por nombre, Filtro por estado Activo/Revocado).
-     - Acciones: Crear (Modal), Revocar (Confirmación), Rotar (Confirmación y visualización de nueva clave), Copiar ID.
-     - Diseño: Consistente con el dashboard, utilizando componentes shadcn/ui y layout administrativo.
-   - Ubicación: src/app/(admin)/admin/bot-api-keys/page.tsx .
-3. Documentación:
-   
-   - Se generó el reporte de estado parcial: CHECKPOINT_DIA2_SPRINT1_STATUS.md .
-### 📋 Estado del Sprint 1 (Día 2)
-Tarea (Prompt) Estado Observaciones #6 Admin UI API Keys ✅ Completado Funcionalidad base lista con filtros y búsqueda. #7 CRUD Completo ⏳ Pendiente Falta edición de metadatos (descripción) y detalles avanzados. #8 Validaciones/Security ⏳ Pendiente Rate limiting estricto, auditoría y control de roles. #9 Stats & Analytics ⏳ Pendiente Dashboard de métricas y gráficos de uso.
-
-### 📅 Planificación Preliminar (Día 3 y Cierre Día 2)
-Para finalizar el Día 2 y avanzar al Día 3, se deben ejecutar las siguientes tareas pendientes:
-
-1. Ejecutar Prompt #7: Implementar la edición de metadatos (descripción) y refinar el CRUD.
-2. Ejecutar Prompt #8: Asegurar las rutas con verificación de roles (ADMIN) y agregar logs de auditoría.
-3. Ejecutar Prompt #9: Implementar endpoints de estadísticas y visualizarlas en el dashboard.
-Una vez completado esto, se procederá al Día 3 (Chat Universal) .
-
-¿Deseas que proceda con la ejecución del Prompt #7 (CRUD Completo) ahora?
- FIN
+---
+```
 
 ---
-</code></pre><hr><h3>PROMPT #7 - Implementar CRUD Completo de API Keys</h3><pre><code>PROMPT #7 - Implementar CRUD Completo de API Keys
+
+### PROMPT #7 - Implementar CRUD Completo de API Keys
+
+```
+PROMPT #7 - Implementar CRUD Completo de API Keys
 ---
 Agente: Desarrollador Full Stack / Backend + Frontend
 Resumen: Implementar las operaciones Create, Read, Update, Delete para API Keys, incluyendo validaciones, manejo de errores y actualizaciones en tiempo real.
@@ -677,40 +569,15 @@ Dependencias:
 - API endpoints backend existentes o implementados
 - Sistema de notificaciones/toast del frontend
 - Componentes Modal, Form, Toast del proyecto
-RESPUESTA DEL AGENTE:
-He completado la implementación del Prompt #7: CRUD Completo de API Keys .
-
-### 🚀 Actividades Realizadas
-1. Base de Datos (Prisma):
-   
-   - Se actualizó el modelo BotApiKey agregando los campos description (Opcional) y expiresAt (Opcional).
-   - Se creó y ejecutó la migración add_bot_api_key_fields .
-2. Backend (API & Servicios):
-   
-   - Se actualizó BotApiKeyService para manejar los nuevos campos en creación y edición.
-   - Se creó la función updateApiKey para modificar metadatos sin tocar la clave secreta.
-   - Se mejoró la seguridad en la generación de claves ( hk_prod_ + random bytes).
-   - Endpoints actualizados:
-     - POST /api/bot/keys : Acepta descripción y fecha de expiración.
-     - PATCH /api/bot/keys/[id] : Soporta tanto rotación ( action: 'rotate' ) como edición de metadatos.
-3. Frontend (Interfaz de Usuario):
-   
-   - Modal de Creación: Formulario ampliado con descripción y fecha de expiración.
-   - Modal de Edición: Nueva funcionalidad para editar nombre, descripción, límite y estado (activar/revocar).
-   - Tabla: Muestra descripción (truncada) y fecha de expiración.
-   - Exportar CSV: Botón funcional para descargar el listado completo.
-   - Feedback: Notificaciones (toasts) para todas las acciones.
-### 📋 Estado Actual
-Tarea (Prompt) Estado Observaciones #6 Admin UI API Keys ✅ Completado Base funcional. #7 CRUD Completo ✅ Completado Edición avanzada, campos extra, CSV export. #8 Validaciones/Security ⏳ Pendiente Falta control de roles estricto y auditoría. #9 Stats & Analytics ⏳ Pendiente Dashboard de métricas.
-
-### 📅 Próximo Paso Sugerido
-Continuar con el Prompt #8: Implementar Validaciones y Security para asegurar que solo usuarios con rol ADMIN puedan acceder a estas funciones y registrar todas las acciones en el log de auditoría.
-
-¿Deseas que proceda con el Prompt #8 ahora?
-FIN
+---
+```
 
 ---
-</code></pre><hr><h3>PROMPT #8 - Implementar Validaciones y Security</h3><pre><code>PROMPT #8 - Implementar Validaciones y Security
+
+### PROMPT #8 - Implementar Validaciones y Security
+
+```
+PROMPT #8 - Implementar Validaciones y Security
 ---
 Agente: Desarrollador Full Stack / Security Engineer
 Resumen: Implementar validaciones robustas, seguridad de acceso, y protecciones adicionales para la gestión de API Keys.
@@ -780,39 +647,15 @@ Dependencias:
 - Sistema de autenticación con roles
 - Sistema de logging configurado
 - Framework de testing
-RESPUESTA AGENTE:
-He completado el Prompt #8: Implementar Validaciones y Security .
-
-### 🔒 Mejoras de Seguridad Implementadas
-1. Autenticación y Autorización (RBAC):
-   
-   - Todos los endpoints de API Keys ( GET , POST , DELETE , PATCH ) ahora verifican la identidad del usuario mediante getAuthenticatedUser .
-   - Se implementó una verificación estricta de rol: Solo usuarios con rol ADMIN pueden realizar operaciones. Cualquier otro rol recibe un error 403 Forbidden .
-2. Limitación de Velocidad (Rate Limiting):
-   
-   - Se creó una utilidad InMemoryRateLimiter (Singleton) en src/lib/rate-limit.ts .
-   - El endpoint de creación ( POST ) limita a cada usuario a un máximo de 5 creaciones por minuto para prevenir abuso o errores accidentales.
-3. Auditoría Completa (Audit Logging):
-   
-   - Se integró el sistema de logAudit existente en todas las operaciones críticas:
-     - Creación: Registra usuario, ID de la nueva key y metadatos iniciales.
-     - Revocación: Registra quién revocó qué key y cuándo.
-     - Actualización: Calcula y registra solo los campos que cambiaron (diff).
-     - Rotación: Registra la acción de rotación de credenciales.
-4. Validación y Sanitización:
-   
-   - Se sanitizan los nombres de las keys eliminando caracteres especiales peligrosos antes de procesarlos.
-   - Se verifican duplicados y existencia de registros antes de operar para evitar errores inconsistentes.
-### 📋 Estado Actual (Día 2)
-Tarea (Prompt) Estado Observaciones #6 Admin UI API Keys ✅ Completado UI Base. #7 CRUD Completo ✅ Completado Funcionalidad avanzada. #8 Validaciones/Security ✅ Completado Auth, RBAC, Audit, Rate Limit. #9 Stats & Analytics ⏳ Pendiente Dashboard de métricas.
-
-### 📅 Próximo Paso Sugerido
-Proceder con el Prompt #9: Implementar Stats y Analytics para finalizar las tareas del Día 2, creando un dashboard que visualice el uso de las API Keys.
-
-¿Deseas que continúe con el Prompt #9
-FIN
 ---
-</code></pre><hr><h3>PROMPT #9 - Implementar Stats y Analytics de API Keys</h3><pre><code>PROMPT #9 - Implementar Stats y Analytics de API Keys
+```
+
+---
+
+### PROMPT #9 - Implementar Stats y Analytics de API Keys
+
+```
+PROMPT #9 - Implementar Stats y Analytics de API Keys
 ---
 Agente: Desarrollador Full Stack / Data Engineer
 Resumen: Implementar dashboard de estadísticas y analytics para monitorear el uso y performance de las API Keys.
@@ -880,40 +723,15 @@ Dependencias:
 - Librería de charts configurada
 - Backend con capacidades de agregación de datos
 - Sistema de caching implementado
-RESPUESTA DEL AGENTE:
-INICIO
-El Día 2 del Sprint 1 (Admin UI para API Keys) ha sido completado exitosamente.
+---
+```
 
-Se ha finalizado la implementación del Prompt #9: Analytics y Reportes de Uso , resultando en un sistema completo de gestión y monitoreo de claves API.
+---
 
-### Resumen de Cambios Realizados
-1. Dashboard de Analytics ( BotStatsDashboard.tsx ) :
-   
-   - Filtros de Tiempo Dinámicos : Implementado selector de rango para visualizar datos de 24h , 7 días y 30 días .
-   - Visualización Completa :
-     - 📈 Línea de Tiempo : Solicitudes por hora/día según el rango seleccionado.
-     - 📊 Barras : Distribución por códigos de respuesta HTTP y Top 5 Claves más usadas.
-     - 🥧 Pastel : Proporción de claves Activas vs Revocadas.
-   - Funcionalidades Extra :
-     - Exportar a CSV : Botón para descargar reporte completo con un click.
-     - Auto-refresh : Actualización silenciosa de datos cada 30 segundos.
-2. Backend ( /api/bot/keys/stats ) :
-   
-   - Optimizado para soportar parámetros de rango ( range=24h|7d|30d ).
-   - Agregación de datos eficiente usando prisma.$queryRaw para agrupar por hora o día según corresponda.
-3. Documentación :
-   
-   - Generado el archivo CHECKPOINT_DIA2_SPRINT1.md en DocumentacionHagoProduce\FaseDos\ validando todos los entregables del día.
-### Estado Actual
-El módulo de Administración de Bots está 100% funcional con CRUD, Seguridad y Analytics.
+### CHECKPOINT #2 - Fin del Día 2: Admin UI para API Keys
 
-### Siguientes Pasos (Día 3)
-Proceder con la implementación del Chat Universal , comenzando con la estructura base para recibir y procesar mensajes (Webhooks).
-
-¿Deseas continuar inmediatamente con las tareas del Día 3 ?
-
-FIN---
-</code></pre><hr><h3>CHECKPOINT #2 - Fin del Día 2: Admin UI para API Keys</h3><pre><code>CHECKPOINT #2 - Fin del Día 2: Admin UI para API Keys
+```
+CHECKPOINT #2 - Fin del Día 2: Admin UI para API Keys
 ---
 Agente: Tech Lead / Project Manager
 Resumen: Documentar el progreso y estado del Día 2 del Sprint 1, validando que la Admin UI para gestión de API Keys está completamente funcional y segura.
@@ -990,7 +808,18 @@ Dependencias:
 - Todos los tests ejecutados
 - Validaciones de seguridad realizadas
 ---
-</code></pre><hr><h2>🟡 DÍA 3: Chat Universal - [CHAT-02]</h2><hr><h3>PROMPT #10 - Crear Componente FloatingChatAssistant</h3><pre><code>PROMPT #10 - Crear Componente FloatingChatAssistant
+```
+
+---
+
+## 🟡 DÍA 3: Chat Universal - [CHAT-02]
+
+---
+
+### PROMPT #10 - Crear Componente FloatingChatAssistant
+
+```
+PROMPT #10 - Crear Componente FloatingChatAssistant
 ---
 Agente: Desarrollador Frontend / UI Developer
 Resumen: Crear el componente flotante del asistente de chat que puede ser accedido desde cualquier página de la aplicación.
@@ -1059,38 +888,15 @@ Dependencias:
 - Sistema de estilos del proyecto (Tailwind, CSS Modules, etc.)
 - Icon library (Lucide, Heroicons, etc.)
 - Backend API `/api/chat` existente
-
-respuesta del agente 
-inicio
-The FloatingChatAssistant component has been implemented and integrated with the existing backend API.
-
-### Changes Summary
-1. Created src/components/chat/FloatingChatAssistant.tsx :
-   
-   - UI : Floating button with toggle, chat container with header, messages area, and input area.
-   - State : Manages isOpen , messages , isTyping , language , and sessionId .
-   - Persistence : Automatically saves chat history and session ID to localStorage .
-   - Features : Auto-scroll, typing indicator, error handling, keyboard shortcut ( Ctrl+K / Cmd+K ), and bilingual support (ES/EN).
-2. Updated src/lib/api/chat.ts and src/lib/chat/types.ts :
-   
-   - Updated sendChatMessage to accept optional sessionId and context .
-   - Updated ChatRequestPayload type to include these fields, fulfilling the requirement for context-aware API calls.
-3. Integrated into Layout :
-   
-   - Added FloatingChatAssistant to src/components/layout/AdminShell.tsx . The assistant will now be available on all admin pages.
-### Usage
-The assistant is accessible via the floating button in the bottom-right corner or by pressing Ctrl+K . It maintains conversation history across page navigations and sessions.
-
-Code Reference:
-
-- FloatingChatAssistant.tsx
-- AdminShell.tsx
-- chat.ts
-fin
-
+---
+```
 
 ---
-</code></pre><hr><h3>PROMPT #11 - Integrar con Backend OpenAI</h3><pre><code>PROMPT #11 - Integrar con Backend OpenAI
+
+### PROMPT #11 - Integrar con Backend OpenAI
+
+```
+PROMPT #11 - Integrar con Backend OpenAI
 ---
 Agente: Desarrollador Full Stack
 Resumen: Integrar el componente FloatingChatAssistant con el backend de chat existente que utiliza OpenAI para generar respuestas.
@@ -1166,39 +972,15 @@ Dependencias:
 - API endpoint `/api/chat` existente y funcional
 - Backend con OpenAI integrado
 - Sistema de autenticación (si aplica)
-
-Se ha completado la primera fase del Día 3: Chat Universal .
-
-He implementado los Prompts #10, #11, #12 y #13 , logrando un asistente flotante completamente funcional con las siguientes características:
-
-1. Componente FloatingChatAssistant :
-   
-   - Widget flotante (esquina inferior derecha/izquierda).
-   - Interfaz moderna con animaciones de entrada/salida.
-   - Accesible mediante atajo de teclado ( Ctrl+K ).
-2. Integración Backend ( /api/chat ) :
-   
-   - Nuevo endpoint que utiliza los servicios existentes de IA ( v1/chat/query ).
-   - Manejo de contexto y detección de intenciones ( analyzeIntent ).
-3. Sugerencias Inteligentes ( QuickSuggestions ) :
-   
-   - Botones de acción rápida que cambian según la ruta actual (Dashboard, Facturas, Clientes, etc.).
-   - Envío de contexto de navegación al backend.
-4. Gestión de Historial y Sesiones :
-   
-   - Soporte para múltiples conversaciones simultáneas.
-   - Persistencia robusta en localStorage .
-   - Interfaz dedicada para ver, cambiar, crear y eliminar chats.
-   - Migración automática de historiales antiguos al nuevo formato de sesiones.
-### Estado Actual
-El chat está activo en todas las páginas ( RootLayout ), listo para interactuar con los usuarios y persistir sus conversaciones.
-
-### Siguientes Pasos
-Proceder con el Prompt #14: Testing y Validación , para asegurar que todos los flujos (especialmente la persistencia y migración) funcionen correctamente en diferentes escenarios.
-
-¿Deseas que inicie las pruebas y validación del componente?
 ---
-</code></pre><hr><h3>PROMPT #12 - Implementar Quick Suggestions y Context Awareness</h3><pre><code>PROMPT #12 - Implementar Quick Suggestions y Context Awareness
+```
+
+---
+
+### PROMPT #12 - Implementar Quick Suggestions y Context Awareness
+
+```
+PROMPT #12 - Implementar Quick Suggestions y Context Awareness
 ---
 Agente: Desarrollador Full Stack / UX Engineer
 Resumen: Implementar sugerencias proactivas y conciencia del contexto para hacer el asistente de chat más inteligente y útil.
@@ -1268,34 +1050,15 @@ Dependencias:
 - Router del frontend configurado
 - Backend con capacidad de recibir contexto
 - Sistema de analytics (si aplica)
-
-RESPUESTA DEL AGENTE: 
-INICIO
-He implementado los Prompts #10, #11, #12 y #13 , logrando un asistente flotante completamente funcional con las siguientes características:
-
-1. Componente FloatingChatAssistant :
-   
-   - Widget flotante (esquina inferior derecha/izquierda).
-   - Interfaz moderna con animaciones de entrada/salida.
-   - Accesible mediante atajo de teclado ( Ctrl+K ).
-2. Integración Backend ( /api/chat ) :
-   
-   - Nuevo endpoint que utiliza los servicios existentes de IA ( v1/chat/query ).
-   - Manejo de contexto y detección de intenciones ( analyzeIntent ).
-3. Sugerencias Inteligentes ( QuickSuggestions ) :
-   
-   - Botones de acción rápida que cambian según la ruta actual (Dashboard, Facturas, Clientes, etc.).
-   - Envío de contexto de navegación al backend.
-4. Gestión de Historial y Sesiones :
-   
-   - Soporte para múltiples conversaciones simultáneas.
-   - Persistencia robusta en localStorage .
-   - Interfaz dedicada para ver, cambiar, crear y eliminar chats.
-   - Migración automática de historiales antiguos al nuevo formato de sesiones.
-### Estado Actual
-FIN
 ---
-</code></pre><hr><h3>PROMPT #13 - Implementar Historial y Persistencia</h3><pre><code>PROMPT #13 - Implementar Historial y Persistencia
+```
+
+---
+
+### PROMPT #13 - Implementar Historial y Persistencia
+
+```
+PROMPT #13 - Implementar Historial y Persistencia
 ---
 Agente: Desarrollador Full Stack
 Resumen: Implementar sistema de historial de conversaciones con persistencia para permitir a los usuarios ver conversaciones anteriores y continuar desde donde dejaron.
@@ -1338,7 +1101,7 @@ Requerimientos específicos:
    - Guardar cada mensaje en localStorage
    - Guardar metadata de conversación
    - Cargar historial al iniciar componente
-   - Limpiar conversaciones muy antiguas (&gt;30 días)
+   - Limpiar conversaciones muy antiguas (>30 días)
 
 6. UX Features:
    - Indicador de "active conversation" en historial
@@ -1370,35 +1133,15 @@ Dependencias:
 - Prompts #10-12 completados
 - Backend endpoints para historial (opcional)
 - Sistema de storage del frontend
-
-RESPUESTA DEL AGENTE:
-INICIO
-He implementado los Prompts #10, #11, #12 y #13 , logrando un asistente flotante completamente funcional con las siguientes características:
-
-1. Componente FloatingChatAssistant :
-   
-   - Widget flotante (esquina inferior derecha/izquierda).
-   - Interfaz moderna con animaciones de entrada/salida.
-   - Accesible mediante atajo de teclado ( Ctrl+K ).
-2. Integración Backend ( /api/chat ) :
-   
-   - Nuevo endpoint que utiliza los servicios existentes de IA ( v1/chat/query ).
-   - Manejo de contexto y detección de intenciones ( analyzeIntent ).
-3. Sugerencias Inteligentes ( QuickSuggestions ) :
-   
-   - Botones de acción rápida que cambian según la ruta actual (Dashboard, Facturas, Clientes, etc.).
-   - Envío de contexto de navegación al backend.
-4. Gestión de Historial y Sesiones :
-   
-   - Soporte para múltiples conversaciones simultáneas.
-   - Persistencia robusta en localStorage .
-   - Interfaz dedicada para ver, cambiar, crear y eliminar chats.
-   - Migración automática de historiales antiguos al nuevo formato de sesiones.
-### Estado Actual
-FIN
+---
+```
 
 ---
-</code></pre><hr><h3>PROMPT #14 - Testing y Validación del Chat Universal</h3><pre><code>PROMPT #14 - Testing y Validación del Chat Universal
+
+### PROMPT #14 - Testing y Validación del Chat Universal
+
+```
+PROMPT #14 - Testing y Validación del Chat Universal
 ---
 Agente: QA Tester / Desarrollador Full Stack
 Resumen: Crear y ejecutar tests integrales para validar que el componente FloatingChatAssistant funciona correctamente en todos los escenarios y casos de uso.
@@ -1479,7 +1222,7 @@ Criterios de aceptación:
 - [ ] Cross-browser tests completados
 - [ ] Edge cases testeados
 - [ ] Todos los tests pasando (95%+)
-- [ ] Coverage &gt;80%
+- [ ] Coverage >80%
 - [ ] Documentación completa generada
 - [ ] Issues documentados con severidad
 
@@ -1488,34 +1231,15 @@ Dependencias:
 - Framework de testing configurado (Jest, Vitest, Cypress, Playwright)
 - Herramientas de accesibilidad (axe, lighthouse)
 - Herramientas de performance (Lighthouse, WebPageTest)
-RESPUESTA DEL AGENTE:
-INICIO
-### Resumen de Pruebas
-He creado y ejecutado una suite de pruebas completa que valida la robustez del componente FloatingChatAssistant y su integración con el backend.
-
-1. Unit Tests (Jest + React Testing Library) :
-   
-   - Estado: ✅ 100% Aprobados (7/7) .
-   - Cobertura: Renderizado inicial, apertura/cierre, envío de mensajes, sugerencias rápidas, cambio de vista (chat/historial) y persistencia de sesiones.
-2. Integration Tests (Jest) :
-   
-   - Estado: ✅ 100% Aprobados (5/5) .
-   - Cobertura: Endpoint /api/chat , validación de autenticación, manejo de errores, sesiones y paso de contexto (idioma/ruta).
-3. E2E Tests (Playwright) :
-   
-   - Estado: ✅ Aprobado en Chromium y Webkit .
-   - Nota: Se observó un timeout de infraestructura en Firefox (no crítico para la lógica de negocio), pero el flujo completo de usuario (abrir, escribir, persistencia entre recargas) fue validado correctamente en los navegadores principales.
-### Entregables Generados
-- 📄 Reporte Completo: TEST_REPORT_CHAT_UNIVERSAL.md con el detalle de cada prueba.
-- 🧪 Archivos de Test:
-  - src/components/chat/__tests__/FloatingChatAssistant.test.tsx
-  - src/app/api/chat/__tests__/route.test.ts
-  - tests/chat.spec.ts
-El Chat Universal está listo, probado y verificado. ¿Deseas proceder con el cierre del Día 3 y la planificación del Día 4?
-FIN
+---
+```
 
 ---
-</code></pre><hr><h3>CHECKPOINT #3 - Fin del Día 3: Chat Universal + Fin Sprint 1</h3><pre><code>CHECKPOINT #3 - Fin del Día 3: Chat Universal + Fin Sprint 1
+
+### CHECKPOINT #3 - Fin del Día 3: Chat Universal + Fin Sprint 1
+
+```
+CHECKPOINT #3 - Fin del Día 3: Chat Universal + Fin Sprint 1
 ---
 Agente: Tech Lead / Project Manager
 Resumen: Documentar el progreso y estado del Día 3 y del Sprint 1 completo, validando que el Chat Universal está completamente funcional y que todos los objetivos del Sprint 1 han sido alcanzados.
@@ -1550,7 +1274,7 @@ Información a registrar:
    - Admin UI Funcional: 100% ✅ / ___%
    - Sistema Notificaciones: 100% ✅ / ___%
    - Chat UI Completa: 100% ✅ / ___%
-   - Coverage Tests: &gt;80% ✅ / ___%
+   - Coverage Tests: >80% ✅ / ___%
 
 5. Issues y Blockers:
    - Issues críticos: ___ (resueltos: ___)
@@ -1601,25 +1325,85 @@ Dependencias:
 - Todos los prompts #1-14 completados
 - Todos los tests ejecutados
 - Validaciones finales realizadas
-RESPUESTA DEL AGENTE:
-### 🏁 CHECKPOINT #3 - Fin del Día 3 y Cierre del Sprint 1
-El Sprint 1: Consolidación ha concluido exitosamente.
-
-Se ha generado el documento oficial CHECKPOINT_DIA3_SPRINT1.md en DocumentacionHagoProduce/FaseDos/ detallando todos los logros:
-
-1. Objetivos Alcanzados (100%) :
-   
-   - ✅ Fundamentos de Datos : Base de datos robusta con modelos para Bots y Chat.
-   - ✅ Admin UI : Panel completo de gestión de API Keys con Analytics.
-   - ✅ Chat Universal : Asistente flotante integrado, persistente y contextual.
-2. Calidad del Código :
-   
-   - Más de 20 tests (Unitarios, Integración y E2E) validando la funcionalidad crítica.
-   - Arquitectura modular y escalable lista para integraciones externas.
-3. Estado del Proyecto :
-   
-   - El sistema está listo para iniciar el Sprint 2 , enfocado en conectar el Chat Universal con servicios reales (WhatsApp, OpenAI) y flujos de negocio (Inventarios, Pedidos).
-¿Deseas comenzar con la planificación y ejecución del Sprint 2: Integraciones Externas ?
+---
+```
 
 ---
-</code></pre><hr><h2>📊 Resumen del Sprint 1</h2><h3>Prompts por Día</h3><p><strong>Día 1: Fundamentos de Datos (5 prompts + 1 checkpoint)</strong></p><ul> <li>PROMPT #1: Implementar Modelo Notification en Prisma Schema</li> <li>PROMPT #2: Implementar Modelo ReportCache en Prisma Schema</li> <li>PROMPT #3: Validar Referencias en Código Existente</li> <li>PROMPT #4: Crear y Ejecutar Migración de Base de Datos</li> <li>PROMPT #5: Verificación y Testing de Modelos</li> <li>CHECKPOINT #1: Fin del Día 1</li> </ul><p><strong>Día 2: Admin UI para API Keys (4 prompts + 1 checkpoint)</strong></p><ul> <li>PROMPT #6: Crear Página de Administración de API Keys</li> <li>PROMPT #7: Implementar CRUD Completo de API Keys</li> <li>PROMPT #8: Implementar Validaciones y Security</li> <li>PROMPT #9: Implementar Stats y Analytics de API Keys</li> <li>CHECKPOINT #2: Fin del Día 2</li> </ul><p><strong>Día 3: Chat Universal (5 prompts + 1 checkpoint)</strong></p><ul> <li>PROMPT #10: Crear Componente FloatingChatAssistant</li> <li>PROMPT #11: Integrar con Backend OpenAI</li> <li>PROMPT #12: Implementar Quick Suggestions y Context Awareness</li> <li>PROMPT #13: Implementar Historial y Persistencia</li> <li>PROMPT #14: Testing y Validación del Chat Universal</li> <li>CHECKPOINT #3: Fin del Día 3 + Fin Sprint 1</li> </ul><h3>Total del Sprint 1</h3><ul> <li><strong>14 Prompts de Tareas</strong></li> <li><strong>3 Checkpoints</strong></li> <li><strong>Total: 17 prompts</strong></li> </ul><hr><h2>🎯 Criterios de Éxito del Sprint 1</h2><p>Al completar el Sprint 1, el proyecto debe alcanzar:</p><h3>Métricas Técnicas</h3><ul> <li>✅ Modelos DB Completos: 5/5</li> <li>✅ Admin UI Funcional: 100%</li> <li>✅ Sistema Notificaciones: 100%</li> <li>✅ Chat UI Completa: 100%</li> <li>✅ Coverage Tests: &gt;80%</li> <li>✅ Performance Queries: &lt;2s</li> </ul><h3>Entregables</h3><ul> <li>✅ Modelos Notification y ReportCache implementados</li> <li>✅ Migración ejecutada y validada</li> <li>✅ Admin UI para API Keys completamente funcional</li> <li>✅ Chat Universal implementado e integrado globalmente</li> <li>✅ Tests completos pasando</li> <li>✅ Documentación completa</li> </ul><h3>Decisiones</h3><ul> <li>✅ Aprobado para continuar a Sprint 2</li> <li>✅ Blockers identificados y resueltos</li> <li>✅ Lecciones aprendidas documentadas</li> </ul><hr><h2>🚀 Próximos Pasos</h2><p>Si el Sprint 1 se completa exitosamente, el equipo debe:</p><ol> <li><strong>Revisar los 3 checkpoints</strong> para validar completion</li> <li><strong>Resolver any remaining issues</strong> identificados</li> <li><strong>Preparar el entorno</strong> para Sprint 2</li> <li><strong>Crear branch</strong> <code>feature/sprint-2-integrations</code></li> <li><strong>Iniciar Sprint 2</strong> con Google Sheets Migration [INT-01]</li> </ol><hr><p><strong>Fecha de Creación:</strong> 2024 <strong>Sprint:</strong> Sprint 1 - Consolidación Crítica <strong>Duración Estimada:</strong> 3 días hábiles <strong>Estado:</strong> ✅ Prompts Generados - Listos para Ejecución</p>
+
+## 📊 Resumen del Sprint 1
+
+### Prompts por Día
+
+**Día 1: Fundamentos de Datos (5 prompts + 1 checkpoint)**
+- PROMPT #1: Implementar Modelo Notification en Prisma Schema
+- PROMPT #2: Implementar Modelo ReportCache en Prisma Schema
+- PROMPT #3: Validar Referencias en Código Existente
+- PROMPT #4: Crear y Ejecutar Migración de Base de Datos
+- PROMPT #5: Verificación y Testing de Modelos
+- CHECKPOINT #1: Fin del Día 1
+
+**Día 2: Admin UI para API Keys (4 prompts + 1 checkpoint)**
+- PROMPT #6: Crear Página de Administración de API Keys
+- PROMPT #7: Implementar CRUD Completo de API Keys
+- PROMPT #8: Implementar Validaciones y Security
+- PROMPT #9: Implementar Stats y Analytics de API Keys
+- CHECKPOINT #2: Fin del Día 2
+
+**Día 3: Chat Universal (5 prompts + 1 checkpoint)**
+- PROMPT #10: Crear Componente FloatingChatAssistant
+- PROMPT #11: Integrar con Backend OpenAI
+- PROMPT #12: Implementar Quick Suggestions y Context Awareness
+- PROMPT #13: Implementar Historial y Persistencia
+- PROMPT #14: Testing y Validación del Chat Universal
+- CHECKPOINT #3: Fin del Día 3 + Fin Sprint 1
+
+### Total del Sprint 1
+- **14 Prompts de Tareas**
+- **3 Checkpoints**
+- **Total: 17 prompts**
+
+---
+
+## 🎯 Criterios de Éxito del Sprint 1
+
+Al completar el Sprint 1, el proyecto debe alcanzar:
+
+### Métricas Técnicas
+- ✅ Modelos DB Completos: 5/5
+- ✅ Admin UI Funcional: 100%
+- ✅ Sistema Notificaciones: 100%
+- ✅ Chat UI Completa: 100%
+- ✅ Coverage Tests: >80%
+- ✅ Performance Queries: <2s
+
+### Entregables
+- ✅ Modelos Notification y ReportCache implementados
+- ✅ Migración ejecutada y validada
+- ✅ Admin UI para API Keys completamente funcional
+- ✅ Chat Universal implementado e integrado globalmente
+- ✅ Tests completos pasando
+- ✅ Documentación completa
+
+### Decisiones
+- ✅ Aprobado para continuar a Sprint 2
+- ✅ Blockers identificados y resueltos
+- ✅ Lecciones aprendidas documentadas
+
+---
+
+## 🚀 Próximos Pasos
+
+Si el Sprint 1 se completa exitosamente, el equipo debe:
+
+1. **Revisar los 3 checkpoints** para validar completion
+2. **Resolver any remaining issues** identificados
+3. **Preparar el entorno** para Sprint 2
+4. **Crear branch** `feature/sprint-2-integrations`
+5. **Iniciar Sprint 2** con Google Sheets Migration [INT-01]
+
+---
+
+**Fecha de Creación:** 2024
+**Sprint:** Sprint 1 - Consolidación Crítica
+**Duración Estimada:** 3 días hábiles
+**Estado:** ✅ Prompts Generados - Listos para Ejecución
