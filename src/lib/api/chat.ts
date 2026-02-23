@@ -28,8 +28,13 @@ function getHeaders() {
   return headers;
 }
 
-export async function sendChatMessage(message: string, language: ChatLanguage): Promise<ChatResponseData> {
-  const body = { message, language };
+export async function sendChatMessage(
+  message: string, 
+  language: ChatLanguage,
+  sessionId?: string,
+  context?: Record<string, any>
+): Promise<ChatResponseData> {
+  const body = { message, language, sessionId, context };
 
   const res = await fetch('/api/v1/chat/query', {
     method: 'POST',

@@ -1,0 +1,5 @@
+
+> hago-produce@0.1.0 test
+> jest --coverage
+
+sh: 1: jest: not found

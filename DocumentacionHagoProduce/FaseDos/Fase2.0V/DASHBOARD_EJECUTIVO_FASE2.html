@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hago Produce - Fase 2 Dashboard Ejecutivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .progress-bar { transition: width 1s ease-in-out; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .tab-active { border-bottom: 3px solid #667eea; color: #667eea; }
+        .status-completed { background-color: #10b981; }
+        .status-partial { background-color: #f59e0b; }
+        .status-pending { background-color: #ef4444; }
+        .phase-card { transition: all 0.3s ease; }
+        .phase-card:hover { transform: scale(1.02); }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Hago Produce</h1>
+                    <p class="text-purple-200 mt-1">Dashboard Ejecutivo - Fase 2</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-purple-200">Última actualización</p>
+                    <p class="font-semibold" id="currentDate">22 de Febrero, 2026</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-8 overflow-x-auto">
+                <button onclick="showTab('overview')" class="tab-btn py-4 px-2 font-medium text-gray-600 hover:text-purple-600 tab-active" data-tab="overview">
+                    📊 Resumen General
+                </button>
+                <button onclick="showTab('phase2')" class="tab-btn py-4 px-2 font-medium text-gray-600 hover:text-purple-600" data-tab="phase2">
+                    🚀 Alcance Fase 2
+                </button>
+                <button onclick="showTab('metrics')" class="tab-btn py-4 px-2 font-medium text-gray-600 hover:text-purple-600" data-tab="metrics">
+                    📈 Métricas de Éxito
+                </button>
+                <button onclick="showTab('roadmap')" class="tab-btn py-4 px-2 font-medium text-gray-600 hover:text-purple-600" data-tab="roadmap">
+                    🗓️ Roadmap
+                </button>
+                <button onclick="showTab('risks')" class="tab-btn py-4 px-2 font-medium text-gray-600 hover:text-purple-600" data-tab="risks">
+                    ⚠️ Riesgos
+                </button>
+                <button onclick="showTab('checklist')" class="tab-btn py-4 px-2 font-medium text-gray-600 hover:text-purple-600" data-tab="checklist">
+                    ✅ Checklist
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- Tab: Overview -->
+        <div id="tab-overview" class="tab-content fade-in">
+            <!-- Progress Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Progreso General</p>
+                            <p class="text-3xl font-bold text-gray-800">65%</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-full gradient-bg flex items-center justify-center">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4 bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-purple-500 to-indigo-500 h-2 rounded-full progress-bar" style="width: 65%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Fases Completadas</p>
+                            <p class="text-3xl font-bold text-green-600">3/4</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-4">Fase 2 en progreso</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Tareas Pendientes</p>
+                            <p class="text-3xl font-bold text-orange-600">24</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-4">~8-12 semanas restantes</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Riesgos Activos</p>
+                            <p class="text-3xl font-bold text-red-600">5</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-4">Con mitigaciones activas</p>
+                </div>
+            </div>
+
+            <!-- Phase Progress Cards -->
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🎯 Progreso por Fase</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="phase-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-lg font-bold text-green-700">Fase 0</span>
+                        <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full">Completada</span>
+                    </div>
+                    <p class="text-sm text-green-600 mb-3">Foundation (Setup, CI/CD, Wireframes)</p>
+                    <div class="bg-white rounded-full h-2 mb-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                    </div>
+                    <p class="text-xs text-green-700 font-semibold">100% - 9/9 tareas</p>
+                </div>
+
+                <div class="phase-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-lg font-bold text-green-700">Fase 1A</span>
+                        <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full">Completada</span>
+                    </div>
+                    <p class="text-sm text-green-600 mb-3">Auth, Users, Dashboard Básico</p>
+                    <div class="bg-white rounded-full h-2 mb-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                    </div>
+                    <p class="text-xs text-green-700 font-semibold">100% - 8/8 tareas</p>
+                </div>
+
+                <div class="phase-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-lg font-bold text-green-700">Fase 1B</span>
+                        <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full">Completada</span>
+                    </div>
+                    <p class="text-sm text-green-600 mb-3">Facturación Completa, Productos</p>
+                    <div class="bg-white rounded-full h-2 mb-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                    </div>
+                    <p class="text-xs text-green-700 font-semibold">100% - 12/12 tareas</p>
+                </div>
+
+                <div class="phase-card bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-lg font-bold text-yellow-700">Fase 1C</span>
+                        <span class="bg-yellow-500 text-white text-xs px-3 py-1 rounded-full">Parcial</span>
+                    </div>
+                    <p class="text-sm text-yellow-600 mb-3">Chat/Agente + Portal Cliente</p>
+                    <div class="bg-white rounded-full h-2 mb-2">
+                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 40%"></div>
+                    </div>
+                    <p class="text-xs text-yellow-700 font-semibold">40% - 3/11 tareas</p>
+                </div>
+            </div>
+
+            <!-- Current Status Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Estado de Funcionalidades</h3>
+                    <canvas id="functionalityChart"></canvas>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Distribución de Esfuerzo por Fase</h3>
+                    <canvas id="effortChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Phase 2 Scope -->
+        <div id="tab-phase2" class="tab-content hidden fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🚀 Alcance de Fase 2</h2>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 rounded-full gradient-bg flex items-center justify-center mr-4">
+                        <span class="text-white font-bold text-xl">2</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Fase 2: Mejoras y Extensiones</h3>
+                        <p class="text-gray-600">Transformar Hago Produce en una plataforma completa con analytics, automatización avanzada y presencia pública</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                    <div class="bg-purple-50 rounded-lg p-4 text-center">
+                        <p class="text-2xl font-bold text-purple-700">4</p>
+                        <p class="text-sm text-purple-600">Módulos Principales</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-4 text-center">
+                        <p class="text-2xl font-bold text-blue-700">45</p>
+                        <p class="text-sm text-blue-600">Tareas Totales</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 text-center">
+                        <p class="text-2xl font-bold text-green-700">8-12</p>
+                        <p class="text-sm text-green-600">Semanas</p>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-4 text-center">
+                        <p class="text-2xl font-bold text-orange-700">Alta</p>
+                        <p class="text-sm text-orange-600">Complejidad</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Module 1: Reports -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-blue-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
+                                <span class="text-2xl">📊</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Reportes Avanzados & Dashboards</h4>
+                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Prioridad: 🔴 Alta</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Analytics con KPIs, gráficos interactivos, exportación PDF/CSV y filtros avanzados</p>
+                    <div class="mb-3">
+                        <p class="text-xs text-gray-500 mb-1">Progreso</p>
+                        <div class="bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>14 tareas</span>
+                        <span>2-3 semanas</span>
+                        <span>Complejidad: Alta</span>
+                    </div>
+                </div>
+
+                <!-- Module 2: Google Sheets Migration -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-red-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center mr-3">
+                                <span class="text-2xl">🔄</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Migración Google Sheets → DB</h4>
+                                <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Prioridad: 🔴 CRÍTICA</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Eliminar dependencia externa, migrar datos a PostgreSQL y actualizar Make.com</p>
+                    <div class="mb-3">
+                        <p class="text-xs text-gray-500 mb-1">Progreso</p>
+                        <div class="bg-gray-200 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>12 tareas</span>
+                        <span>1-2 semanas</span>
+                        <span>Complejidad: Alta</span>
+                    </div>
+                </div>
+
+                <!-- Module 3: External Bot -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-green-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mr-3">
+                                <span class="text-2xl">🤖</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Bot Externo</h4>
+                                <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Prioridad: 🟡 Media</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">WhatsApp y Telegram para comunicación proactiva con clientes</p>
+                    <div class="mb-3">
+                        <p class="text-xs text-gray-500 mb-1">Progreso</p>
+                        <div class="bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>12 tareas</span>
+                        <span>2-3 semanas</span>
+                        <span>Complejidad: Alta</span>
+                    </div>
+                </div>
+
+                <!-- Module 4: Public SPA -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-purple-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mr-3">
+                                <span class="text-2xl">🌐</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">SPA Pública</h4>
+                                <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Prioridad: 🟡 Media</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Landing page institucional optimizada para SEO con información de contacto</p>
+                    <div class="mb-3">
+                        <p class="text-xs text-gray-500 mb-1">Progreso</p>
+                        <div class="bg-gray-200 rounded-full h-2">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>12 tareas</span>
+                        <span>1-2 semanas</span>
+                        <span>Complejidad: Media</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Breakdown -->
+            <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">📋 Breakdown de Tareas por Módulo</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Módulo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tareas</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duración</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridad</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">📊 Reports & Dashboards</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">14 tareas</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2-3 semanas</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">🔴 Alta</span></td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">Pendiente</span></td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">🔄 Google Sheets Migration</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12 tareas</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1-2 semanas</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">🔴 CRÍTICA</span></td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">Pendiente</span></td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">🤖 External Bot</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12 tareas</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2-3 semanas</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">🟡 Media</span></td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">Pendiente</span></td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">🌐 Public SPA</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12 tareas</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1-2 semanas</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">🟡 Media</span></td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">Pendiente</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Metrics -->
+        <div id="tab-metrics" class="tab-content hidden fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📈 Métricas de Éxito</h2>
+            
+            <!-- Technical Metrics -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">🔧 Métricas de Calidad Técnica</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-blue-600">Test Coverage</p>
+                                <p class="text-2xl font-bold text-blue-700">Target: ≥80%</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-600 mt-2">Baseline: ~40%</p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-green-600">Lighthouse Score</p>
+                                <p class="text-2xl font-bold text-green-700">Target: ≥95</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-600 mt-2">Baseline: ~85</p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-purple-600">API Response Time</p>
+                                <p class="text-2xl font-bold text-purple-700">Target: <300ms</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-xs text-purple-600 mt-2">Baseline: ~500ms</p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-red-600">Security Vulns</p>
+                                <p class="text-2xl font-bold text-red-700">Target: 0</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-red-200 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-xs text-red-600 mt-2">Baseline: ~5 (High/Critical)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Metrics -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">💼 Métricas de Negocio</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="border-l-4 border-indigo-500 bg-indigo-50 rounded-r-lg p-4">
+                        <p class="text-sm text-indigo-600">Tiempo de Reportes</p>
+                        <p class="text-xl font-bold text-indigo-700"><5s estándar, <15s complejos</p>
+                    </div>
+                    <div class="border-l-4 border-green-500 bg-green-50 rounded-r-lg p-4">
+                        <p class="text-sm text-green-600">Éxito Webhooks</p>
+                        <p class="text-xl font-bold text-green-700">≥99.5%</p>
+                    </div>
+                    <div class="border-l-4 border-blue-500 bg-blue-50 rounded-r-lg p-4">
+                        <p class="text-sm text-blue-600">Respuesta Bot</p>
+                        <p class="text-xl font-bold text-blue-700"><3s (P95)</p>
+                    </div>
+                    <div class="border-l-4 border-purple-500 bg-purple-50 rounded-r-lg p-4">
+                        <p class="text-sm text-purple-600">Conversión Landing Page</p>
+                        <p class="text-xl font-bold text-purple-700">≥3%</p>
+                    </div>
+                    <div class="border-l-4 border-orange-500 bg-orange-50 rounded-r-lg p-4">
+                        <p class="text-sm text-orange-600">SEO Ranking</p>
+                        <p class="text-xl font-bold text-orange-700">Top 10 Google</p>
+                    </div>
+                    <div class="border-l-4 border-pink-500 bg-pink-50 rounded-r-lg p-4">
+                        <p class="text-sm text-pink-600">Uso Portal Cliente</p>
+                        <p class="text-xl font-bold text-pink-700">≥70% clientes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">📊 Comparativa Baseline vs Target</h3>
+                    <canvas id="metricsChart"></canvas>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">🎯 Distribución de Mejoras</h3>
+                    <canvas id="improvementsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Roadmap -->
+        <div id="tab-roadmap" class="tab-content hidden fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🗓️ Roadmap de Implementación</h2>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">📅 Timeline Sugerido (8-12 semanas)</h3>
+                <div class="relative">
+                    <!-- Timeline Line -->
+                    <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                    
+                    <!-- Week 1-2 -->
+                    <div class="relative flex items-start mb-8 ml-16">
+                        <div class="absolute -left-16 w-12 h-12 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">1-2</div>
+                        <div class="flex-1 bg-red-50 rounded-lg p-4 border-l-4 border-red-500">
+                            <h4 class="font-bold text-gray-800">🔄 Google Sheets Migration (CRÍTICO)</h4>
+                            <p class="text-sm text-gray-600 mt-2">Migración de datos a PostgreSQL, actualización de Make.com</p>
+                            <div class="mt-2 flex gap-2">
+                                <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Bloqueante</span>
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">12 tareas</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Week 3-5 (Parallel) -->
+                    <div class="relative flex items-start mb-8 ml-16">
+                        <div class="absolute -left-16 w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">3-5</div>
+                        <div class="flex-1 bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                            <h4 class="font-bold text-gray-800">📊 Reports & Dashboards</h4>
+                            <p class="text-sm text-gray-600 mt-2">Analytics, KPIs, exportación PDF/CSV, gráficos interactivos</p>
+                            <div class="mt-2 flex gap-2">
+                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Paralelo</span>
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">14 tareas</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Week 3-5 (Parallel) -->
+                    <div class="relative flex items-start mb-8 ml-16">
+                        <div class="absolute -left-16 w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">3-5</div>
+                        <div class="flex-1 bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+                            <h4 class="font-bold text-gray-800">🤖 External Bot</h4>
+                            <p class="text-sm text-gray-600 mt-2">WhatsApp y Telegram integration, API pública para bots</p>
+                            <div class="mt-2 flex gap-2">
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Paralelo</span>
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">12 tareas</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Week 3-4 (Parallel) -->
+                    <div class="relative flex items-start mb-8 ml-16">
+                        <div class="absolute -left-16 w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">3-4</div>
+                        <div class="flex-1 bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
+                            <h4 class="font-bold text-gray-800">🌐 SPA Pública</h4>
+                            <p class="text-sm text-gray-600 mt-2">Landing page, SEO optimization, responsive design</p>
+                            <div class="mt-2 flex gap-2">
+                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Paralelo</span>
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">12 tareas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gantt Chart -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">📊 Gantt Chart</h3>
+                <canvas id="ganttChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Tab: Risks -->
+        <div id="tab-risks" class="tab-content hidden fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">⚠️ Riesgos y Mitigaciones</h2>
+            
+            <!-- Risk Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-red-50 rounded-lg p-4 border-l-4 border-red-500">
+                    <p class="text-sm text-red-600">Riesgos Críticos</p>
+                    <p class="text-3xl font-bold text-red-700">3</p>
+                </div>
+                <div class="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
+                    <p class="text-sm text-orange-600">Riesgos Altos</p>
+                    <p class="text-3xl font-bold text-orange-700">5</p>
+                </div>
+                <div class="bg-yellow-50 rounded-lg p-4 border-l-4 border-yellow-500">
+                    <p class="text-sm text-yellow-600">Riesgos Medios</p>
+                    <p class="text-3xl font-bold text-yellow-700">2</p>
+                </div>
+            </div>
+
+            <!-- Risk Matrix -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">🎯 Matriz de Riesgos</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Riesgo</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Probabilidad</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Impacto</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severidad</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mitigación</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="bg-red-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">Data loss durante migración Google Sheets</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Media</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Crítico</td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-red-200 text-red-800">🔴 Crítico</span></td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Dry run, backup, rollback plan</td>
+                            </tr>
+                            <tr class="bg-orange-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">Performance issues en reportes grandes</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Alta</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Alto</td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-orange-200 text-orange-800">🟠 Alto</span></td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Paginación, caching, agregaciones DB</td>
+                            </tr>
+                            <tr class="bg-orange-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">Costo OpenAI descontrolado</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Media</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Alto</td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-orange-200 text-orange-800">🟠 Alto</span></td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Rate limiting, caching, monitoreo</td>
+                            </tr>
+                            <tr class="bg-orange-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">Webhooks Make.com inconsistentes</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Media</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Alto</td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-orange-200 text-orange-800">🟠 Alto</span></td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Retry logic, queue, logs</td>
+                            </tr>
+                            <tr class="bg-red-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">Fase 1C no completada antes de Fase 2</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Alta</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Crítico</td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-red-200 text-red-800">🔴 Crítico</span></td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Completar Fase 1C primero</td>
+                            </tr>
+                            <tr class="bg-orange-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">Make.com workflows complejos de migrar</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Alta</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Alto</td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-orange-200 text-orange-800">🟠 Alto</span></td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Documentar, testing incremental</td>
+                            </tr>
+                            <tr class="bg-yellow-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">Deployment issues en producción</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Media</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Medio</td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-yellow-200 text-yellow-800">🟡 Medio</span></td>
+                                <td class="px-4 py-3 text-sm text-gray-600">CI/CD robusto, staging, rollback</td>
+                            </tr>
+                            <tr class="bg-yellow-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">Twilio/Telegram API changes</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Baja</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">Medio</td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-yellow-200 text-yellow-800">🟡 Medio</span></td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Abstracción, circuit breakers</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Checklist -->
+        <div id="tab-checklist" class="tab-content hidden fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">✅ Checklist de Validación Pre-Deploy</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Testing & Quality -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🔍</span> Testing & Quality
+                    </h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Todos los tests unitarios pasan</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Cobertura de tests ≥80%</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Tests E2E de funcionalidades críticas pasan</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Lighthouse score ≥95 en todas las métricas</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Sin vulnerabilidades críticas (npm audit)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Code review completado y aprobado</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">ESLint sin errores</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">TypeScript compila sin errores</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Performance -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🚀</span> Performance
+                    </h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">LCP <2.5s</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">FID <100ms</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">CLS <0.1</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Bundle size <400KB</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Imágenes optimizadas (Next/Image)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Caching configurado correctamente</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">CDN activo (Railway/Vercel)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Security -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🔒</span> Security
+                    </h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Variables de entorno configuradas</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Secrets no commiteados en GitHub</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">API keys rotadas y seguras</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Rate limiting activo en endpoints públicos</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">CORS configurado correctamente</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">HTTPS forzado en producción</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Input validation en todos los endpoints</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Documentation -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">📝</span> Documentation
+                    </h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">README actualizado</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">API documentation generada</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Deployment guide actualizado</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Variables de entorno documentadas</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Onboarding guide actualizado</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm text-gray-700">Changelog actualizado</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Deployment & Operations -->
+                <div class="bg-white rounded-xl shadow-md p-6 md:col-span-2">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🔄</span> Deployment & Operations
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Staging environment funcional</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Deployment script probado</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Database migrations probadas</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Rollback plan definido y probado</span>
+                            </label>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Monitoring configurado (Sentry, APM)</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Logging configurado y accesible</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Alerts configurados (errores, downtime)</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Backup strategy definida</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Summary -->
+            <div class="mt-6 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl shadow-md p-6 text-white">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">Progreso del Checklist</h3>
+                        <p class="text-purple-200 mt-1">Validaciones completadas</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-4xl font-bold" id="checklistProgress">0%</p>
+                        <p class="text-purple-200 text-sm" id="checklistCount">0/0 items</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-white/20 rounded-full h-3">
+                    <div class="bg-white h-3 rounded-full progress-bar transition-all duration-300" id="checklistProgressBar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">Hago Produce - Dashboard Ejecutivo Fase 2</p>
+            <p class="text-sm text-gray-500 mt-2">Generado el 22 de Febrero, 2026 por SuperNinja AI</p>
+        </div>
+    </footer>
+
+    <script>
+        // Tab Navigation
+        function showTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            
+            // Add active class to clicked tab
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('tab-active');
+        }
+
+        // Update current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Checklist Progress
+        function updateChecklistProgress() {
+            const checkboxes = document.querySelectorAll('#tab-checklist input[type="checkbox"]');
+            const checked = document.querySelectorAll('#tab-checklist input[type="checkbox"]:checked');
+            const progress = Math.round((checked.length / checkboxes.length) * 100);
+            
+            document.getElementById('checklistProgress').textContent = `${progress}%`;
+            document.getElementById('checklistCount').textContent = `${checked.length}/${checkboxes.length} items`;
+            document.getElementById('checklistProgressBar').style.width = `${progress}%`;
+        }
+
+        // Add event listeners to checkboxes
+        document.querySelectorAll('#tab-checklist input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateChecklistProgress);
+        });
+
+        // Initialize Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Functionality Status Chart
+            const functionalityCtx = document.getElementById('functionalityChart').getContext('2d');
+            new Chart(functionalityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Operativo', 'Parcial', 'Pendiente'],
+                    datasets: [{
+                        data: [65, 20, 15],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Effort Distribution Chart
+            const effortCtx = document.getElementById('effortChart').getContext('2d');
+            new Chart(effortCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Fase 0', 'Fase 1A', 'Fase 1B', 'Fase 1C', 'Fase 2'],
+                    datasets: [{
+                        label: 'Semanas',
+                        data: [2, 2, 3, 3, 10],
+                        backgroundColor: ['#10b981', '#10b981', '#10b981', '#f59e0b', '#6366f1'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Metrics Comparison Chart
+            const metricsCtx = document.getElementById('metricsChart').getContext('2d');
+            new Chart(metricsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Test Coverage %', 'Lighthouse Score', 'API Time (ms)', 'Bundle Size (KB)'],
+                    datasets: [{
+                        label: 'Baseline',
+                        data: [40, 85, 500, 500],
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 4
+                    }, {
+                        label: 'Target',
+                        data: [80, 95, 300, 400],
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Improvements Distribution Chart
+            const improvementsCtx = document.getElementById('improvementsChart').getContext('2d');
+            new Chart(improvementsCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Performance', 'Security', 'User Experience', 'Business Logic'],
+                    datasets: [{
+                        data: [30, 25, 25, 20],
+                        backgroundColor: ['#6366f1', '#ef4444', '#10b981', '#f59e0b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Gantt Chart
+            const ganttCtx = document.getElementById('ganttChart').getContext('2d');
+            new Chart(ganttCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Google Sheets Migration', 'Reports & Dashboards', 'External Bot', 'Public SPA'],
+                    datasets: [{
+                        label: 'Duración (semanas)',
+                        data: [
+                            [0, 2],
+                            [2, 5],
+                            [2, 5],
+                            [2, 4]
+                        ],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(139, 92, 246, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(139, 92, 246, 1)'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barPercentage: 0.5
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Semana ${context.raw[0] + 1} - Semana ${context.raw[1]}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Semanas'
+                            },
+                            min: 0,
+                            max: 6,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

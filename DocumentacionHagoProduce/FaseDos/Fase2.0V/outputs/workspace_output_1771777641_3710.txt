@@ -1,0 +1,17 @@
+src/app/(auth)/login/page.tsx
+src/app/(auth)/register/page.tsx
+src/app/(admin)/users/page.tsx
+src/app/(admin)/layout.tsx
+src/app/(admin)/product-prices/page.tsx
+src/app/(admin)/dashboard/page.tsx
+src/app/(admin)/suppliers/page.tsx
+src/app/(admin)/invoices/[id]/page.tsx
+src/app/(admin)/invoices/page.tsx
+src/app/(admin)/invoices/create/page.tsx
+src/app/(admin)/invoices/new/page.tsx
+src/app/(admin)/products/page.tsx
+src/app/layout.tsx
+src/app/page.tsx
+src/app/(accounting)/invoices/[id]/status/page.tsx
+src/app/(customer)/my-invoices/page.tsx
+src/app/(customer)/layout.tsx

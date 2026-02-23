@@ -1,32 +1,55 @@
-import { NextRequest } from 'next/server';
 
-type RateLimitKey = string;
+export class InMemoryRateLimiter {
+  private static instance: InMemoryRateLimiter;
+  private store: Map<string, number[]>;
 
-interface RateLimitState {
-  timestamps: number[];
-}
-
-const RATE_LIMIT_WINDOW_MS = 60_000;
-
-const rateLimitStore = new Map<RateLimitKey, RateLimitState>();
-
-export function getUserRateLimitKey(userId: string | undefined, req: NextRequest): RateLimitKey {
-  if (userId) return userId;
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const ip = forwarded.split(',')[0]?.trim();
-    if (ip) return ip;
+  private constructor() {
+    this.store = new Map();
   }
-  return 'anonymous';
-}
 
-export function isRateLimited(key: RateLimitKey, maxRequests: number): boolean {
-  const now = Date.now();
-  const state = rateLimitStore.get(key) || { timestamps: [] };
-  const recent = state.timestamps.filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS);
-  recent.push(now);
-  state.timestamps = recent;
-  rateLimitStore.set(key, state);
-  return recent.length > maxRequests;
-}
+  public static getInstance(): InMemoryRateLimiter {
+    if (!InMemoryRateLimiter.instance) {
+      InMemoryRateLimiter.instance = new InMemoryRateLimiter();
+    }
+    return InMemoryRateLimiter.instance;
+  }
 
+  /**
+   * Checks if a key has exceeded the rate limit.
+   * @param key Unique identifier (e.g., userId or IP)
+   * @param limit Max number of requests
+   * @param windowMs Time window in milliseconds
+   * @returns true if allowed, false if limit exceeded
+   */
+  public check(key: string, limit: number, windowMs: number): boolean {
+    const now = Date.now();
+    const timestamps = this.store.get(key) || [];
+    
+    // Filter out timestamps outside the window
+    const validTimestamps = timestamps.filter(timestamp => now - timestamp < windowMs);
+    
+    if (validTimestamps.length >= limit) {
+      return false;
+    }
+    
+    validTimestamps.push(now);
+    this.store.set(key, validTimestamps);
+    
+    return true;
+  }
+
+  /**
+   * Manually cleans up old entries (can be called periodically if needed)
+   */
+  public cleanup(windowMs: number) {
+    const now = Date.now();
+    for (const [key, timestamps] of this.store.entries()) {
+      const validTimestamps = timestamps.filter(timestamp => now - timestamp < windowMs);
+      if (validTimestamps.length === 0) {
+        this.store.delete(key);
+      } else {
+        this.store.set(key, validTimestamps);
+      }
+    }
+  }
+}

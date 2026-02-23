@@ -5,6 +5,8 @@ export type ChatIntent = 'price_lookup' | 'best_supplier' | 'invoice_status' | '
 export interface ChatRequestPayload {
   message: string;
   language?: ChatLanguage;
+  sessionId?: string;
+  context?: Record<string, any>;
 }
 
 export interface ChatSource {

@@ -1,0 +1,7 @@
+   57 src/app/api/v1/customers/route.ts
+   60 src/app/api/v1/invoices/route.ts
+   92 src/app/api/v1/product-prices/route.ts
+  100 src/app/api/v1/products/route.ts
+   80 src/app/api/v1/suppliers/route.ts
+   81 src/app/api/v1/users/route.ts
+  470 total

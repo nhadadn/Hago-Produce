@@ -1,0 +1,7 @@
+1f54e79 feat: facturacion y notas internas fase 1B
+9b0d1a2 feat(invoices): Implement Phase 1B Invoices CRUD & Customer Portal access control
+397c665 feat: complete phase 0 setup with detailed wireframes, updated navigation, and ci fix
+39818df feat(phase0): Complete project foundation and documentation for audit
+b611cbe Add FaseZero folder and update docs
+b1cbf68 Add project summary README
+e1a0464 Initial commit

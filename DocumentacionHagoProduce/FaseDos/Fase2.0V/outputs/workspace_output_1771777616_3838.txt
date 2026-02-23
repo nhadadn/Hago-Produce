@@ -1,0 +1,16 @@
+-rw-r--r-- 1 root root   5289 Feb 22 16:24 00_prompt_maestro_hago_produce.md
+-rw-r--r-- 1 root root  20189 Feb 22 16:24 01_architecture_c4.md
+-rw-r--r-- 1 root root  14120 Feb 22 16:24 02_data_model.md
+-rw-r--r-- 1 root root  20313 Feb 22 16:24 03_api_contracts.md
+-rw-r--r-- 1 root root  12482 Feb 22 16:24 04_roadmap.md
+-rw-r--r-- 1 root root   6845 Feb 22 16:24 05_project_brief.md
+-rw-r--r-- 1 root root  33949 Feb 22 16:24 06_agent_master_prompts.md
+-rw-r--r-- 1 root root   8334 Feb 22 16:24 07_parallel_roadmap.md
+-rw-r--r-- 1 root root  10250 Feb 22 16:24 08_phase0_checklist.md
+-rw-r--r-- 1 root root  21769 Feb 22 16:24 08_phase0_tasks.md
+-rw-r--r-- 1 root root  50314 Feb 22 16:24 09_phase1a_tasks.md
+-rw-r--r-- 1 root root 162205 Feb 22 16:24 10_phase1b_tasks.md
+-rw-r--r-- 1 root root  29397 Feb 22 16:24 11_phase1c_tasks.md
+-rw-r--r-- 1 root root   6038 Feb 22 16:24 12_phase2_tasks.md
+-rw-r--r-- 1 root root   7755 Feb 22 16:24 13_master_checklist.md
+-rw-r--r-- 1 root root   1959 Feb 22 16:25 todo.md

@@ -28,6 +28,7 @@ model User {
   customer  Customer? @relation(fields: [customerId], references: [id])
 
   invoiceNotes InvoiceNote[]
+  notifications Notification[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -205,14 +206,39 @@ model BotApiKey {
   id          String    @id @default(uuid())
   name        String    @unique @db.VarChar(100)
   hashedKey   String    @map("hashed_key") @db.VarChar(255)
+  description String?   @db.VarChar(200)
   rateLimit   Int       @default(60) @map("rate_limit")
   isActive    Boolean   @default(true) @map("is_active")
   lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@map("bot_api_key")
   @@index([isActive])
+}
+
+model Message {
+  id               String   @id @default(uuid())
+  platform         String   @db.VarChar(20) // whatsapp, telegram
+  platformUserId   String   @map("platform_user_id") @db.VarChar(100)
+  platformMessageId String? @map("platform_message_id") @db.VarChar(100)
+  message          String   @db.Text
+  response         String?  @db.Text
+  intent           String?  @db.VarChar(50)
+  confidence       Float?
+  isCommand        Boolean  @default(false) @map("is_command")
+  command          String?  @db.VarChar(50)
+  status           String   @default("received") @db.VarChar(20) // received, processed, failed
+  errorMessage     String?  @map("error_message") @db.Text
+  processedAt      DateTime? @map("processed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("messages")
+  @@index([platform, platformUserId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model WebhookLog {
@@ -232,4 +258,37 @@ model WebhookLog {
   @@map("webhook_log")
   @@index([idempotencyKey])
   @@index([eventType])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  type      String    @db.VarChar(20) // INFO, WARNING, ERROR, SUCCESS
+  title     String    @db.VarChar(200)
+  message   String    @db.VarChar(2000)
+  isRead    Boolean   @default(false) @map("is_read")
+  createdAt DateTime  @default(now()) @map("created_at")
+  readAt    DateTime? @map("read_at")
+
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([userId, isRead])
+}
+
+model ReportCache {
+  id          String   @id @default(cuid())
+  reportType  String   @map("report_type") @db.VarChar(50) // REVENUE, AGING, TOP_PERFORMERS, PRICE_TRENDS
+  parameters  String   @db.Text // JSON string
+  data        String   @db.Text // JSON string
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("report_cache")
+  @@index([reportType])
+  @@index([expiresAt])
+  @@index([reportType, expiresAt])
 }

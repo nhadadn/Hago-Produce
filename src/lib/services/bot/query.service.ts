@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { prisma } from '@/lib/db';
+import prisma from '@/lib/db';
 
 export const botQuerySchema = z.object({
   query: z.string().min(1, 'La consulta no puede estar vacía'),

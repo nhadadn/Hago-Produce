@@ -1,0 +1,109 @@
+.
+├── DocumentacionHagoProduce
+│   ├── FaseZero
+│   │   ├── 00_prompt_maestro_hago_produce.md
+│   │   ├── 01_architecture_c4.md
+│   │   ├── 02_data_model.md
+│   │   ├── 03_api_contracts.md
+│   │   ├── 04_roadmap.md
+│   │   ├── 05_project_brief.md
+│   │   ├── 06_agent_master_prompts.md
+│   │   └── 07_parallel_roadmap.md
+│   ├── docs
+│   │   ├── 00_prompt_maestro_hago_produce.md
+│   │   ├── 01_architecture_c4.md
+│   │   ├── 02_data_model.md
+│   │   ├── 03_api_contracts.md
+│   │   ├── 04_roadmap.md
+│   │   └── 05_project_brief.md
+│   └── todo.md
+├── docs
+│   ├── architecture
+│   │   ├── adr
+│   │   ├── phase0-review.md
+│   │   └── tech-stack-review.md
+│   ├── audit
+│   │   └── phase0_audit_manifest.md
+│   ├── figma
+│   │   ├── wireframes
+│   │   ├── design-system.md
+│   │   └── navigation-flow.md
+│   ├── onboarding
+│   │   ├── arthur.md
+│   │   └── nadir.md
+│   ├── phase0
+│   │   ├── handoff.md
+│   │   ├── lessons-learned.md
+│   │   └── summary.md
+│   ├── security
+│   │   ├── checklist.md
+│   │   ├── cra-compliance.md
+│   │   ├── gdpr-compliance.md
+│   │   └── phase0-review.md
+│   ├── ci-cd.md
+│   ├── environments.md
+│   ├── railway-setup.md
+│   └── tech-stack.md
+├── prisma
+│   ├── migrations
+│   │   ├── 20260213062006_init_auth
+│   │   ├── 20260213062727_add_user_fields
+│   │   ├── 20260213065509_add_suppliers_table
+│   │   ├── 20260213073800_add_product_model
+│   │   ├── 20260214040916_add_invoices
+│   │   ├── 20260214041928_add_customer_to_user
+│   │   └── migration_lock.toml
+│   └── schema.prisma
+├── scripts
+│   ├── setup-env.bat
+│   └── setup-env.sh
+├── src
+│   ├── app
+│   │   ├── (accounting)
+│   │   ├── (admin)
+│   │   ├── (auth)
+│   │   ├── (customer)
+│   │   ├── api
+│   │   ├── webhooks
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── components
+│   │   ├── auth
+│   │   ├── dashboard
+│   │   ├── invoices
+│   │   ├── layout
+│   │   ├── product-prices
+│   │   ├── products
+│   │   ├── suppliers
+│   │   ├── ui
+│   │   └── users
+│   ├── config
+│   │   └── navigation.ts
+│   ├── lib
+│   │   ├── api
+│   │   ├── audit
+│   │   ├── auth
+│   │   ├── hooks
+│   │   ├── services
+│   │   ├── validation
+│   │   ├── db.ts
+│   │   └── utils.ts
+│   ├── tests
+│   │   ├── integration
+│   │   └── unit
+│   └── middleware.ts
+├── Dockerfile
+├── LICENSE
+├── README.md
+├── docker-compose.yml
+├── jest.config.js
+├── next.config.mjs
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── railway.json
+├── tailwind.config.ts
+└── tsconfig.json
+
+51 directories, 56 files

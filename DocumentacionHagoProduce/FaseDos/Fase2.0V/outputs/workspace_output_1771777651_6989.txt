@@ -1,0 +1,12 @@
+total 44
+drwxr-xr-x 3 root root 4096 Feb 22 16:25 (accounting)
+drwxr-xr-x 8 root root 4096 Feb 22 16:25 (admin)
+drwxr-xr-x 4 root root 4096 Feb 22 16:25 (auth)
+drwxr-xr-x 3 root root 4096 Feb 22 16:25 (customer)
+drwxr-xr-x 8 root root 4096 Feb 22 16:25 .
+drwxr-xr-x 7 root root 4096 Feb 22 16:25 ..
+drwxr-xr-x 4 root root 4096 Feb 22 16:25 api
+-rw-r--r-- 1 root root 1597 Feb 22 16:25 globals.css
+-rw-r--r-- 1 root root  557 Feb 22 16:25 layout.tsx
+-rw-r--r-- 1 root root  401 Feb 22 16:25 page.tsx
+drwxr-xr-x 3 root root 4096 Feb 22 16:25 webhooks

@@ -1,0 +1,155 @@
+import twilio from 'twilio';
+import prisma from '@/lib/db';
+
+// Inicializar cliente de Twilio con variables de entorno
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID!,
+  process.env.TWILIO_AUTH_TOKEN!
+);
+
+const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER!;
+
+/**
+ * Servicio para enviar mensajes de WhatsApp mediante Twilio
+ */
+export class WhatsAppService {
+  /**
+   * Envía un mensaje de WhatsApp a un número específico
+   */
+  async sendMessage(to: string, message: string): Promise<string> {
+    try {
+      // Asegurar que el número tenga el formato correcto de WhatsApp
+      const formattedTo = this.formatWhatsAppNumber(to);
+      
+      const sentMessage = await twilioClient.messages.create({
+        from: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
+        to: `whatsapp:${formattedTo}`,
+        body: message,
+      });
+
+      return sentMessage.sid;
+    } catch (error) {
+      console.error('[WHATSAPP_SEND_ERROR]', error);
+      throw new Error('Error al enviar mensaje de WhatsApp');
+    }
+  }
+
+  /**
+   * Valida la firma del webhook de Twilio
+   */
+  validateWebhookSignature(
+    signature: string | null,
+    url: string,
+    body: string,
+    authToken: string
+  ): boolean {
+    if (!signature) {
+      return false;
+    }
+
+    try {
+      return twilio.validateRequest(authToken, signature, url, body);
+    } catch (error) {
+      console.error('[TWILIO_VALIDATION_ERROR]', error);
+      return false;
+    }
+  }
+
+  /**
+   * Formatea el número de teléfono para WhatsApp
+   */
+  private formatWhatsAppNumber(number: string): string {
+    // Remover espacios y caracteres especiales
+    let cleaned = number.replace(/[\s\-\(\)]/g, '');
+    
+    // Si no tiene código de país, asumir México (+52)
+    if (!cleaned.startsWith('+')) {
+      if (cleaned.startsWith('52')) {
+        cleaned = `+${cleaned}`;
+      } else {
+        cleaned = `+52${cleaned}`;
+      }
+    }
+    
+    return cleaned;
+  }
+
+  /**
+   * Parsea el cuerpo del webhook de Twilio
+   */
+  parseWebhookBody(body: string): {
+    from: string;
+    to: string;
+    message: string;
+    messageSid: string;
+    numMedia: number;
+  } {
+    const params = new URLSearchParams(body);
+    
+    return {
+      from: params.get('From')?.replace('whatsapp:', '') || '',
+      to: params.get('To')?.replace('whatsapp:', '') || '',
+      message: params.get('Body') || '',
+      messageSid: params.get('MessageSid') || '',
+      numMedia: parseInt(params.get('NumMedia') || '0'),
+    };
+  }
+
+  /**
+   * Registra un mensaje en la base de datos
+   */
+  async logMessage(
+    platformUserId: string,
+    message: string,
+    response?: string,
+    intent?: string,
+    confidence?: number,
+    status: 'received' | 'processed' | 'failed' = 'received',
+    errorMessage?: string
+  ): Promise<void> {
+    try {
+      await prisma.message.create({
+        data: {
+          platform: 'whatsapp',
+          platformUserId,
+          message,
+          response,
+          intent,
+          confidence,
+          status,
+          errorMessage,
+          processedAt: status === 'processed' ? new Date() : undefined,
+        },
+      });
+    } catch (error) {
+      console.error('[MESSAGE_LOG_ERROR]', error);
+      // No lanzar error para no interrumpir el flujo principal
+    }
+  }
+
+  /**
+   * Actualiza el estado de un mensaje
+   */
+  async updateMessageStatus(
+    messageId: string,
+    status: 'received' | 'processed' | 'failed',
+    errorMessage?: string
+  ): Promise<void> {
+    try {
+      await prisma.message.update({
+        where: { id: messageId },
+        data: {
+          status,
+          errorMessage,
+          processedAt: status === 'processed' ? new Date() : undefined,
+        },
+      });
+    } catch (error) {
+      console.error('[MESSAGE_UPDATE_ERROR]', error);
+      // No lanzar error para no interrumpir el flujo principal
+    }
+  }
+}
+
+// Exportar instancia singleton
+export const whatsAppService = new WhatsAppService();
