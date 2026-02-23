@@ -30,10 +30,29 @@ export async function GET(req: NextRequest) {
     const validationResult = productPriceFilterSchema.safeParse(filters);
     
     if (!validationResult.success) {
-      return NextResponse.json(
-        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Parámetros inválidos', details: validationResult.error.errors } },
-        { status: 400 }
-      );
+      // Intentar una segunda validación convirtiendo tipos manualmente si la primera falla
+      // Esto es común cuando los parámetros llegan como strings
+      const manualFilters = {
+        ...filters,
+        isCurrent: filters.isCurrent === 'true' || filters.isCurrent === true,
+        page: Number(filters.page) || 1,
+        limit: Number(filters.limit) || 50
+      };
+      
+      const retryValidation = productPriceFilterSchema.safeParse(manualFilters);
+      if (!retryValidation.success) {
+        return NextResponse.json(
+          { success: false, error: { code: 'VALIDATION_ERROR', message: 'Parámetros inválidos', details: validationResult.error.errors } },
+          { status: 400 }
+        );
+      }
+      // Usar el resultado del reintento si fue exitoso
+      const result = await ProductPriceService.getAll(retryValidation.data);
+      return NextResponse.json({
+        success: true,
+        data: result.prices,
+        meta: result.meta,
+      });
     }
 
     const result = await ProductPriceService.getAll(validationResult.data);

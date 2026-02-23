@@ -12,6 +12,7 @@ import { SupplierForm } from '@/components/suppliers/SupplierForm';
 import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier, Supplier, SupplierFilters } from '@/lib/api/suppliers';
 import { Plus, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function SuppliersPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -187,18 +188,20 @@ export default function SuppliersPage() {
       </SupplierModal>
 
       {/* Delete Confirmation Modal */}
-      <SupplierModal
-        isOpen={isDeleteOpen}
-        onClose={() => setIsDeleteOpen(false)}
-        title="Confirmar Eliminación"
-        description={`¿Estás seguro que deseas eliminar al proveedor ${selectedSupplier?.name}? Esta acción no se puede deshacer.`}
-        footer={
-          <div className="flex justify-end space-x-2 w-full">
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro que deseas eliminar al proveedor {selectedSupplier?.name}? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>Eliminar</Button>
-          </div>
-        }
-      />
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -67,8 +67,8 @@ export function ProductPriceModal({
     const loadData = async () => {
       try {
         const [productsRes, suppliersRes] = await Promise.all([
-          fetchProducts({ limit: 1000, isActive: true }),
-          fetchSuppliers({ limit: 1000, isActive: true }),
+          fetchProducts({ limit: 1000 }),
+          fetchSuppliers({ limit: 1000 }),
         ]);
         setProducts(productsRes.data);
         setSuppliers(suppliersRes.data);
@@ -136,6 +136,7 @@ export function ProductPriceModal({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                     disabled={!!initialData}
                   >
                     <FormControl>
@@ -165,6 +166,7 @@ export function ProductPriceModal({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                     disabled={!!initialData}
                   >
                     <FormControl>

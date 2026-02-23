@@ -22,11 +22,12 @@ export interface CustomersResponse {
 }
 
 const getHeaders = () => {
-  const token = localStorage.getItem('accessToken');
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  };
+	const token =
+		localStorage.getItem('accessToken') || localStorage.getItem('customerAccessToken');
+	return {
+		'Content-Type': 'application/json',
+		Authorization: token ? `Bearer ${token}` : '',
+	};
 };
 
 export async function fetchCustomers(filters: CustomerFilters): Promise<CustomersResponse> {
@@ -62,6 +63,20 @@ export async function createCustomer(data: CustomerInput): Promise<Customer> {
 
   const result = await res.json();
   return result.data;
+}
+
+export async function fetchCustomerById(id: string): Promise<Customer> {
+	const res = await fetch(`/api/v1/customers/${id}`, {
+		headers: getHeaders(),
+	});
+
+	if (!res.ok) {
+		const error = await res.json();
+		throw new Error(error.error?.message || 'Error al obtener cliente');
+	}
+
+	const result = await res.json();
+	return result.data;
 }
 
 export async function updateCustomer(id: string, data: CustomerUpdateInput): Promise<Customer> {

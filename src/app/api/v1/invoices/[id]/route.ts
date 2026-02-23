@@ -14,6 +14,28 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Factura no encontrada' } }, { status: 404 });
     }
 
+    if (user.role === Role.CUSTOMER) {
+      if (!user.customerId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: { code: 'FORBIDDEN', message: 'Usuario no asociado a un cliente' },
+          },
+          { status: 403 }
+        );
+      }
+
+      if (invoice.customerId !== user.customerId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: { code: 'FORBIDDEN', message: 'No tiene permisos para ver esta factura' },
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     return NextResponse.json({ success: true, data: invoice });
   } catch (error) {
     console.error('[INVOICE_GET]', error);

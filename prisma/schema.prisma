@@ -117,7 +117,7 @@ model Invoice {
 
   customer      Customer      @relation(fields: [customerId], references: [id])
   items         InvoiceItem[]
-  notes         InvoiceNote[]
+  invoiceNotes  InvoiceNote[]
 
   @@map("invoices")
   @@index([customerId])
@@ -199,4 +199,37 @@ model Customer {
   @@index([name])
   @@index([taxId])
   @@index([isActive])
+}
+
+model BotApiKey {
+  id          String    @id @default(uuid())
+  name        String    @unique @db.VarChar(100)
+  hashedKey   String    @map("hashed_key") @db.VarChar(255)
+  rateLimit   Int       @default(60) @map("rate_limit")
+  isActive    Boolean   @default(true) @map("is_active")
+  lastUsedAt  DateTime? @map("last_used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("bot_api_key")
+  @@index([isActive])
+}
+
+model WebhookLog {
+  id             String   @id @default(uuid())
+  source         String   @db.VarChar(50)
+  apiKey         String?  @map("api_key") @db.VarChar(255)
+  idempotencyKey String?  @map("idempotency_key") @db.VarChar(255)
+  eventType      String   @map("event_type") @db.VarChar(100)
+  status         String   @db.VarChar(20)
+  httpStatus     Int      @map("http_status")
+  errorCode      String?  @map("error_code") @db.VarChar(100)
+  errorMessage   String?  @map("error_message")
+  payload        Json?    @db.Json
+  responseBody   Json?    @map("response_body") @db.Json
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("webhook_log")
+  @@index([idempotencyKey])
+  @@index([eventType])
 }

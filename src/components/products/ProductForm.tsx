@@ -29,16 +29,28 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { PRODUCT_CATEGORIES } from "@/lib/validation/product";
+
+// Common units
+const PRODUCT_UNITS = [
+  { value: "unit", label: "Unidad" },
+  { value: "kg", label: "Kilogramo" },
+  { value: "lb", label: "Libra" },
+  { value: "box", label: "Caja" },
+  { value: "pallet", label: "Pallet" },
+  { value: "bunch", label: "Manojo" },
+  { value: "bag", label: "Bolsa" },
+] as const;
 
 interface ProductFormProps {
   product?: Product;
@@ -53,7 +65,12 @@ export function ProductForm({
   isLoading,
   onCancel,
 }: ProductFormProps) {
-  const [open, setOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [unitOpen, setUnitOpen] = useState(false);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [customUnits, setCustomUnits] = useState<{ value: string; label: string }[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [newUnit, setNewUnit] = useState("");
   
   const form = useForm<ProductInput>({
     resolver: zodResolver(productSchema),
@@ -81,6 +98,9 @@ export function ProductForm({
       });
     }
   }, [product, form]);
+
+  const allCategories = [...PRODUCT_CATEGORIES, ...customCategories];
+  const allUnits = [...PRODUCT_UNITS, ...customUnits];
 
   return (
     <Form {...form}>
@@ -143,7 +163,7 @@ export function ProductForm({
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Categoría</FormLabel>
-                <Popover open={open} onOpenChange={setOpen}>
+                <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
@@ -155,7 +175,7 @@ export function ProductForm({
                         )}
                       >
                         {field.value
-                          ? PRODUCT_CATEGORIES.find(
+                          ? allCategories.find(
                               (category) => category === field.value
                             ) || field.value
                           : "Seleccionar categoría"}
@@ -165,30 +185,52 @@ export function ProductForm({
                   </PopoverTrigger>
                   <PopoverContent className="w-[200px] p-0">
                     <Command>
-                      <CommandInput placeholder="Buscar categoría..." />
-                      <CommandEmpty>No se encontró la categoría.</CommandEmpty>
-                      <CommandGroup>
-                        {PRODUCT_CATEGORIES.map((category) => (
-                          <CommandItem
-                            value={category}
-                            key={category}
-                            onSelect={() => {
-                              form.setValue("category", category);
-                              setOpen(false);
+                      <CommandInput 
+                        placeholder="Buscar categoría..." 
+                        onValueChange={(value) => setNewCategory(value)}
+                      />
+                      <CommandList>
+                        <CommandEmpty className="p-2">
+                          <p className="text-sm text-muted-foreground mb-2">No encontrada.</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              if (newCategory) {
+                                setCustomCategories([...customCategories, newCategory]);
+                                form.setValue("category", newCategory);
+                                setCategoryOpen(false);
+                              }
                             }}
                           >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                category === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {category}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Crear "{newCategory}"
+                          </Button>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {allCategories.map((category) => (
+                            <CommandItem
+                              value={category}
+                              key={category}
+                              onSelect={() => {
+                                form.setValue("category", category);
+                                setCategoryOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  category === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {category}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
                     </Command>
                   </PopoverContent>
                 </Popover>
@@ -200,25 +242,80 @@ export function ProductForm({
             control={form.control}
             name="unit"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Unidad</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar unidad" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="unit">Unidad</SelectItem>
-                    <SelectItem value="kg">Kilogramo</SelectItem>
-                    <SelectItem value="lb">Libra</SelectItem>
-                    <SelectItem value="box">Caja</SelectItem>
-                    <SelectItem value="pallet">Pallet</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Popover open={unitOpen} onOpenChange={setUnitOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value
+                          ? allUnits.find(
+                              (unit) => unit.value === field.value
+                            )?.label || field.value
+                          : "Seleccionar unidad"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Buscar unidad..." 
+                        onValueChange={(value) => setNewUnit(value)}
+                      />
+                      <CommandList>
+                        <CommandEmpty className="p-2">
+                          <p className="text-sm text-muted-foreground mb-2">No encontrada.</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              if (newUnit) {
+                                const unitValue = newUnit.toLowerCase().replace(/\s+/g, '-');
+                                setCustomUnits([...customUnits, { value: unitValue, label: newUnit }]);
+                                form.setValue("unit", unitValue);
+                                setUnitOpen(false);
+                              }
+                            }}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Crear "{newUnit}"
+                          </Button>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {allUnits.map((unit) => (
+                            <CommandItem
+                              value={unit.label}
+                              key={unit.value}
+                              onSelect={() => {
+                                form.setValue("unit", unit.value);
+                                setUnitOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  unit.value === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {unit.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}

@@ -47,11 +47,19 @@ export function useAuth() {
           isLoading: false,
         });
       } else {
-        logout();
+        // Only logout if the token is invalid, but avoid immediate redirect loop if possible
+        // Let components handle the redirect if needed
+        localStorage.removeItem('accessToken');
+        setAuthState({
+          user: null,
+          accessToken: null,
+          isLoading: false,
+        });
       }
     } catch (error) {
       console.error('Failed to fetch user', error);
-      logout();
+      // Don't auto logout on network error to avoid bad UX
+      setAuthState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -62,6 +70,7 @@ export function useAuth() {
       accessToken: token,
       isLoading: false,
     });
+    // Router push handled in component
   };
 
   const logout = () => {

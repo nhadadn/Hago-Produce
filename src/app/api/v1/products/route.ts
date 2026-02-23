@@ -30,6 +30,11 @@ export async function GET(req: NextRequest) {
     };
 
     // Validar filtros
+    // Convert isActive to string before validation if it's not undefined
+    if (filters.isActive !== undefined && filters.isActive !== null) {
+      filters.isActive = String(filters.isActive);
+    }
+
     const validationResult = productFilterSchema.safeParse(filters);
     if (!validationResult.success) {
       return NextResponse.json(

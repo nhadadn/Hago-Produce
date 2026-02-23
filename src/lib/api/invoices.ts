@@ -30,10 +30,11 @@ export interface ChangeInvoiceStatusInput {
 }
 
 const getHeaders = () => {
-  const token = localStorage.getItem('accessToken');
+  const token =
+    localStorage.getItem('accessToken') || localStorage.getItem('customerAccessToken');
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    Authorization: token ? `Bearer ${token}` : '',
   };
 };
 

@@ -81,3 +81,35 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     );
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const user = await getAuthenticatedUser(req);
+    if (!user) return unauthorizedResponse();
+
+    if (!ALLOWED_ROLES.includes(user.role as Role)) {
+      return NextResponse.json(
+        { success: false, error: { code: 'FORBIDDEN', message: 'No tienes permisos para eliminar proveedores' } },
+        { status: 403 }
+      );
+    }
+
+    const supplier = await supplierService.getSupplierById(params.id);
+    if (!supplier) {
+      return NextResponse.json(
+        { success: false, error: { code: 'NOT_FOUND', message: 'Proveedor no encontrado' } },
+        { status: 404 }
+      );
+    }
+
+    await supplierService.deleteSupplier(params.id);
+
+    return NextResponse.json({ success: true, message: 'Proveedor eliminado correctamente' });
+  } catch (error) {
+    console.error('Delete supplier error:', error);
+    return NextResponse.json(
+      { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
+      { status: 500 }
+    );
+  }
+}

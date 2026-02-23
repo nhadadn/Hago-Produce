@@ -16,3 +16,8 @@ export const registerSchema = z.object({
 export const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token requerido'),
 });
+
+export const customerLoginSchema = z.object({
+  tax_id: z.string().min(1, 'El Tax ID es requerido'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+});

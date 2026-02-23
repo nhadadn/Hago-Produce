@@ -38,8 +38,8 @@ export function LoginForm() {
       login(data.data.tokens.accessToken, data.data.user);
       
       // Redirect based on role
-      // For now, redirect to home/dashboard
-      router.push('/');
+      // For now, redirect to dashboard (it was redirecting to home which is the landing page now)
+      router.push('/dashboard');
       
     } catch (err: any) {
       setError(err.message);

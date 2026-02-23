@@ -9,6 +9,28 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const user = await getAuthenticatedUser(req);
     if (!user) return unauthorizedResponse();
 
+    if (user.role === Role.CUSTOMER) {
+      if (!user.customerId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: { code: 'FORBIDDEN', message: 'Usuario no asociado a un cliente' },
+          },
+          { status: 403 }
+        );
+      }
+
+      if (user.customerId !== params.id) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: { code: 'FORBIDDEN', message: 'No tiene permisos para ver este cliente' },
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const customer = await CustomerService.getById(params.id);
     if (!customer) {
       return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Cliente no encontrado' } }, { status: 404 });
