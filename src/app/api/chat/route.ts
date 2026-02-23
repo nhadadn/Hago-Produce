@@ -4,6 +4,9 @@ import { analyzeIntent } from '@/lib/services/chat/intents';
 import { executeQuery } from '@/lib/services/chat/query-executor';
 import { formatResponse } from '@/lib/services/chat/openai-client';
 import { ChatLanguage } from '@/lib/chat/types';
+import { isRateLimited, createRateLimitResponse } from '@/lib/utils/rate-limit';
+import prisma from '@/lib/db';
+import { logAudit } from '@/lib/audit/logger';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,6 +18,28 @@ export async function POST(req: NextRequest) {
     // Given it's an ERP, we strictly require auth.
     if (!user) {
       return unauthorizedResponse();
+    }
+
+    // 1.1 Rate Limiting
+    const rateLimit = parseInt(process.env.CHAT_RATE_LIMIT || '20', 10);
+    const language: ChatLanguage = 'es'; // Default, will be updated from body later
+
+    if (isRateLimited('chat_api', user.userId, rateLimit)) {
+      await logAudit({
+        userId: user.userId,
+        action: 'RATE_LIMIT_EXCEEDED',
+        entityType: 'chat',
+        entityId: 'chat_api',
+        changes: { limit: rateLimit, endpoint: '/api/chat' },
+      });
+
+      const rateLimitResponse = createRateLimitResponse('chat_api', user.userId, language);
+      return NextResponse.json(rateLimitResponse.error, {
+        status: 429,
+        headers: {
+          'Retry-After': rateLimitResponse.error.retryAfter.toString(),
+        },
+      });
     }
 
     // 2. Parse Request
@@ -31,23 +56,98 @@ export async function POST(req: NextRequest) {
     // 3. Session Management
     // If no sessionId provided, generate one (using web crypto API if available, else random string)
     const currentSessionId = sessionId || crypto.randomUUID();
+    const chatLanguage: ChatLanguage = (context?.language as ChatLanguage) || 'es'; 
+
+    // Find or create session
+    let session = await prisma.chatSession.findUnique({
+      where: { sessionId: currentSessionId },
+    });
+
+    if (!session) {
+      session = await prisma.chatSession.create({
+        data: {
+          sessionId: currentSessionId,
+          userId: user.userId,
+          context: context ? JSON.parse(JSON.stringify(context)) : undefined,
+          messages: [],
+        },
+      });
+    }
 
     // 4. Intent Analysis
-    // We default to 'es' (Spanish) as per project preference, unless context provides language
-    const language: ChatLanguage = (context?.language as ChatLanguage) || 'es'; 
-    const detected = analyzeIntent(message, language);
+    const detected = await analyzeIntent(message, chatLanguage);
 
     // 5. Query Execution
-    const executionResult = await executeQuery(detected, language, {
+    const executionResult = await executeQuery(detected, chatLanguage, {
       userId: user.userId,
       customerId: user.customerId,
       // Pass context if needed in future
     });
 
-    // 6. Format Response with OpenAI
-    const reply = await formatResponse(detected.intent, language, executionResult);
+    // 6. Format Response with OpenAI, including short history for context
+    const existingMessages = (session.messages as any[]) || [];
+    const lastMessages = existingMessages.slice(-20);
 
-    // 7. Return Response
+    const historyMessages = lastMessages.map((m: any) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: String(m.content ?? ''),
+    }));
+
+    const reply = await formatResponse(detected.intent, chatLanguage, executionResult, [
+      { role: 'system', content: `Historial reciente del chat en ${chatLanguage}:` },
+      ...historyMessages,
+      { role: 'user', content: message },
+    ]);
+
+    // 7. Update Session History
+    // We append the new exchange to the messages array
+    const newMessage = {
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString(),
+    };
+    
+    const newReply = {
+      role: 'assistant',
+      content: reply,
+      timestamp: new Date().toISOString(),
+      intent: detected.intent,
+    };
+
+    await prisma.chatSession.update({
+      where: { sessionId: currentSessionId },
+      data: {
+        messages: [...existingMessages, newMessage, newReply],
+        lastActivityAt: new Date(),
+      },
+    });
+
+    // 8. Return Response (JSON or SSE streaming)
+    const accept = req.headers.get('accept') || '';
+
+    if (accept.includes('text/event-stream')) {
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          const payload = JSON.stringify({
+            reply,
+            sessionId: currentSessionId,
+            intent: detected.intent,
+          });
+          controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
+          controller.close();
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+        },
+      });
+    }
+
     return NextResponse.json({
       reply,
       sessionId: currentSessionId,

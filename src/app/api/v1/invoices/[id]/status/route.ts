@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { invoicesService } from '@/lib/services/invoices.service';
 import { Role, InvoiceStatus } from '@prisma/client';
+import prisma from '@/lib/db';
+import { NotificationTriggers } from '@/lib/services/notifications/triggers';
 import { z } from 'zod';
 
 const ALLOWED_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING];
@@ -49,11 +51,35 @@ export async function PATCH(
     }
 
     try {
+      const existing = await prisma.invoice.findUnique({ where: { id: params.id } });
+      if (!existing) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'NOT_FOUND',
+              message: 'Factura no encontrada',
+            },
+          },
+          { status: 404 },
+        );
+      }
+
+      const previousStatus = existing.status as InvoiceStatus;
+
       const invoice = await invoicesService.changeStatus(
         params.id,
         validation.data.status,
         user.userId,
       );
+
+      Promise.resolve(
+        NotificationTriggers.handleInvoiceStatusChange(
+          invoice.id,
+          previousStatus,
+          invoice.status as InvoiceStatus,
+        ),
+      ).catch((e) => console.error('[NOTIFICATION_STATUS_CHANGE]', e));
 
       return NextResponse.json({ success: true, data: invoice });
     } catch (error: any) {
@@ -99,4 +125,3 @@ export async function PATCH(
     );
   }
 }
-

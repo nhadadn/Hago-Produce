@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const detected = analyzeIntent(body.message, language);
+    const detected = await analyzeIntent(body.message, language);
     const executionResult = await executeQuery(detected, language, {
       userId: user.userId,
       customerId: user.customerId,

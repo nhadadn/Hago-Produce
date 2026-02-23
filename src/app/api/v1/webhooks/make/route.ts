@@ -82,6 +82,16 @@ const productPriceEventDataSchema = productPriceSchema.extend({
   id: z.string().uuid().optional(),
 });
 
+const makePriceFromNamesSchema = z.object({
+  product_name: z.string(),
+  supplier_name: z.string(),
+  cost_price: z.number().nonnegative(),
+  sell_price: z.number().nonnegative().optional(),
+  currency: z.string().default('CAD'),
+  effective_date: z.string().optional(),
+  source: z.string().optional(),
+});
+
 const invoiceCreateEventDataSchema = createInvoiceSchema;
 
 const invoiceUpdateEventDataSchema = updateInvoiceSchema.extend({
@@ -296,58 +306,124 @@ async function processCustomerEvent(eventType: z.infer<typeof eventTypeSchema>, 
 }
 
 async function processPriceEvent(eventType: z.infer<typeof eventTypeSchema>, data: unknown) {
-  const parsed = productPriceEventDataSchema.parse(data);
+  const parsedStandard = productPriceEventDataSchema.safeParse(data);
 
-  if (eventType === 'price.created') {
-    await prisma.$transaction(async (tx) => {
-      if (parsed.isCurrent) {
-        await tx.productPrice.updateMany({
-          where: {
+  if (parsedStandard.success) {
+    const parsed = parsedStandard.data;
+
+    if (eventType === 'price.created') {
+      await prisma.$transaction(async (tx) => {
+        if (parsed.isCurrent) {
+          await tx.productPrice.updateMany({
+            where: {
+              productId: parsed.productId,
+              supplierId: parsed.supplierId,
+              isCurrent: true,
+            },
+            data: {
+              isCurrent: false,
+            },
+          });
+        }
+
+        await tx.productPrice.create({
+          data: {
+            ...(parsed.id ? { id: parsed.id } : {}),
             productId: parsed.productId,
             supplierId: parsed.supplierId,
-            isCurrent: true,
-          },
-          data: {
-            isCurrent: false,
+            costPrice: parsed.costPrice,
+            sellPrice: parsed.sellPrice,
+            currency: parsed.currency,
+            effectiveDate: parsed.effectiveDate,
+            isCurrent: parsed.isCurrent,
+            source: parsed.source ?? 'make_automation',
           },
         });
-      }
-
-      await tx.productPrice.create({
-        data: {
-          ...(parsed.id ? { id: parsed.id } : {}),
-          productId: parsed.productId,
-          supplierId: parsed.supplierId,
-          costPrice: parsed.costPrice,
-          sellPrice: parsed.sellPrice,
-          currency: parsed.currency,
-          effectiveDate: parsed.effectiveDate,
-          isCurrent: parsed.isCurrent,
-          source: parsed.source ?? 'make_automation',
-        },
       });
+
+      return { action: 'created' };
+    }
+
+    if (!parsed.id) {
+      throw new Error('Para price.updated se requiere id del registro de precio.');
+    }
+
+    await prisma.productPrice.update({
+      where: { id: parsed.id },
+      data: {
+        costPrice: parsed.costPrice,
+        sellPrice: parsed.sellPrice,
+        currency: parsed.currency,
+        effectiveDate: parsed.effectiveDate,
+        isCurrent: parsed.isCurrent,
+        source: parsed.source ?? 'make_automation',
+      },
     });
 
-    return { action: 'created' };
+    return { action: 'updated' };
   }
 
-  if (!parsed.id) {
-    throw new Error('Para price.updated se requiere id del registro de precio.');
-  }
+  const makeParsed = makePriceFromNamesSchema.parse(data);
 
-  await prisma.productPrice.update({
-    where: { id: parsed.id },
-    data: {
-      costPrice: parsed.costPrice,
-      sellPrice: parsed.sellPrice,
-      currency: parsed.currency,
-      effectiveDate: parsed.effectiveDate,
-      isCurrent: parsed.isCurrent,
-      source: parsed.source ?? 'make_automation',
+  const product = await prisma.product.findFirst({
+    where: {
+      OR: [
+        { name: { equals: makeParsed.product_name, mode: 'insensitive' } },
+        { nameEs: { equals: makeParsed.product_name, mode: 'insensitive' } },
+      ],
     },
   });
 
-  return { action: 'updated' };
+  if (!product) {
+    throw new Error('Producto no encontrado para el nombre proporcionado.');
+  }
+
+  let supplier = await prisma.supplier.findUnique({
+    where: { name: makeParsed.supplier_name },
+  });
+
+  if (!supplier) {
+    supplier = await prisma.supplier.create({
+      data: {
+        name: makeParsed.supplier_name,
+        isActive: true,
+      },
+    });
+  }
+
+  const effectiveDate = makeParsed.effective_date
+    ? new Date(makeParsed.effective_date)
+    : new Date();
+
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.productPrice.updateMany({
+      where: {
+        productId: product.id,
+        supplierId: supplier!.id,
+        isCurrent: true,
+      },
+      data: {
+        isCurrent: false,
+      },
+    });
+
+    await tx.productPrice.create({
+      data: {
+        productId: product.id,
+        supplierId: supplier!.id,
+        costPrice: makeParsed.cost_price,
+        sellPrice: makeParsed.sell_price,
+        currency: makeParsed.currency || 'CAD',
+        effectiveDate,
+        isCurrent: true,
+        source: makeParsed.source ?? 'make_automation',
+      },
+    });
+
+    return { action: 'created' as const };
+  });
+
+  return result;
 }
 
 async function processInvoiceEvent(eventType: z.infer<typeof eventTypeSchema>, data: unknown) {
@@ -389,7 +465,7 @@ async function processEvent(eventType: z.infer<typeof eventTypeSchema>, data: un
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = req.headers.get('x-make-api-key');
+  const apiKey = req.headers.get('x-make-api-key') ?? req.headers.get('x-api-key');
 
   if (!apiKey || apiKey !== process.env.MAKE_WEBHOOK_API_KEY) {
     return unauthorizedResponse();
@@ -414,7 +490,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = parsedPayload.data;
-  const idempotencyKey = body.idempotencyKey ?? req.headers.get('x-make-idempotency-key');
+  const idempotencyKey =
+    body.idempotencyKey ??
+    req.headers.get('x-make-idempotency-key') ??
+    req.headers.get('x-idempotency-key');
 
   if (idempotencyKey) {
     const cached = await findCachedResponse('make', idempotencyKey);
@@ -470,4 +549,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(responseBody, { status: httpStatus });
 }
-

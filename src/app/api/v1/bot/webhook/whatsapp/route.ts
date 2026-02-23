@@ -11,44 +11,85 @@ import prisma from '@/lib/db';
  */
 export async function POST(req: NextRequest) {
   try {
-    // Validar firma del webhook de Twilio
     const signature = req.headers.get('x-twilio-signature');
     const url = req.url;
+    // Twilio webhook validation requires the raw body and the exact URL
+    // Next.js req.text() consumes the body, so we need to clone it if we use it later,
+    // but here we use it immediately for validation and parsing.
     const body = await req.text();
     
-    if (!whatsAppService.validateWebhookSignature(
-      signature,
-      url,
-      body,
-      process.env.TWILIO_AUTH_TOKEN!
-    )) {
-      console.error('[WHATSAPP_WEBHOOK] Firma inválida');
-      return NextResponse.json(
-        { success: false, error: { code: 'INVALID_SIGNATURE' } },
-        { status: 401 }
+    // TAREA 2: Validación de Firma en Producción
+    // En producción, es obligatorio validar la firma para asegurar que el request viene de Twilio
+    if (process.env.NODE_ENV === 'production') {
+      if (!signature || !process.env.TWILIO_AUTH_TOKEN) {
+        console.error('[WHATSAPP_WEBHOOK] Falta firma o token de autenticación en producción');
+        return NextResponse.json(
+          { error: 'Unauthorized', code: 'MISSING_SIGNATURE' },
+          { status: 401 }
+        );
+      }
+
+      const isValid = whatsAppService.validateWebhookSignature(
+        signature,
+        process.env.TWILIO_WEBHOOK_URL || url, // Use configured URL if behind proxy/load balancer
+        body,
+        process.env.TWILIO_AUTH_TOKEN
       );
+
+      if (!isValid) {
+        console.error('[WHATSAPP_WEBHOOK] Firma inválida en producción');
+        return NextResponse.json(
+          { error: 'Unauthorized', code: 'INVALID_SIGNATURE' },
+          { status: 401 }
+        );
+      }
+    } else {
+       // En desarrollo, logueamos si la firma es inválida pero permitimos el paso (útil para testing con Postman/ngrok)
+       if (signature && process.env.TWILIO_AUTH_TOKEN) {
+         const isValid = whatsAppService.validateWebhookSignature(
+           signature,
+           url,
+           body,
+           process.env.TWILIO_AUTH_TOKEN
+         );
+         if (!isValid) {
+           console.warn('[WHATSAPP_WEBHOOK_DEV] Firma inválida (permitido en desarrollo)');
+         }
+       }
     }
 
-    // Parsear mensaje de WhatsApp
-    const messageData = whatsAppService.parseWebhookBody(body);
+    // Parsear mensaje de WhatsApp usando helper que maneja x-www-form-urlencoded
+    // El body de Twilio viene como form-urlencoded string
+    const params = new URLSearchParams(body);
+    const messageData = {
+      from: params.get('From'),
+      to: params.get('To'),
+      body: params.get('Body'),
+      messageSid: params.get('MessageSid'),
+      numMedia: params.get('NumMedia'),
+    };
     
-    if (!messageData.from || !messageData.message) {
+    if (!messageData.from || !messageData.body) {
       console.error('[WHATSAPP_WEBHOOK] Datos del mensaje incompletos');
       return NextResponse.json(
         { success: false, error: { code: 'INVALID_DATA' } },
         { status: 400 }
       );
     }
+    
+    // Normalizar datos para uso interno
+    const fromNumber = messageData.from.replace('whatsapp:', '');
+    const messageText = messageData.body;
 
     // Verificar rate limiting por número de teléfono
-    if (isRateLimited('whatsapp', messageData.from)) {
-      console.warn(`[WHATSAPP_RATE_LIMIT] Usuario ${messageData.from} excedió el límite`);
-      const rateLimitResponse = createRateLimitResponse('whatsapp', messageData.from, 'es');
+    if (isRateLimited('whatsapp', fromNumber)) {
+      console.warn(`[WHATSAPP_RATE_LIMIT] Usuario ${fromNumber} excedió el límite`);
+      const rateLimitResponse = createRateLimitResponse('whatsapp', fromNumber, 'es');
       
       // Enviar mensaje de rate limit al usuario
       try {
         await whatsAppService.sendMessage(
-          messageData.from,
+          messageData.from!,
           rateLimitResponse.error.message
         );
       } catch (sendError) {
@@ -67,9 +108,9 @@ export async function POST(req: NextRequest) {
       messageRecord = await prisma.message.create({
         data: {
           platform: 'whatsapp',
-          platformUserId: messageData.from,
+          platformUserId: fromNumber,
           platformMessageId: messageData.messageSid,
-          message: messageData.message,
+          message: messageText!,
           status: 'received',
         },
       });
@@ -84,7 +125,7 @@ export async function POST(req: NextRequest) {
 
     try {
       // Detectar si es un comando
-      const commandInfo = commandHandler.isCommand(messageData.message);
+      const commandInfo = commandHandler.isCommand(messageText!);
       
       if (commandInfo.isCommand && commandInfo.command) {
         // Manejar comando
@@ -100,7 +141,7 @@ export async function POST(req: NextRequest) {
         // Usar el servicio de consultas del bot para procesar el mensaje
         const botQueryService = new BotQueryService();
         const queryResult = await botQueryService.executeQuery({
-          query: messageData.message,
+          query: messageText!,
           language: 'es',
         });
 
@@ -117,7 +158,7 @@ export async function POST(req: NextRequest) {
 
     // Enviar respuesta al usuario
     try {
-      await whatsAppService.sendMessage(messageData.from, response);
+      await whatsAppService.sendMessage(messageData.from!, response);
       
       // Actualizar el registro del mensaje con la respuesta
       if (messageRecord) {
@@ -154,7 +195,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`[WHATSAPP_WEBHOOK] Mensaje procesado exitosamente para ${messageData.from}`);
+    console.log(`[WHATSAPP_WEBHOOK] Mensaje procesado exitosamente para ${fromNumber}`);
     return NextResponse.json({ success: true });
 
   } catch (error) {

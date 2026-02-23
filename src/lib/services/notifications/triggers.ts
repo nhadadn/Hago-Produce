@@ -1,6 +1,8 @@
 import prisma from '@/lib/db';
 import { InvoiceStatus } from '@prisma/client';
 import { NotificationsService } from '@/lib/services/notifications/service';
+import { sendWhatsAppMessage } from '@/lib/services/notifications/twilio';
+import { whatsAppService } from '@/lib/services/bot/whatsapp.service';
 
 export const NotificationTriggers = {
   async handleInvoiceStatusChange(
@@ -8,24 +10,64 @@ export const NotificationTriggers = {
     previousStatus: InvoiceStatus,
     newStatus: InvoiceStatus,
   ): Promise<void> {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
       select: {
         id: true,
+        number: true,
+        total: true,
         customerId: true,
+        customer: { select: { name: true, phone: true, email: true } },
       },
     });
 
-    if (!invoice) {
-      return;
-    }
+    if (!invoice) return;
 
-    await NotificationsService.triggerStatusChange(
-      invoice.id,
-      invoice.customerId,
-      previousStatus,
-      newStatus,
-    );
+    const recent = await prisma.auditLog.findMany({
+      where: {
+        entityType: 'notification',
+        entityId: invoice.id,
+        createdAt: { gte: oneHourAgo },
+      },
+      take: 1,
+    });
+
+    if (recent.length === 0 && invoice.customer?.phone) {
+      try {
+        const to = `whatsapp:${whatsAppService.formatWhatsAppNumber(invoice.customer.phone)}`;
+        const total = Number(invoice.total).toFixed(2);
+        const text = `Hola ${invoice.customer.name || ''}, tu factura ${invoice.number} ha cambiado a estado ${newStatus}. Total: ${total} CAD.`.trim();
+        await sendWhatsAppMessage(to, text);
+
+        await prisma.auditLog.create({
+          data: {
+            userId: null,
+            action: 'NOTIFICATION_SENT',
+            entityType: 'notification',
+            entityId: invoice.id,
+            changes: { trigger: 'status_change', channel: 'whatsapp', to },
+            ipAddress: null,
+          },
+        });
+      } catch (e) {
+        await NotificationsService.triggerStatusChange(
+          invoice.id,
+          invoice.customerId,
+          previousStatus,
+          newStatus,
+        );
+      }
+    } else {
+      await NotificationsService.triggerStatusChange(
+        invoice.id,
+        invoice.customerId,
+        previousStatus,
+        newStatus,
+      );
+    }
   },
 
   async handleDueDateNotification(): Promise<void> {
@@ -97,4 +139,3 @@ export const NotificationTriggers = {
     }
   },
 };
-

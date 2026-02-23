@@ -55,23 +55,22 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Formatea el número de teléfono para WhatsApp
-   */
-  private formatWhatsAppNumber(number: string): string {
-    // Remover espacios y caracteres especiales
+  formatWhatsAppNumber(number: string): string {
     let cleaned = number.replace(/[\s\-\(\)]/g, '');
-    
-    // Si no tiene código de país, asumir México (+52)
-    if (!cleaned.startsWith('+')) {
-      if (cleaned.startsWith('52')) {
-        cleaned = `+${cleaned}`;
-      } else {
-        cleaned = `+52${cleaned}`;
-      }
+    if (cleaned.startsWith('+')) {
+      return cleaned;
     }
-    
-    return cleaned;
+    const digitsOnly = cleaned.replace(/\D/g, '');
+    if (digitsOnly.length < 10) {
+      throw new Error('Número inválido: mínimo 10 dígitos');
+    }
+    if (digitsOnly.startsWith('1')) {
+      return `+${digitsOnly}`;
+    }
+    if (digitsOnly.length === 10) {
+      return `+1${digitsOnly}`;
+    }
+    return `+${digitsOnly}`;
   }
 
   /**

@@ -32,7 +32,7 @@ function cleanupRateLimitStore(key: string): void {
  * Verifica si un usuario está rate limited
  */
 export function isRateLimited(
-  platform: 'whatsapp' | 'telegram',
+  platform: 'whatsapp' | 'telegram' | 'chat_api',
   userId: string,
   rateLimit: number = DEFAULT_RATE_LIMIT
 ): boolean {
@@ -58,7 +58,7 @@ export function isRateLimited(
  * Calcula Retry-After header en segundos
  */
 export function getRetryAfterSeconds(
-  platform: 'whatsapp' | 'telegram',
+  platform: 'whatsapp' | 'telegram' | 'chat_api',
   userId: string
 ): number {
   const key = `${platform}:${userId}`;
@@ -74,7 +74,7 @@ export function getRetryAfterSeconds(
  * Obtiene estadísticas de rate limiting para un usuario
  */
 export function getRateLimitStats(
-  platform: 'whatsapp' | 'telegram',
+  platform: 'whatsapp' | 'telegram' | 'chat_api',
   userId: string
 ): {
   currentCount: number;
@@ -116,7 +116,7 @@ export function clearRateLimitStore(): void {
  * Respuesta de rate limit excedido
  */
 export function createRateLimitResponse(
-  platform: 'whatsapp' | 'telegram',
+  platform: 'whatsapp' | 'telegram' | 'chat_api',
   userId: string,
   language: string = 'es'
 ): {

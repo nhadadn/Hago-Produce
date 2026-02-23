@@ -63,6 +63,12 @@ Para la generación de los siguientes prompts (Sprint 2 en adelante), DEBES segu
    - *Nivel 2 (Conexión):* Auth exitosa y ping.
    - *Nivel 3 (Negocio):* Flujo completo con transformación de datos.
 
+### D. Automatización y Orquestación de Flujos
+✅ **REQUERIMIENTO CRÍTICO:** El Agente Orquestador debe entender y desarrollar las automatizaciones necesarias (internas o externas) para la operatividad total de los chatbots.
+   - *Make.com (Integromat):* Diseñar y documentar escenarios para orquestar flujos complejos (ej: "Nuevo Pedido en Chat" -> "Webhook Make" -> "Validar Stock" -> "Notificar Almacén").
+   - *Internal Automation:* Jobs programados (Cron) para limpieza de sesiones, reintento de webhooks fallidos.
+   - *External Triggers:* Configuración explícita de webhooks en proveedores (Meta, Stripe) para cerrar el ciclo de eventos.
+
 ## 4. 🎯 OBJETIVOS DEL SPRINT 2 (RECALIBRADO)
 
 Tu tarea es generar el plan de ejecución para el **Sprint 2: Integraciones Externas & Lógica de Negocio**.
@@ -71,7 +77,7 @@ Tu tarea es generar el plan de ejecución para el **Sprint 2: Integraciones Exte
 1.  **Hardening del Chat:** Resolver GAP-01 (Tests) y GAP-03 (Rate Limit) inmediatamente.
 2.  **WhatsApp Business API:** Implementación real de webhooks (Recepción -> Validación -> Proceso -> Respuesta).
 3.  **RAG (Retrieval Augmented Generation):** Conectar el chat con la base de datos de productos/inventario real (no mocks).
-4.  **Make.com / Webhooks:** Sincronización bidireccional de precios/stock.
+4.  **Make.com / Webhooks:** Sincronización bidireccional de precios/stock y orquestación de flujos de negocio.
 
 ## 5. 📝 INSTRUCCIÓN DE SALIDA
 
@@ -82,7 +88,7 @@ Basado en lo anterior, genera los siguientes entregables:
    - *Prompt 2.1:* Hardening & Security (Cierre de Gaps Sprint 1).
    - *Prompt 2.2:* Infraestructura de Webhooks (WhatsApp + Meta Verify).
    - *Prompt 2.3:* Motor de Inteligencia (RAG Simple para consulta de inventario).
-   - *Prompt 2.4:* Integración Transaccional (Crear pedido desde Chat).
+   - *Prompt 2.4:* Integración Transaccional y Automatización (Make.com + Flujos Internos).
 
 ---
 **Comando de Ejecución:**

@@ -1,6 +1,14 @@
 export type ChatLanguage = 'es' | 'en';
 
-export type ChatIntent = 'price_lookup' | 'best_supplier' | 'invoice_status' | 'customer_balance';
+export type ChatIntent =
+  | 'price_lookup'
+  | 'best_supplier'
+  | 'invoice_status'
+  | 'customer_balance'
+  | 'product_info'
+  | 'inventory_summary'
+  | 'create_order'
+  | 'overdue_invoices';
 
 export interface ChatRequestPayload {
   message: string;

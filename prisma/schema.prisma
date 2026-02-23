@@ -29,6 +29,7 @@ model User {
 
   invoiceNotes InvoiceNote[]
   notifications Notification[]
+  chatSessions ChatSession[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -291,4 +292,21 @@ model ReportCache {
   @@index([reportType])
   @@index([expiresAt])
   @@index([reportType, expiresAt])
+}
+
+model ChatSession {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  sessionId      String    @unique @map("session_id")
+  messages       Json[]    @default([])
+  context        Json?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  lastActivityAt DateTime  @default(now()) @map("last_activity_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("chat_sessions")
+  @@index([userId])
+  @@index([lastActivityAt])
 }

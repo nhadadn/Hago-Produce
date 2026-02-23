@@ -22,10 +22,27 @@ jest.mock('@/lib/services/chat/openai-client', () => ({
   formatResponse: jest.fn(),
 }));
 
+jest.mock('@/lib/db', () => ({
+  __esModule: true,
+  default: {
+    chatSession: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({ sessionId: 'existing-session', messages: [] }),
+      update: jest.fn().mockResolvedValue({}),
+    },
+  },
+}));
+
+jest.mock('@/lib/utils/rate-limit', () => ({
+  isRateLimited: jest.fn(() => false),
+  createRateLimitResponse: jest.requireActual('@/lib/utils/rate-limit').createRateLimitResponse,
+}));
+
 import { getAuthenticatedUser } from '@/lib/auth/middleware';
 import { analyzeIntent } from '@/lib/services/chat/intents';
 import { executeQuery } from '@/lib/services/chat/query-executor';
 import { formatResponse } from '@/lib/services/chat/openai-client';
+import { isRateLimited } from '@/lib/utils/rate-limit';
 
 describe('POST /api/chat', () => {
   beforeEach(() => {
@@ -114,5 +131,21 @@ describe('POST /api/chat', () => {
     await POST(req);
 
     expect(analyzeIntent).toHaveBeenCalledWith('Hi', 'en');
+  });
+
+  it('returns 429 when rate limit is exceeded', async () => {
+    (getAuthenticatedUser as jest.Mock).mockResolvedValue({ userId: 'user-rl-1' });
+    (isRateLimited as jest.Mock).mockReturnValueOnce(true);
+
+    const req = new NextRequest('http://localhost/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message: 'Hola' }),
+    });
+
+    const res = await POST(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(429);
+    expect(json.code || json.error?.code).toBe('RATE_LIMITED');
   });
 });

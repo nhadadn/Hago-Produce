@@ -1,0 +1,35 @@
+{
+  "name": "HAGO Produce - Prices to Webhook V2",
+  "flow": [
+    { "id": 1, "module": "google-drive:watchFilesInAFolder" },
+    { "id": 48, "module": "builtin:BasicFeeder" },
+    { "id": 15, "module": "google-drive:getAFile" },
+    { "id": 30, "module": "tools:setVariable" },
+    { "id": 47, "module": "http:makeRequest" },
+    { "id": 5, "module": "pdfco:convert" },
+    { "id": 18, "module": "builtin:BasicFeeder" },
+    { "id": 6, "module": "openai-gpt:chatCompletions" },
+    { "id": 23, "module": "json:parse" },
+    { "id": 17, "module": "builtin:BasicFeeder" },
+    {
+      "id": 50,
+      "module": "http:makeRequest",
+      "version": 1,
+      "parameters": {
+        "method": "post",
+        "url": "{{APP_URL}}/api/v1/webhooks/make",
+        "headers": {
+          "Content-Type": "application/json",
+          "X-API-Key": "{{MAKE_WEBHOOK_API_KEY}}",
+          "X-Idempotency-Key": "{{30.filename}}_{{17.product_name}}_{{17.supplier_name}}_{{17.effective_date}}"
+        },
+        "body": "={\"eventType\":\"price.updated\",\"data\":{\"product_name\":{{17.product_name}},\"supplier_name\":{{17.supplier_name}},\"cost_price\":{{17.cost_price}},\"sell_price\":{{17.sell_price}},\"currency\":{{17.currency}},\"effective_date\":{{17.effective_date}},\"source\":\"make_automation\"},\"timestamp\":\"{{now}}\",\"idempotencyKey\":\"{{30.filename}}_{{17.product_name}}_{{17.supplier_name}}_{{17.effective_date}}\"}"
+      }
+    }
+  ],
+  "zone": "us2.make.com",
+  "notes": [
+    "Módulo 39 (google-sheets:addMultipleRows) eliminado y reemplazado por módulo 50 HTTP hacia /api/v1/webhooks/make"
+  ]
+}
+
