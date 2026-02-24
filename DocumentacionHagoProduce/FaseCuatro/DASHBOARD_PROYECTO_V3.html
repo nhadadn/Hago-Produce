@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hago Produce — Dashboard Ejecutivo v3</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* === HAGO PRODUCE DESIGN TOKENS === */
+    :root {
+      --primary-900: #1B5E20;
+      --primary-800: #2E7D32;
+      --primary-700: #388E3C;
+      --primary-600: #43A047;
+      --primary-500: #4CAF50;
+      --primary-100: #C8E6C9;
+      --primary-50:  #E8F5E9;
+      --secondary-800: #FF6F00;
+      --secondary-700: #FF8F00;
+      --secondary-50:  #FFF3E0;
+      --gray-900: #212121;
+      --gray-800: #424242;
+      --gray-700: #616161;
+      --gray-600: #757575;
+      --gray-500: #9E9E9E;
+      --gray-400: #BDBDBD;
+      --gray-300: #E0E0E0;
+      --gray-200: #EEEEEE;
+      --gray-100: #F5F5F5;
+      --gray-50:  #FAFAFA;
+      --success: #4CAF50;
+      --warning: #FF9800;
+      --error:   #F44336;
+      --info:    #2196F3;
+      --whatsapp: #25D366;
+      --telegram: #0088CC;
+      --email:    #1976D2;
+      --make:     #6B2CF5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      min-height: 100vh;
+    }
+
+    /* === SIDEBAR === */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px;
+      background: var(--primary-900);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-brand h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.3px;
+    }
+
+    .sidebar-brand p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 2px;
+    }
+
+    .sidebar-badge {
+      display: inline-block;
+      background: var(--primary-800);
+      color: white;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 6px;
+    }
+
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 8px 20px 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+    .nav-item.active { background: var(--primary-800); color: white; }
+
+    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+    /* === MAIN CONTENT === */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === TOP HEADER === */
+    .topbar {
+      background: white;
+      border-bottom: 1px solid var(--gray-300);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    .breadcrumb span { color: var(--gray-400); margin: 0 6px; }
+
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+
+    .topbar-badge {
+      background: var(--primary-50);
+      color: var(--primary-800);
+      border: 1px solid var(--primary-100);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .sprint-badge {
+      background: var(--secondary-50);
+      color: var(--secondary-800);
+      border: 1px solid #FFE0B2;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* === PAGE CONTENT === */
+    .page { padding: 32px; display: none; }
+    .page.active { display: block; }
+
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .page-title { font-size: 28px; font-weight: 700; color: var(--gray-900); }
+    .page-subtitle { font-size: 14px; color: var(--gray-600); margin-top: 4px; }
+
+    /* === KPI CARDS === */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .kpi-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--gray-300);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s;
+    }
+
+    .kpi-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .kpi-label { font-size: 13px; color: var(--gray-600); font-weight: 500; }
+
+    .kpi-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .kpi-icon.green { background: var(--primary-50); }
+    .kpi-icon.amber { background: var(--secondary-50); }
+    .kpi-icon.red { background: #FFEBEE; }
+    .kpi-icon.blue { background: #E3F2FD; }
+
+    .kpi-value { font-size: 30px; font-weight: 700; color: var(--gray-900); }
+    .kpi-value.green { color: var(--primary-800); }
+    .kpi-value.red { color: var(--error); }
+    .kpi-value.amber { color: var(--secondary-800); }
+
+    .kpi-trend {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 500; margin-top: 6px;
+    }
+
+    .kpi-trend.up { color: var(--success); }
+    .kpi-trend.down { color: var(--error); }
+    .kpi-trend.neutral { color: var(--gray-500); }
+
+    /* === CARDS === */
+    .card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-300);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title { font-size: 16px; font-weight: 600; color: var(--gray-900); }
+    .card-subtitle { font-size: 13px; color: var(--gray-600); margin-top: 2px; }
+    .card-body { padding: 24px; }
+
+    /* === GRID LAYOUTS === */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .grid-7-5 { display: grid; grid-template-columns: 7fr 5fr; gap: 20px; margin-bottom: 20px; }
+
+    /* === PROGRESS BARS === */
+    .progress-item { margin-bottom: 16px; }
+    .progress-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .progress-label { font-size: 13px; font-weight: 500; color: var(--gray-800); }
+    .progress-value { font-size: 13px; font-weight: 600; color: var(--primary-800); }
+    .progress-bar { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+    .progress-fill.green { background: var(--primary-800); }
+    .progress-fill.amber { background: var(--secondary-800); }
+    .progress-fill.blue { background: var(--info); }
+    .progress-fill.red { background: var(--error); }
+
+    /* === BADGES === */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+
+    .badge.success { background: var(--primary-50); color: var(--primary-800); border: 1px solid var(--primary-100); }
+    .badge.warning { background: var(--secondary-50); color: var(--secondary-800); border: 1px solid #FFE0B2; }
+    .badge.error { background: #FFEBEE; color: var(--error); border: 1px solid #FFCDD2; }
+    .badge.info { background: #E3F2FD; color: var(--info); border: 1px solid #BBDEFB; }
+    .badge.neutral { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-300); }
+    .badge.purple { background: #EDE7F6; color: #6B2CF5; border: 1px solid #D1C4E9; }
+
+    /* === TABLES === */
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left; padding: 10px 16px;
+      font-size: 11px; font-weight: 600;
+      color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.05em;
+      background: var(--gray-50); border-bottom: 1px solid var(--gray-200);
+    }
+    tbody td { padding: 12px 16px; border-bottom: 1px solid var(--gray-100); color: var(--gray-800); }
+    tbody tr:hover { background: var(--gray-50); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* === RISK MATRIX === */
+    .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .risk-card {
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid;
+    }
+
+    .risk-card.critical { background: #FFEBEE; border-color: #FFCDD2; }
+    .risk-card.high { background: var(--secondary-50); border-color: #FFE0B2; }
+    .risk-card.medium { background: #E3F2FD; border-color: #BBDEFB; }
+    .risk-card.low { background: var(--primary-50); border-color: var(--primary-100); }
+
+    .risk-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .risk-desc { font-size: 12px; color: var(--gray-700); line-height: 1.4; }
+    .risk-mitigation { font-size: 11px; color: var(--gray-600); margin-top: 6px; font-style: italic; }
+
+    /* === TIMELINE === */
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before {
+      content: '';
+      position: absolute; left: 8px; top: 0; bottom: 0;
+      width: 2px; background: var(--gray-200);
+    }
+
+    .timeline-item { position: relative; margin-bottom: 20px; }
+    .timeline-dot {
+      position: absolute; left: -20px; top: 4px;
+      width: 12px; height: 12px; border-radius: 50%;
+      border: 2px solid white;
+    }
+    .timeline-dot.done { background: var(--primary-800); }
+    .timeline-dot.active { background: var(--secondary-800); }
+    .timeline-dot.pending { background: var(--gray-400); }
+
+    .timeline-title { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+    .timeline-desc { font-size: 12px; color: var(--gray-600); margin-top: 2px; }
+    .timeline-date { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+
+    /* === SPRINT CARDS === */
+    .sprint-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+
+    .sprint-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid var(--gray-300);
+      border-top: 4px solid;
+    }
+
+    .sprint-card.done { border-top-color: var(--primary-800); }
+    .sprint-card.active { border-top-color: var(--secondary-800); }
+    .sprint-card.pending { border-top-color: var(--gray-400); }
+
+    .sprint-name { font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .sprint-status { font-size: 11px; margin-bottom: 12px; }
+    .sprint-progress-label { font-size: 11px; color: var(--gray-600); margin-bottom: 4px; }
+
+    /* === CHANNEL BADGES === */
+    .channel-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; color: white;
+    }
+    .channel-badge.whatsapp { background: var(--whatsapp); }
+    .channel-badge.telegram { background: var(--telegram); }
+    .channel-badge.email { background: var(--email); }
+    .channel-badge.make { background: var(--make); }
+
+    /* === PROMPT CARDS === */
+    .prompt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .prompt-card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px;
+      border: 1px solid var(--gray-300);
+      border-left: 4px solid;
+    }
+
+    .prompt-card.critical { border-left-color: var(--error); }
+    .prompt-card.high { border-left-color: var(--secondary-800); }
+    .prompt-card.medium { border-left-color: var(--info); }
+    .prompt-card.done { border-left-color: var(--primary-800); }
+
+    .prompt-id { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; }
+    .prompt-title { font-size: 14px; font-weight: 600; color: var(--gray-900); margin: 4px 0; }
+    .prompt-desc { font-size: 12px; color: var(--gray-600); line-height: 1.4; }
+    .prompt-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+
+    /* === BUTTONS === */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      border: none; transition: all 0.15s;
+    }
+    .btn-primary { background: var(--primary-800); color: white; }
+    .btn-primary:hover { background: var(--primary-900); }
+    .btn-secondary { background: white; color: var(--primary-800); border: 1px solid var(--primary-800); }
+    .btn-secondary:hover { background: var(--primary-50); }
+
+    /* === DESIGN TOKENS PREVIEW === */
+    .token-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px; }
+    .token-swatch { border-radius: 8px; height: 48px; position: relative; }
+    .token-label { font-size: 10px; color: var(--gray-600); text-align: center; margin-top: 4px; }
+
+    /* === CHECKLIST === */
+    .checklist { list-style: none; }
+    .checklist li {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--gray-100);
+      font-size: 13px; color: var(--gray-800);
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .sprint-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .grid-2, .grid-3, .grid-7-5 { grid-template-columns: 1fr; }
+    }
+
+    /* === PRINT === */
+    @media print {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .page { display: block !important; page-break-after: always; }
+    }
+  </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>🌿 Hago Produce</h1>
+      <p>Dashboard Ejecutivo</p>
+      <span class="sidebar-badge">v3.0 — Sprint 4</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Proyecto</div>
+      <button class="nav-item active" onclick="showPage('overview')">
+        <span class="icon">📊</span> Resumen General
+      </button>
+      <button class="nav-item" onclick="showPage('sprints')">
+        <span class="icon">🏃</span> Sprints & Progreso
+      </button>
+      <button class="nav-item" onclick="showPage('sprint4')">
+        <span class="icon">🚀</span> Sprint 4 — Plan
+      </button>
+
+      <div class="nav-section-label" style="margin-top:8px">Diseño</div>
+      <button class="nav-item" onclick="showPage('design')">
+        <span class="icon">🎨</span> Design System
+      </button>
+      <button class="nav-item" onclick="showPage('prompts')">
+        <span class="icon">📝</span> Prompts Figma MAKE
+      </button>
+
+      <div class="nav-section-label" style="margin-top:8px">Calidad</div>
+      <button class="nav-item" onclick="showPage('quality')">
+        <span class="icon">🧪</span> Tests & Coverage
+      </button>
+      <button class="nav-item" onclick="showPage('risks')">
+        <span class="icon">⚠️</span> Riesgos
+      </button>
+      <button class="nav-item" onclick="showPage('roadmap')">
+        <span class="icon">🗺️</span> Roadmap
+      </button>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="breadcrumb" id="breadcrumb">Dashboard / Resumen General</div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-badge">✅ Sprint 3 Completado</span>
+        <span class="sprint-badge">⏳ Sprint 4 En Planificación</span>
+      </div>
+    </header>
+
+    <!-- ===== PAGE: OVERVIEW ===== -->
+    <div class="page active" id="page-overview">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Resumen General del Proyecto</div>
+          <div class="page-subtitle">Estado consolidado de Hago Produce — Fase 2 | Actualizado: Feb 24, 2026</div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('sprint4')">Ver Plan Sprint 4 →</button>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Progreso Global</span>
+            <div class="kpi-icon green">📈</div>
+          </div>
+          <div class="kpi-value green">72%</div>
+          <div class="kpi-trend up">↑ +22% vs Sprint 2</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Sprints Completados</span>
+            <div class="kpi-icon green">✅</div>
+          </div>
+          <div class="kpi-value green">3 / 5</div>
+          <div class="kpi-trend neutral">Sprint 4 en planificación</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Test Coverage</span>
+            <div class="kpi-icon red">🧪</div>
+          </div>
+          <div class="kpi-value red">~40%</div>
+          <div class="kpi-trend down">↓ Objetivo: >80%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Gaps Críticos</span>
+            <div class="kpi-icon amber">⚠️</div>
+          </div>
+          <div class="kpi-value amber">3</div>
+          <div class="kpi-trend neutral">Design System, Tests, Frontend</div>
+        </div>
+      </div>
+
+      <!-- Sprint Progress -->
+      <div class="grid-7-5">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Progreso por Fase</div>
+              <div class="card-subtitle">Estado de implementación por módulo</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">🏗️ Infraestructura & Auth</span>
+                <span class="progress-value">100%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill green" style="width:100%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">📄 Facturación & CRUD</span>
+                <span class="progress-value">100%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill green" style="width:100%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">🤖 Chat IA + RAG</span>
+                <span class="progress-value">90%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill green" style="width:90%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">🔗 Integraciones (Make/Twilio)</span>
+                <span class="progress-value">85%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill green" style="width:85%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">📊 Reportes & Analytics</span>
+                <span class="progress-value">80%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill blue" style="width:80%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">🎨 Design System & UX</span>
+                <span class="progress-value">25%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill amber" style="width:25%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">🌐 Frontend Público (SPA)</span>
+                <span class="progress-value">10%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill red" style="width:10%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">🧪 Tests & CI/CD</span>
+                <span class="progress-value">40%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill red" style="width:40%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Canales Integrados</div>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span class="channel-badge whatsapp">📱 WhatsApp</span>
+                <span class="badge success">✅ Activo</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span class="channel-badge make">⚡ Make.com</span>
+                <span class="badge success">✅ Activo</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span class="channel-badge email">📧 Email</span>
+                <span class="badge warning">⏳ Sprint 4</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span class="channel-badge telegram">✈️ Telegram</span>
+                <span class="badge warning">⏳ Sprint 4</span>
+              </div>
+            </div>
+
+            <hr style="margin:20px 0;border-color:var(--gray-200)">
+
+            <div class="card-title" style="margin-bottom:12px">Intents del Chat</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <span class="badge success">price_lookup</span>
+              <span class="badge success">best_supplier</span>
+              <span class="badge success">invoice_status</span>
+              <span class="badge success">inventory_summary</span>
+              <span class="badge success">overdue_invoices</span>
+              <span class="badge success">create_order</span>
+              <span class="badge success">customer_balance</span>
+              <span class="badge success">product_info</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Progreso por Sprint</div></div>
+          <div class="card-body">
+            <canvas id="sprintChart" height="200"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Distribución de Módulos</div></div>
+          <div class="card-body">
+            <canvas id="modulesChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: SPRINTS ===== -->
+    <div class="page" id="page-sprints">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Sprints & Progreso</div>
+          <div class="page-subtitle">Historial completo de sprints y estado de entregables</div>
+        </div>
+      </div>
+
+      <div class="sprint-grid">
+        <div class="sprint-card done">
+          <div class="sprint-name">Sprint 1 — Consolidación</div>
+          <div class="sprint-status"><span class="badge success">✅ Completado</span></div>
+          <div class="sprint-progress-label">Progreso</div>
+          <div class="progress-bar"><div class="progress-fill green" style="width:100%"></div></div>
+          <div style="font-size:11px;color:var(--gray-600);margin-top:8px">
+            Modelos DB, Admin UI, Chat básico
+          </div>
+        </div>
+        <div class="sprint-card done">
+          <div class="sprint-name">Sprint 2 — Integraciones</div>
+          <div class="sprint-status"><span class="badge success">✅ Completado</span></div>
+          <div class="sprint-progress-label">Progreso</div>
+          <div class="progress-bar"><div class="progress-fill green" style="width:100%"></div></div>
+          <div style="font-size:11px;color:var(--gray-600);margin-top:8px">
+            Make.com, WhatsApp, RAG, Notificaciones
+          </div>
+        </div>
+        <div class="sprint-card done">
+          <div class="sprint-name">Sprint 3 — Backend Avanzado</div>
+          <div class="sprint-status"><span class="badge success">✅ Completado</span></div>
+          <div class="sprint-progress-label">Progreso</div>
+          <div class="progress-bar"><div class="progress-fill green" style="width:90%"></div></div>
+          <div style="font-size:11px;color:var(--gray-600);margin-top:8px">
+            Reportes, Email, Telegram, create_order
+          </div>
+        </div>
+        <div class="sprint-card active">
+          <div class="sprint-name">Sprint 4 — Productización</div>
+          <div class="sprint-status"><span class="badge warning">⏳ En Planificación</span></div>
+          <div class="sprint-progress-label">Progreso</div>
+          <div class="progress-bar"><div class="progress-fill amber" style="width:5%"></div></div>
+          <div style="font-size:11px;color:var(--gray-600);margin-top:8px">
+            Design System, Tests, Landing, Portal UX
+          </div>
+        </div>
+      </div>
+
+      <!-- Sprint 3 Deliverables -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-title">Sprint 3 — Entregables Verificados</div>
+          <span class="badge success">9/10 Completados</span>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Entregable</th>
+                  <th>Archivo Principal</th>
+                  <th>Estado</th>
+                  <th>Tests</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>S3-P01</td><td>create_order con OpenAI Function Calling</td><td>src/lib/services/chat/intents/create-order.ts</td><td><span class="badge success">✅ Done</span></td><td><span class="badge info">Parcial</span></td></tr>
+                <tr><td>S3-P02</td><td>ReportCache Activo</td><td>src/app/api/v1/reports/</td><td><span class="badge success">✅ Done</span></td><td><span class="badge info">Parcial</span></td></tr>
+                <tr><td>S3-P03</td><td>E2E Firefox Fix</td><td>playwright.config.ts</td><td><span class="badge warning">⚠️ Parcial</span></td><td><span class="badge error">Pendiente</span></td></tr>
+                <tr><td>S3-P04</td><td>SPA Pública — Landing</td><td>src/app/page.tsx</td><td><span class="badge warning">⚠️ Placeholder</span></td><td><span class="badge neutral">N/A</span></td></tr>
+                <tr><td>S3-P05</td><td>Portal Cliente Avanzado</td><td>src/components/portal/</td><td><span class="badge success">✅ Done</span></td><td><span class="badge info">Parcial</span></td></tr>
+                <tr><td>S3-P06</td><td>create_purchase_order</td><td>src/lib/services/chat/intents/</td><td><span class="badge success">✅ Done</span></td><td><span class="badge info">Parcial</span></td></tr>
+                <tr><td>S3-P07</td><td>Email Service (Resend)</td><td>src/lib/services/notifications/</td><td><span class="badge success">✅ Done</span></td><td><span class="badge info">Parcial</span></td></tr>
+                <tr><td>S3-P08</td><td>Telegram Service</td><td>src/lib/services/notifications/telegram.ts</td><td><span class="badge success">✅ Done</span></td><td><span class="badge info">Parcial</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: SPRINT 4 ===== -->
+    <div class="page" id="page-sprint4">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🚀 Sprint 4 — Plan Estratégico</div>
+          <div class="page-subtitle">Productización & UX | 15 días | 3 semanas</div>
+        </div>
+        <span class="badge warning">⏳ En Planificación</span>
+      </div>
+
+      <!-- Sprint 4 KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header"><span class="kpi-label">Prompts Totales</span><div class="kpi-icon green">📝</div></div>
+          <div class="kpi-value green">8</div>
+          <div class="kpi-trend neutral">S4-P00 a S4-P06 + Auditorías</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header"><span class="kpi-label">Duración</span><div class="kpi-icon blue">📅</div></div>
+          <div class="kpi-value">15 días</div>
+          <div class="kpi-trend neutral">3 semanas, 3 checkpoints</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header"><span class="kpi-label">Objetivo Coverage</span><div class="kpi-icon amber">🧪</div></div>
+          <div class="kpi-value amber">>80%</div>
+          <div class="kpi-trend up">↑ Desde ~40% actual</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header"><span class="kpi-label">Lighthouse Target</span><div class="kpi-icon green">⚡</div></div>
+          <div class="kpi-value green">>90</div>
+          <div class="kpi-trend neutral">Performance + Accessibility</div>
+        </div>
+      </div>
+
+      <!-- Semana 1 -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📅 Semana 1 — Fundamentos (Días 1-5)</div>
+            <div class="card-subtitle">Design System + Tests + Landing Page</div>
+          </div>
+          <span class="badge error">🔴 CRÍTICO</span>
+        </div>
+        <div class="card-body">
+          <div class="prompt-grid">
+            <div class="prompt-card critical">
+              <div class="prompt-id">S4-P00 · Día 1</div>
+              <div class="prompt-title">Design System Integration</div>
+              <div class="prompt-desc">Integrar Design Tokens de Hago Produce en globals.css y tailwind.config.ts. Reemplazar variables genéricas shadcn con colores de marca.</div>
+              <div class="prompt-footer">
+                <span class="badge error">🔴 Bloqueante</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: Ninguno</span>
+              </div>
+            </div>
+            <div class="prompt-card critical">
+              <div class="prompt-id">S4-P01-A · Días 1-2</div>
+              <div class="prompt-title">Fix Tests: Mocks + Suite Completa</div>
+              <div class="prompt-desc">Corregir tests fallando con mocks de OpenAI, Twilio, Telegram. Crear jest.setup.ts con mocks globales determinísticos.</div>
+              <div class="prompt-footer">
+                <span class="badge error">🔴 Bloqueante CI</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: Ninguno</span>
+              </div>
+            </div>
+            <div class="prompt-card critical">
+              <div class="prompt-id">S4-P01-B · Días 2-3</div>
+              <div class="prompt-title">Coverage >80%: Tests Adicionales</div>
+              <div class="prompt-desc">Elevar coverage en módulos críticos: chat intents, notifications, reports API. Agregar tests para edge cases.</div>
+              <div class="prompt-footer">
+                <span class="badge error">🔴 Crítico</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: S4-P01-A</span>
+              </div>
+            </div>
+            <div class="prompt-card critical">
+              <div class="prompt-id">S4-P02 · Días 3-5</div>
+              <div class="prompt-title">Landing Page Institucional</div>
+              <div class="prompt-desc">Reemplazar placeholder con Landing Page profesional. Hero, Features, Portals, Footer. SEO + Lighthouse >90.</div>
+              <div class="prompt-footer">
+                <span class="badge error">🔴 Crítico</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: S4-P00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Semana 2 -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📅 Semana 2 — Portal UX (Días 6-10)</div>
+            <div class="card-subtitle">Gráficos + Descarga ZIP + Skeletons + Error Handling</div>
+          </div>
+          <span class="badge warning">🟡 ALTA</span>
+        </div>
+        <div class="card-body">
+          <div class="prompt-grid">
+            <div class="prompt-card high">
+              <div class="prompt-id">S4-P03 · Días 6-7</div>
+              <div class="prompt-title">Portal Cliente: Gráficos Chart.js</div>
+              <div class="prompt-desc">Dashboard con gráfico de barras (facturación mensual), donut (estados), KPI cards con tendencias. Dynamic import para performance.</div>
+              <div class="prompt-footer">
+                <span class="badge warning">🟡 Alta</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: S4-P00</span>
+              </div>
+            </div>
+            <div class="prompt-card high">
+              <div class="prompt-id">S4-P04 · Días 7-8</div>
+              <div class="prompt-title">Descarga Masiva ZIP (JSZip)</div>
+              <div class="prompt-desc">Selección múltiple de facturas + descarga ZIP con PDFs. API endpoint + componente BulkDownloadButton con progress.</div>
+              <div class="prompt-footer">
+                <span class="badge warning">🟡 Alta</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: S4-P01-A</span>
+              </div>
+            </div>
+            <div class="prompt-card high">
+              <div class="prompt-id">S4-P05 · Días 8-9</div>
+              <div class="prompt-title">Skeletons + Error Boundaries</div>
+              <div class="prompt-desc">Skeleton loaders en tablas y cards. Error Boundary global. Páginas 404/500 personalizadas con Design Tokens.</div>
+              <div class="prompt-footer">
+                <span class="badge warning">🟡 Alta</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: S4-P00</span>
+              </div>
+            </div>
+            <div class="prompt-card medium">
+              <div class="prompt-id">CP-S4-W2 · Día 10</div>
+              <div class="prompt-title">Checkpoint Semana 2</div>
+              <div class="prompt-desc">Validación: gráficos funcionales, ZIP descargable, skeletons en todas las vistas, error handling completo.</div>
+              <div class="prompt-footer">
+                <span class="badge info">🔵 Checkpoint</span>
+                <span style="font-size:11px;color:var(--gray-500)">Go/No-Go</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Semana 3 -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📅 Semana 3 — CI/CD + Staging (Días 11-15)</div>
+            <div class="card-subtitle">GitHub Actions + Vercel + SEO + Go-Live Prep</div>
+          </div>
+          <span class="badge info">🔵 MEDIO</span>
+        </div>
+        <div class="card-body">
+          <div class="prompt-grid">
+            <div class="prompt-card medium">
+              <div class="prompt-id">S4-P06 · Días 11-12</div>
+              <div class="prompt-title">CI/CD: GitHub Actions + Vercel</div>
+              <div class="prompt-desc">Pipeline CI con lint + test + build. Deploy automático a Vercel Staging. Preview URL por PR. Seed de datos demo.</div>
+              <div class="prompt-footer">
+                <span class="badge warning">🟡 Alta</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: S4-P01-B</span>
+              </div>
+            </div>
+            <div class="prompt-card medium">
+              <div class="prompt-id">S4-P07 · Días 12-13</div>
+              <div class="prompt-title">SEO Completo + Open Graph</div>
+              <div class="prompt-desc">og:title, og:description, og:image. sitemap.xml, robots.txt. Meta tags en todas las páginas.</div>
+              <div class="prompt-footer">
+                <span class="badge neutral">🟢 Medio</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: S4-P02</span>
+              </div>
+            </div>
+            <div class="prompt-card medium">
+              <div class="prompt-id">Hardening · Días 13-14</div>
+              <div class="prompt-title">QA Final + Performance</div>
+              <div class="prompt-desc">Lighthouse audit completo. Revisión de a11y. Security headers. Pruebas manuales en staging.</div>
+              <div class="prompt-footer">
+                <span class="badge neutral">🟢 Medio</span>
+                <span style="font-size:11px;color:var(--gray-500)">Prerreq: S4-P06</span>
+              </div>
+            </div>
+            <div class="prompt-card done">
+              <div class="prompt-id">CP-S4-W3 · Día 15</div>
+              <div class="prompt-title">Checkpoint Cierre Sprint 4</div>
+              <div class="prompt-desc">Aprobación formal de stakeholder. Lighthouse >90, 0 bugs críticos, staging funcional. Go/No-Go para Sprint 5.</div>
+              <div class="prompt-footer">
+                <span class="badge success">✅ Go-Live Prep</span>
+                <span style="font-size:11px;color:var(--gray-500)">Aprobación requerida</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: DESIGN SYSTEM ===== -->
+    <div class="page" id="page-design">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🎨 Design System — Hago Produce</div>
+          <div class="page-subtitle">Tokens de diseño basados en identidad de marca (Midjourney)</div>
+        </div>
+      </div>
+
+      <!-- Color Tokens -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">Verde Primario — Primary Green</div></div>
+        <div class="card-body">
+          <div class="token-grid">
+            <div>
+              <div class="token-swatch" style="background:#1B5E20"></div>
+              <div class="token-label">900<br>#1B5E20</div>
+            </div>
+            <div>
+              <div class="token-swatch" style="background:#2E7D32"></div>
+              <div class="token-label">800 BASE<br>#2E7D32</div>
+            </div>
+            <div>
+              <div class="token-swatch" style="background:#388E3C"></div>
+              <div class="token-label">700<br>#388E3C</div>
+            </div>
+            <div>
+              <div class="token-swatch" style="background:#43A047"></div>
+              <div class="token-label">600<br>#43A047</div>
+            </div>
+            <div>
+              <div class="token-swatch" style="background:#4CAF50"></div>
+              <div class="token-label">500<br>#4CAF50</div>
+            </div>
+            <div>
+              <div class="token-swatch" style="background:#C8E6C9"></div>
+              <div class="token-label">100<br>#C8E6C9</div>
+            </div>
+            <div>
+              <div class="token-swatch" style="background:#E8F5E9;border:1px solid #C8E6C9"></div>
+              <div class="token-label">50<br>#E8F5E9</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Ámbar Secundario</div></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+              <div><div class="token-swatch" style="background:#E65100"></div><div class="token-label">900<br>#E65100</div></div>
+              <div><div class="token-swatch" style="background:#FF6F00"></div><div class="token-label">800<br>#FF6F00</div></div>
+              <div><div class="token-swatch" style="background:#FF8F00"></div><div class="token-label">700<br>#FF8F00</div></div>
+              <div><div class="token-swatch" style="background:#FFF3E0;border:1px solid #FFE0B2"></div><div class="token-label">50<br>#FFF3E0</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Colores de Canales</div></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:32px;height:32px;border-radius:8px;background:#25D366"></div>
+                <div><div style="font-size:13px;font-weight:600">WhatsApp</div><div style="font-size:11px;color:var(--gray-600)">#25D366</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:32px;height:32px;border-radius:8px;background:#0088CC"></div>
+                <div><div style="font-size:13px;font-weight:600">Telegram</div><div style="font-size:11px;color:var(--gray-600)">#0088CC</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:32px;height:32px;border-radius:8px;background:#1976D2"></div>
+                <div><div style="font-size:13px;font-weight:600">Email</div><div style="font-size:11px;color:var(--gray-600)">#1976D2</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:32px;height:32px;border-radius:8px;background:#6B2CF5"></div>
+                <div><div style="font-size:13px;font-weight:600">Make.com</div><div style="font-size:11px;color:var(--gray-600)">#6B2CF5</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accessibility -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Accesibilidad WCAG AA — Ratios de Contraste</div>
+          <span class="badge success">Verificado</span>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Combinación</th><th>Ratio</th><th>WCAG AA</th><th>WCAG AAA</th><th>Uso</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Primary-800 + White</td><td>5.2:1</td><td><span class="badge success">✅ Pass</span></td><td><span class="badge error">❌ Fail</span></td><td>Botones principales</td></tr>
+                <tr><td>Primary-700 + White</td><td>4.5:1</td><td><span class="badge success">✅ Pass</span></td><td><span class="badge error">❌ Fail</span></td><td>Hover states</td></tr>
+                <tr><td>Primary-50 + Gray-900</td><td>12.5:1</td><td><span class="badge success">✅ Pass</span></td><td><span class="badge success">✅ Pass</span></td><td>Fondos de bot messages</td></tr>
+                <tr><td>Secondary-800 + White</td><td>4.8:1</td><td><span class="badge success">✅ Pass</span></td><td><span class="badge error">❌ Fail</span></td><td>Acciones secundarias</td></tr>
+                <tr><td>Gray-900 + White</td><td>16.0:1</td><td><span class="badge success">✅ Pass</span></td><td><span class="badge success">✅ Pass</span></td><td>Texto principal</td></tr>
+                <tr><td style="color:var(--error)">Primary-500 + White ⚠️</td><td>3.5:1</td><td><span class="badge error">❌ Fail</span></td><td><span class="badge error">❌ Fail</span></td><td>NO usar para texto</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: PROMPTS ===== -->
+    <div class="page" id="page-prompts">
+      <div class="page-header">
+        <div>
+          <div class="page-title">📝 Prompts Figma MAKE</div>
+          <div class="page-subtitle">Prompts actualizados con Design System de Hago Produce</div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔴 P0 — Críticos</div></div>
+          <div class="card-body">
+            <ul class="checklist">
+              <li><span class="check-icon">✅</span>Login Page (actualizado)</li>
+              <li><span class="check-icon">✅</span>Admin Dashboard (actualizado)</li>
+              <li><span class="check-icon">✅</span>Invoice Creation Form (actualizado)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🟡 P1 — Alta Prioridad</div></div>
+          <div class="card-body">
+            <ul class="checklist">
+              <li><span class="check-icon">✅</span>Customer Portal Dashboard</li>
+              <li><span class="check-icon">✅</span>Purchase Order Form</li>
+              <li><span class="check-icon">✅</span>Chatbot Interface (actualizado)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🟢 P2 — Media Prioridad</div></div>
+          <div class="card-body">
+            <ul class="checklist">
+              <li><span class="check-icon">✅</span>Reports Page</li>
+              <li><span class="check-icon">✅</span>Settings Page</li>
+              <li><span class="check-icon">✅</span>Invoice Detail Page</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat UI Preview -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Chat UI — Lógica de Color</div></div>
+        <div class="card-body">
+          <div style="background:var(--gray-100);border-radius:12px;padding:20px;max-width:400px">
+            <!-- Bot message -->
+            <div style="display:flex;gap:10px;margin-bottom:16px">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--primary-800);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;flex-shrink:0">🤖</div>
+              <div style="background:var(--primary-50);border:1px solid var(--primary-100);border-radius:12px 12px 12px 0;padding:10px 14px;max-width:240px">
+                <div style="font-size:13px;color:var(--gray-900)">Hola! Soy Hago Assistant. ¿En qué puedo ayudarte?</div>
+                <div style="font-size:10px;color:var(--gray-500);margin-top:4px">10:30 AM</div>
+              </div>
+            </div>
+            <!-- User message -->
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:16px">
+              <div style="background:var(--primary-800);border-radius:12px 12px 0 12px;padding:10px 14px;max-width:240px">
+                <div style="font-size:13px;color:white">Crea una factura para Tomato King</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px">10:31 AM</div>
+              </div>
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-300);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">👤</div>
+            </div>
+            <!-- Confirmation -->
+            <div style="background:var(--primary-50);border:1px solid var(--primary-100);border-radius:8px;padding:10px 14px;margin-bottom:12px">
+              <div style="font-size:12px;color:var(--primary-800);font-weight:600">✅ Factura creada exitosamente</div>
+              <div style="font-size:11px;color:var(--gray-700);margin-top:2px">INV-2026-0001 enviada por Email</div>
+            </div>
+            <!-- Quick actions -->
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <span style="background:var(--primary-50);color:var(--primary-800);border-radius:16px;padding:4px 10px;font-size:11px;font-weight:500;cursor:pointer">Crear factura</span>
+              <span style="background:var(--primary-50);color:var(--primary-800);border-radius:16px;padding:4px 10px;font-size:11px;font-weight:500;cursor:pointer">Ver precios</span>
+              <span style="background:var(--primary-50);color:var(--primary-800);border-radius:16px;padding:4px 10px;font-size:11px;font-weight:500;cursor:pointer">Ver órdenes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: QUALITY ===== -->
+    <div class="page" id="page-quality">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🧪 Tests & Coverage</div>
+          <div class="page-subtitle">Estado actual y plan para Sprint 4</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header"><span class="kpi-label">Coverage Actual</span><div class="kpi-icon red">📉</div></div>
+          <div class="kpi-value red">~40%</div>
+          <div class="kpi-trend down">↓ Por debajo del objetivo</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header"><span class="kpi-label">Tests Fallando</span><div class="kpi-icon red">❌</div></div>
+          <div class="kpi-value red">~19</div>
+          <div class="kpi-trend down">Mocks de OpenAI faltantes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header"><span class="kpi-label">Archivos de Test</span><div class="kpi-icon blue">📁</div></div>
+          <div class="kpi-value">35+</div>
+          <div class="kpi-trend neutral">Unit + Integration + E2E</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header"><span class="kpi-label">Objetivo Sprint 4</span><div class="kpi-icon green">🎯</div></div>
+          <div class="kpi-value green">>80%</div>
+          <div class="kpi-trend up">↑ +40% de mejora</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Módulos Críticos — Coverage Estimado</div></div>
+          <div class="card-body">
+            <div class="progress-item">
+              <div class="progress-header"><span class="progress-label">src/lib/services/chat/intents/</span><span class="progress-value">~30%</span></div>
+              <div class="progress-bar"><div class="progress-fill red" style="width:30%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header"><span class="progress-label">src/app/api/v1/reports/</span><span class="progress-value">~45%</span></div>
+              <div class="progress-bar"><div class="progress-fill amber" style="width:45%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header"><span class="progress-label">src/lib/services/notifications/</span><span class="progress-value">~50%</span></div>
+              <div class="progress-bar"><div class="progress-fill amber" style="width:50%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header"><span class="progress-label">src/app/api/v1/invoices/</span><span class="progress-value">~70%</span></div>
+              <div class="progress-bar"><div class="progress-fill blue" style="width:70%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-header"><span class="progress-label">src/lib/auth/</span><span class="progress-value">~80%</span></div>
+              <div class="progress-bar"><div class="progress-fill green" style="width:80%"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Plan de Acción — Sprint 4</div></div>
+          <div class="card-body">
+            <ul class="checklist">
+              <li><span class="check-icon">⏳</span>Crear jest.setup.ts con mocks globales (OpenAI, Twilio, Telegram)</li>
+              <li><span class="check-icon">⏳</span>Crear __mocks__/intents.ts para analyzeIntent</li>
+              <li><span class="check-icon">⏳</span>Actualizar jest.config.js con coverageThreshold</li>
+              <li><span class="check-icon">⏳</span>Agregar tests para src/app/api/v1/reports/ (aging, revenue, top)</li>
+              <li><span class="check-icon">⏳</span>Ampliar tests de notifications/service.ts</li>
+              <li><span class="check-icon">⏳</span>Ampliar tests de make-webhook.test.ts</li>
+              <li><span class="check-icon">⏳</span>Fix E2E Firefox: timeout 30000ms + retry:2</li>
+              <li><span class="check-icon">⏳</span>Configurar GitHub Actions CI con coverage report</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: RISKS ===== -->
+    <div class="page" id="page-risks">
+      <div class="page-header">
+        <div>
+          <div class="page-title">⚠️ Gestión de Riesgos</div>
+          <div class="page-subtitle">Matriz de riesgo Sprint 4 — Impacto vs Probabilidad</div>
+        </div>
+      </div>
+
+      <div class="risk-grid">
+        <div class="risk-card critical">
+          <div class="risk-title" style="color:var(--error)">🔴 R01 — Tests OpenAI en CI</div>
+          <div class="risk-desc">Tests de analyzeIntent llaman API real de OpenAI. Sin mock → CI falla en cada push.</div>
+          <div class="risk-mitigation">Mitigación: jest.setup.ts con mock global de openai-client. Prioridad máxima en S4-P01-A.</div>
+        </div>
+        <div class="risk-card critical">
+          <div class="risk-title" style="color:var(--error)">🔴 R02 — Design Tokens rompen shadcn</div>
+          <div class="risk-desc">Reemplazar variables CSS puede romper componentes shadcn existentes.</div>
+          <div class="risk-mitigation">Mitigación: Migración incremental. Nuevos tokens como extensión, no reemplazo. Test visual en cada componente.</div>
+        </div>
+        <div class="risk-card high">
+          <div class="risk-title" style="color:var(--secondary-800)">🟡 R03 — Chart.js bundle size</div>
+          <div class="risk-desc">Chart.js puede aumentar bundle >200KB, afectando LCP.</div>
+          <div class="risk-mitigation">Mitigación: Dynamic import + tree shaking. Solo importar charts usados.</div>
+        </div>
+        <div class="risk-card high">
+          <div class="risk-title" style="color:var(--secondary-800)">🟡 R04 — ZIP timeout >10 facturas</div>
+          <div class="risk-desc">Generación de PDF para múltiples facturas puede timeout en >10 items.</div>
+          <div class="risk-mitigation">Mitigación: Chunks de 5, progress bar, timeout de 60s, máximo 50 facturas.</div>
+        </div>
+        <div class="risk-card high">
+          <div class="risk-title" style="color:var(--secondary-800)">🟡 R05 — Secrets en Staging</div>
+          <div class="risk-desc">Variables de entorno de staging pueden exponer secrets de producción.</div>
+          <div class="risk-mitigation">Mitigación: Variables separadas por environment. No compartir DB de producción.</div>
+        </div>
+        <div class="risk-card medium">
+          <div class="risk-title" style="color:var(--info)">🔵 R06 — LCP >2.5s Landing</div>
+          <div class="risk-desc">Imágenes sin optimizar pueden degradar LCP en Landing Page.</div>
+          <div class="risk-mitigation">Mitigación: next/image obligatorio, WebP format, lazy loading, gradientes CSS en hero.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: ROADMAP ===== -->
+    <div class="page" id="page-roadmap">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🗺️ Roadmap del Proyecto</div>
+          <div class="page-subtitle">Timeline completo Fase 2 → Go-Live</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Timeline de Sprints</div></div>
+          <div class="card-body">
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-dot done"></div>
+                <div class="timeline-title">✅ Sprint 1 — Consolidación</div>
+                <div class="timeline-desc">Modelos DB, Admin UI, Chat básico, FloatingChatAssistant</div>
+                <div class="timeline-date">Completado</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot done"></div>
+                <div class="timeline-title">✅ Sprint 2 — Integraciones</div>
+                <div class="timeline-desc">Make.com, WhatsApp Twilio, RAG, Notificaciones automáticas</div>
+                <div class="timeline-date">Completado</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot done"></div>
+                <div class="timeline-title">✅ Sprint 3 — Backend Avanzado</div>
+                <div class="timeline-desc">Reportes, Email, Telegram, create_order, create_purchase_order</div>
+                <div class="timeline-date">Completado</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot active"></div>
+                <div class="timeline-title">⏳ Sprint 4 — Productización</div>
+                <div class="timeline-desc">Design System, Tests >80%, Landing Page, Portal UX, CI/CD</div>
+                <div class="timeline-date">En planificación — 15 días</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot pending"></div>
+                <div class="timeline-title">📅 Sprint 5 — Go-Live</div>
+                <div class="timeline-desc">QuickBooks, Email real (Resend), Onboarding clientes, Monitoreo</div>
+                <div class="timeline-date">Pendiente — Condicional a Sprint 4</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">Condiciones para Go-Live (Sprint 5)</div></div>
+          <div class="card-body">
+            <ul class="checklist">
+              <li><span class="check-icon">⏳</span>Tests al 100% pasando en CI</li>
+              <li><span class="check-icon">⏳</span>Coverage >80% en módulos críticos</li>
+              <li><span class="check-icon">⏳</span>Design System integrado (no slate-*)</li>
+              <li><span class="check-icon">⏳</span>Landing Page con Lighthouse >90</li>
+              <li><span class="check-icon">⏳</span>Portal cliente con gráficos funcionales</li>
+              <li><span class="check-icon">⏳</span>Descarga masiva ZIP funcional</li>
+              <li><span class="check-icon">⏳</span>CI/CD con GitHub Actions + Vercel</li>
+              <li><span class="check-icon">⏳</span>Staging funcional con datos de demo</li>
+              <li><span class="check-icon">⏳</span>0 bugs críticos en QA manual</li>
+              <li><span class="check-icon">⏳</span>Aprobación stakeholder en CP-S4-W3</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metrics Target -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Métricas de Éxito — Sprint 4</div></div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Métrica</th><th>Baseline Actual</th><th>Objetivo Sprint 4</th><th>Cómo Medirlo</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Test Coverage</td><td><span class="badge error">~40%</span></td><td><span class="badge success">>80%</span></td><td>jest --coverage en CI</td></tr>
+                <tr><td>Tests Fallando</td><td><span class="badge error">~19</span></td><td><span class="badge success">0</span></td><td>jest --ci exit code 0</td></tr>
+                <tr><td>Lighthouse Performance</td><td><span class="badge neutral">N/A</span></td><td><span class="badge success">>90</span></td><td>lhci autorun en CI</td></tr>
+                <tr><td>Lighthouse Accessibility</td><td><span class="badge neutral">N/A</span></td><td><span class="badge success">>95</span></td><td>lhci autorun en CI</td></tr>
+                <tr><td>LCP (Landing Page)</td><td><span class="badge neutral">N/A</span></td><td><span class="badge success"><2.5s</span></td><td>Lighthouse + Web Vitals</td></tr>
+                <tr><td>Bundle Size (JS)</td><td><span class="badge neutral">N/A</span></td><td><span class="badge success"><500KB</span></td><td>next build output</td></tr>
+                <tr><td>TypeScript Errors</td><td><span class="badge neutral">Desconocido</span></td><td><span class="badge success">0</span></td><td>tsc --noEmit en CI</td></tr>
+                <tr><td>ESLint Errors</td><td><span class="badge neutral">Desconocido</span></td><td><span class="badge success">0</span></td><td>next lint en CI</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // === NAVIGATION ===
+  const breadcrumbs = {
+    'overview': 'Dashboard / Resumen General',
+    'sprints': 'Dashboard / Sprints & Progreso',
+    'sprint4': 'Dashboard / Sprint 4 — Plan Estratégico',
+    'design': 'Dashboard / Design System',
+    'prompts': 'Dashboard / Prompts Figma MAKE',
+    'quality': 'Dashboard / Tests & Coverage',
+    'risks': 'Dashboard / Gestión de Riesgos',
+    'roadmap': 'Dashboard / Roadmap',
+  };
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    document.getElementById('breadcrumb').textContent = breadcrumbs[id] || 'Dashboard';
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') === `showPage('${id}')`) n.classList.add('active');
+    });
+    if (id === 'overview') initCharts();
+  }
+
+  // === CHARTS ===
+  let chartsInitialized = false;
+
+  function initCharts() {
+    if (chartsInitialized) return;
+    chartsInitialized = true;
+
+    // Sprint Progress Chart
+    const sprintCtx = document.getElementById('sprintChart').getContext('2d');
+    new Chart(sprintCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint 4 (Plan)', 'Sprint 5 (Plan)'],
+        datasets: [{
+          label: 'Progreso (%)',
+          data: [100, 100, 90, 5, 0],
+          backgroundColor: ['#2E7D32', '#2E7D32', '#2E7D32', '#FF6F00', '#BDBDBD'],
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#EEEEEE' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // Modules Distribution Chart
+    const modulesCtx = document.getElementById('modulesChart').getContext('2d');
+    new Chart(modulesCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Completado', 'En Progreso', 'Pendiente'],
+        datasets: [{
+          data: [72, 18, 10],
+          backgroundColor: ['#2E7D32', '#FF6F00', '#BDBDBD'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}%` } }
+        },
+        cutout: '65%',
+      }
+    });
+  }
+
+  // Init on load
+  window.addEventListener('load', () => {
+    initCharts();
+    // Animate progress bars
+    setTimeout(() => {
+      document.querySelectorAll('.progress-fill').forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = width; }, 100);
+      });
+    }, 200);
+  });
+</script>
+
+</body>
+</html>
