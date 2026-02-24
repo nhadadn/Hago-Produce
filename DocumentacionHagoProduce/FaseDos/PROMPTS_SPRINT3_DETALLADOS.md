@@ -1,4 +1,34 @@
-<h1>🎯 Prompts Sprint 3 — Completitud &amp; Experiencia de Usuario</h1><h2>Hago Produce | Fase 2 | Basado en Gaps del Sprint 2</h2><blockquote> <p><strong>Prerrequisito:</strong> Leer <code>CHECKPOINT_CIERRE_SPRINT2.md</code> y <code>PROMPT_MAESTRO_RECALIBRACION_SPRINT3.md</code> antes de ejecutar cualquier prompt.<br><strong>Convenciones:</strong> Comentarios en español, código en inglés, ORM único Prisma, formato de respuesta <code>{ success, data, error }</code>.</p> </blockquote><hr><h2>📊 RESUMEN DE PROMPTS</h2><table class="e-rte-table"> <thead> <tr> <th>#</th> <th>ID</th> <th>Nombre</th> <th>Agente</th> <th>Día</th> <th>Prioridad</th> </tr> </thead> <tbody><tr> <td>1</td> <td>S3-P01</td> <td>create_order con OpenAI Function Calling</td> <td>Full Stack / AI</td> <td>1-2</td> <td>🔴 Alta</td> </tr> <tr> <td>2</td> <td>S3-P02</td> <td>ReportCache Activo + Performance</td> <td>Backend</td> <td>2-3</td> <td>🟡 Media</td> </tr> <tr> <td>3</td> <td>S3-P03</td> <td>E2E Firefox Fix + Coverage &gt;80%</td> <td>QA</td> <td>1</td> <td>⚠️ Warning</td> </tr> <tr> <td>4</td> <td>S3-P04</td> <td>SPA Pública — Landing Page Institucional</td> <td>Frontend</td> <td>3-5</td> <td>🟡 Media</td> </tr> <tr> <td>5</td> <td>S3-P05</td> <td>Portal Cliente Avanzado con Gráficos</td> <td>Full Stack</td> <td>4-6</td> <td>🟡 Media</td> </tr> <tr> <td>6</td> <td>S3-CP1</td> <td>Checkpoint Día 2 Sprint 3</td> <td>Tech Lead</td> <td>2</td> <td>—</td> </tr> <tr> <td>7</td> <td>S3-CP2</td> <td>Checkpoint Día 4 Sprint 3</td> <td>Tech Lead</td> <td>4</td> <td>—</td> </tr> <tr> <td>8</td> <td>S3-CP3</td> <td>Checkpoint Cierre Sprint 3</td> <td>Tech Lead</td> <td>8</td> <td>—</td> </tr> </tbody></table><hr><h2>🔴 DÍA 1-2: create_order con OpenAI Function Calling</h2><hr><h3>PROMPT #S3-P01-A — Implementar OpenAI Function Calling para Extracción de Parámetros</h3><pre><code>PROMPT #S3-P01-A — create_order: Extracción de Parámetros con OpenAI Function Calling
+# 🎯 Prompts Sprint 3 — Completitud & Experiencia de Usuario
+## Hago Produce | Fase 2 | Basado en Gaps del Sprint 2
+
+> **Prerrequisito:** Leer `CHECKPOINT_CIERRE_SPRINT2.md` y `PROMPT_MAESTRO_RECALIBRACION_SPRINT3.md` antes de ejecutar cualquier prompt.  
+> **Convenciones:** Comentarios en español, código en inglés, ORM único Prisma, formato de respuesta `{ success, data, error }`.
+
+---
+
+## 📊 RESUMEN DE PROMPTS
+
+| # | ID | Nombre | Agente | Día | Prioridad |
+|---|---|---|---|---|---|
+| 1 | S3-P01 | create_order con OpenAI Function Calling | Full Stack / AI | 1-2 | 🔴 Alta |
+| 2 | S3-P02 | ReportCache Activo + Performance | Backend | 2-3 | 🟡 Media |
+| 3 | S3-P03 | E2E Firefox Fix + Coverage >80% | QA | 1 | ⚠️ Warning |
+| 4 | S3-P04 | SPA Pública — Landing Page Institucional | Frontend | 3-5 | 🟡 Media |
+| 5 | S3-P05 | Portal Cliente Avanzado con Gráficos | Full Stack | 4-6 | 🟡 Media |
+| 6 | S3-CP1 | Checkpoint Día 2 Sprint 3 | Tech Lead | 2 | — |
+| 7 | S3-CP2 | Checkpoint Día 4 Sprint 3 | Tech Lead | 4 | — |
+| 8 | S3-CP3 | Checkpoint Cierre Sprint 3 | Tech Lead | 8 | — |
+
+---
+
+## 🔴 DÍA 1-2: create_order con OpenAI Function Calling
+
+---
+
+### PROMPT #S3-P01-A — Implementar OpenAI Function Calling para Extracción de Parámetros
+
+```
+PROMPT #S3-P01-A — create_order: Extracción de Parámetros con OpenAI Function Calling
 ---
 Agente: Desarrollador Full Stack / AI Engineer
 Resumen: Implementar la extracción estructurada de parámetros para el intent create_order
@@ -78,7 +108,14 @@ Dependencias:
 - src/lib/services/chat/openai-client.ts (patrón de llamada a OpenAI)
 - src/lib/db.ts (cliente Prisma)
 ---
-</code></pre><hr><h3>PROMPT #S3-P01-B — Implementar Creación Real de Invoice DRAFT desde Chat</h3><pre><code>PROMPT #S3-P01-B — create_order: Creación de Invoice DRAFT en DB con Confirmación
+```
+
+---
+
+### PROMPT #S3-P01-B — Implementar Creación Real de Invoice DRAFT desde Chat
+
+```
+PROMPT #S3-P01-B — create_order: Creación de Invoice DRAFT en DB con Confirmación
 ---
 Agente: Desarrollador Full Stack / AI Engineer
 Resumen: Implementar la segunda parte del flujo create_order: cuando el usuario confirma
@@ -230,16 +267,27 @@ Dependencias:
 - Framework Jest configurado
 - Patrón de mocks de src/lib/services/chat/__tests__/rag.test.ts
 ---
-</code></pre><hr><h2>⚠️ DÍA 1: E2E Firefox Fix + Coverage</h2><hr><h3>PROMPT #S3-P03 — Resolver E2E Firefox Timeout y Elevar Coverage</h3><pre><code>PROMPT #S3-P03 — E2E Firefox Fix + Coverage Total &gt;80%
+```
+
+---
+
+## ⚠️ DÍA 1: E2E Firefox Fix + Coverage
+
+---
+
+### PROMPT #S3-P03 — Resolver E2E Firefox Timeout y Elevar Coverage
+
+```
+PROMPT #S3-P03 — E2E Firefox Fix + Coverage Total >80%
 ---
 Agente: QA Engineer / Desarrollador Full Stack
 Resumen: Resolver el timeout de E2E en Firefox (GAP-01 original del Sprint 1) y elevar
-la cobertura total de tests al objetivo &gt;80% del proyecto.
+la cobertura total de tests al objetivo >80% del proyecto.
 
 Descripción detallada:
 El test E2E en Firefox falla por timeout de infraestructura (no por lógica de negocio).
 Chromium y WebKit pasan exitosamente. Adicionalmente, el coverage total del proyecto
-está por debajo del objetivo &gt;80%.
+está por debajo del objetivo >80%.
 
 Contexto del repositorio:
 - Archivo E2E: tests/chat.spec.ts (o playwright-report/ para ver el reporte actual)
@@ -270,7 +318,7 @@ PARTE B — Análisis de Coverage:
    - src/app/api/v1/reports/*.ts
 
 PARTE C — Elevar Coverage:
-Para cada archivo con coverage &lt;80%, agregar tests que cubran:
+Para cada archivo con coverage <80%, agregar tests que cubran:
 - Happy path (flujo exitoso)
 - Error path (manejo de errores)
 - Edge cases (valores nulos, arrays vacíos, etc.)
@@ -286,9 +334,9 @@ Criterios de aceptación:
 - [ ] tests/chat.spec.ts pasa en Firefox, Chromium y WebKit
 - [ ] playwright.config.ts con timeouts diferenciados por browser
 - [ ] retry: 2 configurado para CI
-- [ ] Coverage total del proyecto &gt;80%
+- [ ] Coverage total del proyecto >80%
 - [ ] Reporte de coverage generado en coverage/
-- [ ] Ningún archivo de lógica de negocio crítica con coverage &lt;70%
+- [ ] Ningún archivo de lógica de negocio crítica con coverage <70%
 - [ ] Documentación de archivos excluidos del coverage (si aplica)
 
 Dependencias:
@@ -296,12 +344,23 @@ Dependencias:
 - Jest con coverage configurado en package.json
 - Todos los tests existentes pasando antes de este prompt
 ---
-</code></pre><hr><h2>🟡 DÍAS 2-3: ReportCache Activo + Performance</h2><hr><h3>PROMPT #S3-P02-A — Activar ReportCache en Servicio de Reportes</h3><pre><code>PROMPT #S3-P02-A — ReportCache: Activar Caché en Servicio de Reportes
+```
+
+---
+
+## 🟡 DÍAS 2-3: ReportCache Activo + Performance
+
+---
+
+### PROMPT #S3-P02-A — Activar ReportCache en Servicio de Reportes
+
+```
+PROMPT #S3-P02-A — ReportCache: Activar Caché en Servicio de Reportes
 ---
 Agente: Desarrollador Backend
 Resumen: Activar el modelo ReportCache (ya existe en DB desde Sprint 1) en el servicio
 de reportes para cachear resultados por tipo y parámetros, con TTL configurable y
-mejora de performance de &lt;2s a &lt;500ms para reportes cacheados.
+mejora de performance de <2s a <500ms para reportes cacheados.
 
 Descripción detallada:
 El modelo ReportCache existe en prisma/schema.prisma con campos: id, reportType,
@@ -320,7 +379,7 @@ Requerimientos específicos:
 PARTE A — Utilidad de caché:
 Crear src/lib/utils/report-cache.ts con las siguientes funciones:
 - getCachedReport(reportType, parameters): busca en ReportCache por tipo y hash de params
-  * Filtra por expiresAt &gt; now() para ignorar cachés expirados
+  * Filtra por expiresAt > now() para ignorar cachés expirados
   * Retorna los datos parseados o null si no hay caché válido
 - setCachedReport(reportType, parameters, data, ttlMinutes): guarda en ReportCache
   * Genera hash MD5 o SHA256 de los parámetros para la cache key
@@ -630,7 +689,14 @@ Dependencias:
 - API de facturas existente
 - Chart.js disponible (CDN o npm)
 ---
-</code></pre><hr><h3>PROMPT #S3-P05-B — Historial Completo y Descarga Masiva de Facturas</h3><pre><code>PROMPT #S3-P05-B — Portal Cliente: Historial Completo + Descarga Masiva de PDFs
+```
+
+---
+
+### PROMPT #S3-P05-B — Historial Completo y Descarga Masiva de Facturas
+
+```
+PROMPT #S3-P05-B — Portal Cliente: Historial Completo + Descarga Masiva de PDFs
 ---
 Agente: Desarrollador Full Stack
 Resumen: Implementar el historial completo de facturas con filtros avanzados y
@@ -701,7 +767,18 @@ Dependencias:
 - Librería ZIP disponible (archiver o jszip)
 - API GET /api/v1/notifications existente
 ---
-</code></pre><hr><h2>📋 CHECKPOINTS DEL SPRINT 3</h2><hr><h3>CHECKPOINT #S3-CP1 — Fin del Día 2: create_order + E2E Fix</h3><pre><code>CHECKPOINT #S3-CP1 — Fin del Día 2: create_order + E2E Firefox
+```
+
+---
+
+## 📋 CHECKPOINTS DEL SPRINT 3
+
+---
+
+### CHECKPOINT #S3-CP1 — Fin del Día 2: create_order + E2E Fix
+
+```
+CHECKPOINT #S3-CP1 — Fin del Día 2: create_order + E2E Firefox
 ---
 Agente: Tech Lead / Project Manager
 Resumen: Documentar el progreso al finalizar el Día 2 del Sprint 3, validando
