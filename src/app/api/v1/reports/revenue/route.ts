@@ -76,7 +76,15 @@ export async function POST(req: NextRequest) {
 
     const metrics = await getRevenueMetrics(start, end, { customerId: customerId || undefined });
 
-    return NextResponse.json({ success: true, data: metrics });
+    const response = NextResponse.json({ success: true, data: metrics });
+    
+    if (metrics._fromCache) {
+      response.headers.set('X-Cache', 'HIT');
+    } else {
+      response.headers.set('X-Cache', 'MISS');
+    }
+
+    return response;
   } catch (error) {
     console.error('[REPORTS_REVENUE_POST]', error);
     return NextResponse.json(

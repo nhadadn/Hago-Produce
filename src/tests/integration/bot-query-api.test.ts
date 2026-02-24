@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { prisma } from '@/lib/db';
+import prisma from '@/lib/db';
 import { createApiKey } from '@/lib/services/bot/api-key.service';
 
 describe('POST /api/v1/bot/query', () => {

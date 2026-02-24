@@ -59,7 +59,15 @@ export async function POST(req: NextRequest) {
 
     const report = await getAgingReport(asOf, { customerId: customerId || undefined });
 
-    return NextResponse.json({ success: true, data: report });
+    const response = NextResponse.json({ success: true, data: report });
+    
+    if (report._fromCache) {
+      response.headers.set('X-Cache', 'HIT');
+    } else {
+      response.headers.set('X-Cache', 'MISS');
+    }
+
+    return response;
   } catch (error) {
     console.error('[REPORTS_AGING_POST]', error);
     return NextResponse.json(

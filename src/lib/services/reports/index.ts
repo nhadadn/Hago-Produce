@@ -1,5 +1,6 @@
 import prisma from '@/lib/db';
 import { InvoiceStatus } from '@prisma/client';
+import { getCachedReport, setCachedReport, ReportType } from '@/lib/utils/report-cache';
 
 export interface RevenueMetrics {
   totalRevenue: number;
@@ -7,6 +8,7 @@ export interface RevenueMetrics {
   previousPeriodRevenue: number;
   growthRate: number | null;
   averageInvoiceAmount: number;
+  _fromCache?: boolean;
 }
 
 export type AgingBucketLabel = '0-30' | '31-60' | '61-90' | '90+';
@@ -20,6 +22,7 @@ export interface AgingBucketSummary {
 export interface AgingReport {
   asOfDate: string;
   buckets: AgingBucketSummary[];
+  _fromCache?: boolean;
 }
 
 export interface TopCustomer {
@@ -60,6 +63,7 @@ export interface ProductPriceTrends {
   monthlyAverage: PriceTrendPoint[];
   changeVsPreviousPeriod: number | null;
   suppliers: SupplierPriceHistory[];
+  _fromCache?: boolean;
 }
 
 const REVENUE_STATUSES: InvoiceStatus[] = [
@@ -103,6 +107,17 @@ export async function getRevenueMetrics(
   options?: { customerId?: string },
 ): Promise<RevenueMetrics> {
   try {
+    const cacheParams = {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      customerId: options?.customerId,
+    };
+    
+    const cached = await getCachedReport<RevenueMetrics>('REVENUE', cacheParams);
+    if (cached) {
+      return { ...cached, _fromCache: true };
+    }
+
     const where: any = {
       issueDate: {
         gte: startDate,
@@ -245,10 +260,14 @@ export async function getAgingReport(
       };
     });
 
-    return {
+    const result = {
       asOfDate: asOfDate.toISOString(),
       buckets: summaries,
     };
+
+    await setCachedReport('AGING', cacheParams, result);
+
+    return result;
   } catch (error) {
     console.error('[REPORTS_AGING_ERROR]', error);
     throw error;
@@ -261,6 +280,18 @@ export async function getTopCustomers(
   endDate: Date,
 ): Promise<TopCustomer[]> {
   try {
+    const cacheParams = {
+      limit,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    };
+
+    const cached = await getCachedReport<TopCustomer[]>('TOP_CUSTOMERS', cacheParams);
+    if (cached) {
+      (cached as any)._fromCache = true;
+      return cached;
+    }
+
     const result = await prisma.invoice.groupBy({
       by: ['customerId'],
       where: {
@@ -302,7 +333,7 @@ export async function getTopCustomers(
       customerMap.set(customer.id, customer.name);
     }
 
-    return result.map((row) => {
+    const mappedResult = result.map((row) => {
       const totalRevenue = Number(row._sum.total ?? 0);
       const invoiceCount = row._count.id;
       const averageInvoiceAmount = invoiceCount > 0 ? totalRevenue / invoiceCount : 0;
@@ -315,6 +346,10 @@ export async function getTopCustomers(
         averageInvoiceAmount,
       };
     });
+
+    await setCachedReport('TOP_CUSTOMERS', cacheParams, mappedResult);
+
+    return mappedResult;
   } catch (error) {
     console.error('[REPORTS_TOP_CUSTOMERS_ERROR]', error);
     throw error;
@@ -327,6 +362,18 @@ export async function getTopProducts(
   endDate: Date,
 ): Promise<TopProduct[]> {
   try {
+    const cacheParams = {
+      limit,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    };
+
+    const cached = await getCachedReport<TopProduct[]>('TOP_PRODUCTS', cacheParams);
+    if (cached) {
+      (cached as any)._fromCache = true;
+      return cached;
+    }
+
     const result = await prisma.invoiceItem.groupBy({
       by: ['productId'],
       where: {
@@ -368,7 +415,7 @@ export async function getTopProducts(
       productMap.set(product.id, product.name);
     }
 
-    return result.map((row) => {
+    const mappedResult = result.map((row) => {
       const totalQuantity = Number(row._sum.quantity ?? 0);
       const totalRevenue = Number(row._sum.totalPrice ?? 0);
       const averagePrice = totalQuantity > 0 ? totalRevenue / totalQuantity : 0;
@@ -381,6 +428,10 @@ export async function getTopProducts(
         averagePrice,
       };
     });
+
+    await setCachedReport('TOP_PRODUCTS', cacheParams, mappedResult);
+
+    return mappedResult;
   } catch (error) {
     console.error('[REPORTS_TOP_PRODUCTS_ERROR]', error);
     throw error;
@@ -392,6 +443,16 @@ export async function getProductPriceTrends(
   months: number,
 ): Promise<ProductPriceTrends> {
   try {
+    const cacheParams = {
+      productId,
+      months,
+    };
+
+    const cached = await getCachedReport<ProductPriceTrends>('PRICE_TRENDS', cacheParams);
+    if (cached) {
+      return { ...cached, _fromCache: true };
+    }
+
     const now = new Date();
     const start = new Date(now.getTime());
     start.setUTCMonth(start.getUTCMonth() - months);
@@ -472,13 +533,17 @@ export async function getProductPriceTrends(
       }
     }
 
-    return {
+    const result = {
       productId,
       currentPrice,
       monthlyAverage,
       changeVsPreviousPeriod,
       suppliers: Array.from(supplierMap.values()),
     };
+
+    await setCachedReport('PRICE_TRENDS', cacheParams, result);
+
+    return result;
   } catch (error) {
     console.error('[REPORTS_PRICE_TRENDS_ERROR]', error);
     throw error;

@@ -75,14 +75,39 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Intent Analysis
-    const detected = await analyzeIntent(message, chatLanguage);
+    const sessionContext = session.context ? JSON.parse(JSON.stringify(session.context)) : {};
+    const detected = await analyzeIntent(message, chatLanguage, sessionContext);
 
     // 5. Query Execution
     const executionResult = await executeQuery(detected, chatLanguage, {
       userId: user.userId,
       customerId: user.customerId,
-      // Pass context if needed in future
+      pendingOrder: sessionContext.pendingOrder,
+      pendingPurchaseOrders: sessionContext.pendingPurchaseOrders,
     });
+
+    // 5.1 Update Context
+    let newContext = { ...sessionContext };
+    if (executionResult.data?.pendingOrder) {
+      newContext.pendingOrder = executionResult.data.pendingOrder;
+    }
+    if (executionResult.data?.pendingOrders) {
+      newContext.pendingPurchaseOrders = executionResult.data.pendingOrders;
+    }
+
+    if (
+      (detected.intent === 'confirm_order' || detected.intent === 'cancel_order') &&
+      executionResult.data?.success
+    ) {
+      delete newContext.pendingOrder;
+    }
+
+    if (
+      (detected.intent === 'confirm_purchase_order' || detected.intent === 'cancel_purchase_order') &&
+      executionResult.data?.success
+    ) {
+      delete newContext.pendingPurchaseOrders;
+    }
 
     // 6. Format Response with OpenAI, including short history for context
     const existingMessages = (session.messages as any[]) || [];
@@ -119,6 +144,7 @@ export async function POST(req: NextRequest) {
       data: {
         messages: [...existingMessages, newMessage, newReply],
         lastActivityAt: new Date(),
+        context: newContext,
       },
     });
 

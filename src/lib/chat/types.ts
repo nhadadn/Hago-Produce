@@ -8,7 +8,12 @@ export type ChatIntent =
   | 'product_info'
   | 'inventory_summary'
   | 'create_order'
-  | 'overdue_invoices';
+  | 'confirm_order'
+  | 'cancel_order'
+  | 'overdue_invoices'
+  | 'create_purchase_order'
+  | 'confirm_purchase_order'
+  | 'cancel_purchase_order';
 
 export interface ChatRequestPayload {
   message: string;
@@ -18,7 +23,7 @@ export interface ChatRequestPayload {
 }
 
 export interface ChatSource {
-  type: 'product_price' | 'supplier' | 'invoice' | 'customer';
+  type: 'product_price' | 'supplier' | 'invoice' | 'customer' | 'purchase_order';
   id: string;
   label: string;
 }
@@ -34,6 +39,9 @@ export interface ChatResponseData {
 export interface ChatServiceContext {
   userId?: string;
   customerId?: string | null;
+  pendingOrder?: any;
+  pendingPurchaseOrders?: any;
+  message?: any;
 }
 
 export interface DetectedIntent {

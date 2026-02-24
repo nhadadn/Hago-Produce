@@ -10,7 +10,8 @@ import { invoiceStatusIntent } from '@/lib/services/chat/intents/invoice-status'
 import { customerBalanceIntent } from '@/lib/services/chat/intents/customer-balance';
 import { productInfoIntent } from '@/lib/services/chat/intents/product-info';
 import { inventorySummaryIntent } from '@/lib/services/chat/intents/inventory-summary';
-import { createOrderIntent } from '@/lib/services/chat/intents/create-order';
+import { createOrderIntent, confirmOrderIntent, cancelOrderIntent } from '@/lib/services/chat/intents/create-order';
+import { createPurchaseOrderIntent, confirmPurchaseOrderIntent, cancelPurchaseOrderIntent } from '@/lib/services/chat/intents/create-purchase-order';
 import { overdueInvoicesIntent } from '@/lib/services/chat/intents/overdue-invoices';
 
 export async function executeQuery(
@@ -46,6 +47,25 @@ export async function executeQuery(
 
   if (intent === 'create_order') {
     return createOrderIntent(params, language, confidence, context);
+  }
+
+  if (intent === 'confirm_order') {
+    return confirmOrderIntent(params, language, confidence, context);
+  }
+
+  if (intent === 'cancel_order') {
+    return cancelOrderIntent(params, language, confidence, context);
+  }
+  if (intent === 'create_purchase_order') {
+    return createPurchaseOrderIntent(params, language, confidence, context);
+  }
+
+  if (intent === 'confirm_purchase_order') {
+    return confirmPurchaseOrderIntent(params, language, confidence, context);
+  }
+
+  if (intent === 'cancel_purchase_order') {
+    return cancelPurchaseOrderIntent(params, language, confidence, context);
   }
 
   if (intent === 'overdue_invoices') {

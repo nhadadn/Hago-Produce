@@ -1,0 +1,109 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Quintas CRM" [ref=e6] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e7]:
+          - link "Dashboard" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Mapa" [ref=e9] [cursor=pointer]:
+            - /url: /mapa
+          - link "Ventas" [ref=e10] [cursor=pointer]:
+            - /url: /ventas
+          - link "Pagos" [ref=e11] [cursor=pointer]:
+            - /url: /pagos
+          - link "Clientes" [ref=e12] [cursor=pointer]:
+            - /url: /clientes
+          - link "Vendedores" [ref=e13] [cursor=pointer]:
+            - /url: /vendedores
+          - link "Portal Cliente" [ref=e14] [cursor=pointer]:
+            - /url: /portal
+      - generic [ref=e16]: AD
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - heading "Dashboard General" [level=1] [ref=e20]
+      - paragraph [ref=e21]: Resumen de actividad y rendimiento
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e25]:
+          - paragraph [ref=e26]: Ventas del Mes
+          - heading "-" [level=3] [ref=e27]
+        - generic [ref=e29]: "-"
+      - generic [ref=e32]:
+        - paragraph [ref=e33]: Total Pagado
+        - heading "-" [level=3] [ref=e34]
+      - generic [ref=e37]:
+        - paragraph [ref=e38]: Total Pendiente
+        - heading "-" [level=3] [ref=e39]
+      - generic [ref=e42]:
+        - paragraph [ref=e43]: Comisiones Pendientes
+        - heading "-" [level=3] [ref=e44]
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - heading "Ventas Mensuales" [level=3] [ref=e48]
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - heading "Ventas Recientes" [level=3] [ref=e52]
+            - link "Ver todas" [ref=e53] [cursor=pointer]:
+              - /url: /ventas
+          - table [ref=e55]:
+            - rowgroup [ref=e56]:
+              - row "Lote Cliente Fecha Monto Estatus" [ref=e57]:
+                - columnheader "Lote" [ref=e58]
+                - columnheader "Cliente" [ref=e59]
+                - columnheader "Fecha" [ref=e60]
+                - columnheader "Monto" [ref=e61]
+                - columnheader "Estatus" [ref=e62]
+            - rowgroup [ref=e63]:
+              - row "A-001 Juan Pérez 14/06/2025 $150,000.00 PAGADO" [ref=e64]:
+                - cell "A-001" [ref=e65]
+                - cell "Juan Pérez" [ref=e66]
+                - cell "14/06/2025" [ref=e67]
+                - cell "$150,000.00" [ref=e68]
+                - cell "PAGADO" [ref=e69]
+              - row "B-012 María López 13/06/2025 $200,000.00 PENDIENTE" [ref=e70]:
+                - cell "B-012" [ref=e71]
+                - cell "María López" [ref=e72]
+                - cell "13/06/2025" [ref=e73]
+                - cell "$200,000.00" [ref=e74]
+                - cell "PENDIENTE" [ref=e75]
+              - row "C-005 Carlos Ruiz 11/06/2025 $180,000.00 PAGADO" [ref=e76]:
+                - cell "C-005" [ref=e77]
+                - cell "Carlos Ruiz" [ref=e78]
+                - cell "11/06/2025" [ref=e79]
+                - cell "$180,000.00" [ref=e80]
+                - cell "PAGADO" [ref=e81]
+              - row "A-003 Ana García 09/06/2025 $160,000.00 CANCELADO" [ref=e82]:
+                - cell "A-003" [ref=e83]
+                - cell "Ana García" [ref=e84]
+                - cell "09/06/2025" [ref=e85]
+                - cell "$160,000.00" [ref=e86]
+                - cell "CANCELADO" [ref=e87]
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - heading "Acciones Rápidas" [level=3] [ref=e90]
+          - generic [ref=e91]:
+            - link "Nueva Venta" [ref=e92] [cursor=pointer]:
+              - /url: /ventas/nueva
+            - link "Registrar Pago" [ref=e93] [cursor=pointer]:
+              - /url: /pagos/registrar
+            - link "Nuevo Cliente" [ref=e94] [cursor=pointer]:
+              - /url: /clientes/nuevo
+        - generic [ref=e95]:
+          - heading "Notificaciones" [level=3] [ref=e96]
+          - generic [ref=e97]:
+            - generic [ref=e100]:
+              - paragraph [ref=e101]: Pago recibido de Lote A-001
+              - paragraph [ref=e102]: Hace 10 min
+            - generic [ref=e105]:
+              - paragraph [ref=e106]: Lote C-005 apartado por web
+              - paragraph [ref=e107]: Hace 2 horas
+            - generic [ref=e110]:
+              - paragraph [ref=e111]: Pago vencido Lote B-012
+              - paragraph [ref=e112]: Ayer
+  - alert [ref=e113]
+```

@@ -77,7 +77,15 @@ export async function POST(req: NextRequest) {
 
     const top = await getTopProducts(limit ?? 10, start, end);
 
-    return NextResponse.json({ success: true, data: top });
+    const response = NextResponse.json({ success: true, data: top });
+    
+    if ((top as any)._fromCache) {
+      response.headers.set('X-Cache', 'HIT');
+    } else {
+      response.headers.set('X-Cache', 'MISS');
+    }
+
+    return response;
   } catch (error) {
     console.error('[REPORTS_TOP_PRODUCTS_POST]', error);
     return NextResponse.json(

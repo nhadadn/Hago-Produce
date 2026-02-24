@@ -49,6 +49,8 @@ model Supplier {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   prices      ProductPrice[]
+  purchaseOrders PurchaseOrder[]
+  purchaseOrderItems PurchaseOrderItem[]
 
   @@map("suppliers")
 }
@@ -68,6 +70,7 @@ model Product {
 
   prices      ProductPrice[]
   invoiceItems InvoiceItem[]
+  purchaseOrderItems PurchaseOrderItem[]
 
   @@map("products")
   @@index([name])
@@ -191,6 +194,8 @@ model Customer {
   phone       String?
   address     String?
   isActive    Boolean  @default(true) @map("is_active")
+  telegramChatId String? @map("telegram_chat_id")
+  preferredChannel String? @map("preferred_channel")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -310,3 +315,70 @@ model ChatSession {
   @@index([userId])
   @@index([lastActivityAt])
 }
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  channel   String   @db.VarChar(20) // EMAIL, WHATSAPP, TELEGRAM
+  recipient String   @db.VarChar(255)
+  status    String   @db.VarChar(20) // SENT, FAILED, PENDING
+  error     String?  @db.Text
+  metadata  Json?    @db.Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notification_logs")
+  @@index([channel])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  orderNumber String   @unique // PO-YYYY-NNNN
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  status      PurchaseOrderStatus @default(DRAFT)
+  subtotal    Decimal  @db.Decimal(10, 2)
+  taxRate     Decimal  @default(0.13) @db.Decimal(5, 4)
+  taxAmount   Decimal  @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+  notes       String?
+  deliveryDate DateTime?
+  deliveryTime String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       PurchaseOrderItem[]
+
+  @@map("purchase_orders")
+  @@index([supplierId])
+  @@index([status])
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id])
+  supplierId      String        // Proveedor sugerido para este item
+  supplier        Supplier      @relation(fields: [supplierId], references: [id])
+  description     String
+  quantity        Decimal       @db.Decimal(10, 2)
+  unit            String
+  unitPrice       Decimal       @db.Decimal(10, 2)
+  totalPrice      Decimal       @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now())
+
+  @@map("purchase_order_items")
+  @@index([purchaseOrderId])
+  @@index([productId])
+  @@index([supplierId])
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  CONFIRMED
+  RECEIVED
+  CANCELLED
+}
+
