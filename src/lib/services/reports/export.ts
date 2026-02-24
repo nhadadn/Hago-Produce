@@ -60,6 +60,152 @@ function buildRevenuePDF(metrics: RevenueMetrics): Uint8Array {
   return doc.output('arraybuffer');
 }
 
+export interface InvoicePDFData {
+  invoiceNumber: string;
+  customerName: string;
+  date: Date;
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }>;
+  subtotal: number;
+  taxAmount: number;
+  total: number;
+}
+
+export function generateInvoicePDF(data: InvoicePDFData): Uint8Array {
+  const doc = new jspdf({ orientation: 'p', unit: 'pt', format: 'a4' });
+  
+  // Header
+  doc.setFontSize(20);
+  doc.text('HAGO PRODUCE', 40, 40);
+  doc.setFontSize(10);
+  doc.text('Dirección de la empresa', 40, 55);
+  doc.text('Teléfono: +506 8888-8888', 40, 68);
+  
+  // Invoice Details
+  doc.setFontSize(16);
+  doc.text(`FACTURA #${data.invoiceNumber}`, 350, 40);
+  doc.setFontSize(10);
+  doc.text(`Fecha: ${formatDate(data.date)}`, 350, 60);
+  doc.text(`Cliente: ${data.customerName}`, 350, 75);
+
+  // Items Table
+  const rows = data.items.map((item) => [
+    item.description,
+    item.quantity.toString(),
+    `$${item.unitPrice.toFixed(2)}`,
+    `$${item.total.toFixed(2)}`,
+  ]);
+
+  autoTable(doc, {
+    head: [['Descripción', 'Cant', 'Precio Unit', 'Total']],
+    body: rows,
+    startY: 100,
+    theme: 'striped',
+    styles: { fontSize: 10 },
+    headStyles: { fillColor: [41, 128, 185] },
+  });
+
+  // Totals
+  const finalY = (doc as any).lastAutoTable.finalY + 20;
+  doc.text(`Subtotal:`, 350, finalY);
+  doc.text(`$${data.subtotal.toFixed(2)}`, 450, finalY, { align: 'right' });
+  
+  doc.text(`Impuestos (13%):`, 350, finalY + 15);
+  doc.text(`$${data.taxAmount.toFixed(2)}`, 450, finalY + 15, { align: 'right' });
+  
+  doc.setFontSize(12);
+  doc.text(`TOTAL:`, 350, finalY + 35);
+  doc.text(`$${data.total.toFixed(2)}`, 450, finalY + 35, { align: 'right' });
+
+  // Footer
+  doc.setFontSize(8);
+  doc.text('Gracias por su preferencia.', 40, finalY + 60);
+
+  return doc.output('arraybuffer');
+}
+
+export interface PurchaseOrderPDFData {
+  orderNumber: string;
+  supplierName: string;
+  date: Date;
+  deliveryDate?: Date;
+  items: Array<{
+    description: string;
+    quantity: number;
+    unit: string;
+    unitPrice: number;
+    total: number;
+  }>;
+  subtotal: number;
+  taxAmount: number;
+  total: number;
+  notes?: string;
+}
+
+export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData): Uint8Array {
+  const doc = new jspdf({ orientation: 'p', unit: 'pt', format: 'a4' });
+  
+  // Header
+  doc.setFontSize(20);
+  doc.text('HAGO PRODUCE', 40, 40);
+  doc.setFontSize(10);
+  doc.text('Orden de Compra', 40, 55);
+  doc.text('Teléfono: +506 8888-8888', 40, 68);
+  
+  // Order Details
+  doc.setFontSize(16);
+  doc.text(`ORDEN #${data.orderNumber}`, 350, 40);
+  doc.setFontSize(10);
+  doc.text(`Fecha: ${formatDate(data.date)}`, 350, 60);
+  if (data.deliveryDate) {
+    doc.text(`Entrega: ${formatDate(data.deliveryDate)}`, 350, 75);
+  }
+  doc.text(`Proveedor: ${data.supplierName}`, 350, 90);
+
+  // Items Table
+  const rows = data.items.map((item) => [
+    item.description,
+    `${item.quantity} ${item.unit}`,
+    `$${item.unitPrice.toFixed(2)}`,
+    `$${item.total.toFixed(2)}`,
+  ]);
+
+  autoTable(doc, {
+    head: [['Descripción', 'Cant', 'Precio Unit', 'Total']],
+    body: rows,
+    startY: 120,
+    theme: 'striped',
+    styles: { fontSize: 10 },
+    headStyles: { fillColor: [46, 204, 113] }, // Green for POs
+  });
+
+  // Totals
+  const finalY = (doc as any).lastAutoTable.finalY + 20;
+  doc.text(`Subtotal:`, 350, finalY);
+  doc.text(`$${data.subtotal.toFixed(2)}`, 450, finalY, { align: 'right' });
+  
+  doc.text(`Impuestos (13%):`, 350, finalY + 15);
+  doc.text(`$${data.taxAmount.toFixed(2)}`, 450, finalY + 15, { align: 'right' });
+  
+  doc.setFontSize(12);
+  doc.text(`TOTAL:`, 350, finalY + 35);
+  doc.text(`$${data.total.toFixed(2)}`, 450, finalY + 35, { align: 'right' });
+
+  // Notes
+  if (data.notes) {
+    doc.setFontSize(10);
+    doc.text('Notas:', 40, finalY + 60);
+    doc.setFontSize(9);
+    doc.text(data.notes, 40, finalY + 75, { maxWidth: 500 });
+  }
+
+  return doc.output('arraybuffer');
+}
+
 function buildAgingPDF(report: AgingReport): Uint8Array {
   const doc = new jspdf({ orientation: 'p', unit: 'pt', format: 'a4' });
   doc.setFontSize(16);

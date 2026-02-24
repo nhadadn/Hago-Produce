@@ -1,3 +1,4 @@
+import { NextRequest } from 'next/server';
 
 export class InMemoryRateLimiter {
   private static instance: InMemoryRateLimiter;
@@ -52,4 +53,15 @@ export class InMemoryRateLimiter {
       }
     }
   }
+}
+
+const DEFAULT_WINDOW_MS = 60_000;
+
+export function getUserRateLimitKey(userId: string, req: NextRequest): string {
+  return `${userId}:${req.nextUrl.pathname}`;
+}
+
+export function isRateLimited(key: string, limit: number, windowMs: number = DEFAULT_WINDOW_MS): boolean {
+  const limiter = InMemoryRateLimiter.getInstance();
+  return !limiter.check(key, limit, windowMs);
 }

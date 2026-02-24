@@ -1548,6 +1548,179 @@ Checklist con casillas [ ] incluyendo:
 3. Creé WEBHOOKS_CONFIG_GUIDE.md documentando la configuración de los webhooks de Twilio WhatsApp y Make.com, incluyendo comandos de prueba con curl .
 4. Creé RUNBOOK_OPERACIONES.md con tabla de troubleshooting y consultas SQL de diagnóstico para webhooks, mensajes y precios.
 5. Creé GOLIVE_CHECKLIST.md con la checklist de go‑live para producción, cubriendo DB, OpenAI, Twilio, Make.com, secretos y pruebas manuales de WhatsApp y notificaciones.
+
+## Sección final – PROMPT maestro de recalibración del agente (Sprint 2)
+
+Esta sección define el **PROMPT maestro** recomendado para recalibrar futuros agentes
+cuando trabajen sobre Hago Produce tomando como baseline todo lo implementado y
+documentado en este SPRINT2_RECALIBRADO_COMPLETO.md.
+
+Uso recomendado:
+
+- Copiar el bloque siguiente como **System Prompt** o prompt inicial.
+- Ejecutarlo siempre después de que el repositorio (código + documentación de Sprint 2)
+  haya sido sincronizado con GitHub.
+
+```markdown
+# PROMPT MAESTRO – RE-CALIBRACIÓN TRAE.AI PARA HAGO PRODUCE (SPRINT 2 COMPLETADO)
+
+## 0. Contexto general del proyecto
+
+Estás trabajando en **HAGO PRODUCE**, un sistema empresarial para gestionar:
+
+- Productos, proveedores y listas de precios.
+- Facturas y estados de facturación (creación, vencimientos, cambios de estado).
+- Automatizaciones de negocio (Make.com, Twilio, cron jobs).
+- Chat interno con RAG para consultas sobre el negocio.
+
+Stack técnico (alto nivel):
+
+- Frontend / Backend: Next.js 14 (App Router) + TypeScript.
+- Base de datos: PostgreSQL con Prisma como ORM.
+- Infraestructura: Railway, GitHub Actions, Docker.
+- Integraciones:
+  - Make.com (pipeline de precios PDF → DB).
+  - Twilio WhatsApp Business (bot + notificaciones).
+  - Telegram (bot).
+  - Cron jobs para notificaciones (por ejemplo, facturas vencidas).
+
+> Asume que el repositorio local y la documentación de Sprint 2 ya están
+> sincronizados con GitHub (el humano ha ejecutado algo equivalente a
+> `git add .`, `git commit` y `git push --force` en la rama de trabajo).
+
+---
+
+## 1. Estado actual: Sprint 2 terminado
+
+El Sprint 2 está completado y se ha documentado en detalle. A nivel técnico, se
+han trabajado principalmente estos bloques (META‑PROMPTS S2‑01 a S2‑05):
+
+- **S2‑01 – Chat Hardening**
+  - Endurecimiento de `/api/chat` (imports correctos, uso de `prisma` y `logAudit`).
+  - Tests de seguridad para:
+    - `/api/chat` (401 sin JWT, 400 sin `message`, 429 por rate limit).
+    - Webhook WhatsApp: firma Twilio (prod/dev), rate limiting.
+
+- **S2‑02 – RAG Real**
+  - Intent detection híbrido (keywords + OpenAI fallback).
+  - Nuevos intents (`product_info`, `inventory_summary`, `create_order`,
+    `overdue_invoices`, etc.).
+  - Historial de conversación inyectado a OpenAI para respuestas más
+    contextuales.
+  - Soporte básico de SSE en `/api/chat`.
+
+- **S2‑03 – Make.com → DB**
+  - Webhook `/api/v1/webhooks/make` compatible con payloads de Make.com.
+  - Migración conceptual: dejar de depender de Google Sheets y escribir
+    directamente en DB (`ProductPrice`).
+  - Idempotencia robusta vía `WebhookLog`.
+  - `MAKE_BLUEPRINT_V2.json` para el escenario de Make.com (con módulo HTTP).
+  - Tests de integración para el webhook.
+
+- **S2‑04 – WhatsApp Producción**
+  - Normalización de números WhatsApp para el contexto de Hago Produce.
+  - Variables de entorno Twilio documentadas en `.env.example`.
+  - Notificaciones automáticas por cambio de estado de facturas (vía WhatsApp).
+  - Cron job para notificaciones de facturas vencidas, protegido por
+    `CRON_SECRET`.
+  - Tests unitarios / integración básicos para WhatsApp + notificaciones.
+
+- **S2‑05 – Documentación Maestra de Automatizaciones**
+  - Inventario de automatizaciones (Make.com, Twilio, cron, bots).
+  - Guía de configuración de Make.com.
+  - Guía de configuración de webhooks externos (Twilio, Make.com).
+  - Runbook de operaciones.
+  - Checklist de Go‑Live.
+
+Tu punto de partida es este: las funcionalidades de Sprint 2 existen y tienen
+documentación asociada.
+
+---
+
+## 2. Documentación clave de Sprint 2
+
+Toda la documentación de Fase 2 / Sprint 2 vive dentro de:
+
+- `DocumentacionHagoProduce/FaseDos/`
+
+Documentos clave:
+
+- `SPRINT2_RECALIBRADO_COMPLETO.md` (este documento):
+  - Meta‑prompts S2‑01 a S2‑05.
+  - Tareas, criterios de aceptación y respuestas de agentes.
+
+- `Fase2.0V/FASE2_DELIVERABLES_SUMMARY.md`:
+  - Resumen de entregables de Fase 2.
+
+- `Fase2.0V/AUDITORIA_FASE2_HAGO_PRODUCE.md`:
+  - Auditoría técnica extensa de Fase 2.
+
+- `Fase2.0V/FASE2_ROADMAP_Y_PROMPTS.md`:
+  - Roadmap de dependencias y prompts de implementación por tema.
+
+- `AUTOMATIZACIONES_MASTER.md`:
+  - Inventario de automatizaciones, diagrama ASCII y variables de entorno.
+
+- `MAKE_SETUP_GUIDE.md`:
+  - Guía de configuración de Make.com y uso de `MAKE_BLUEPRINT_V2.json`.
+
+- `WEBHOOKS_CONFIG_GUIDE.md`:
+  - Configuración de webhooks Twilio WhatsApp y Make.com.
+
+- `RUNBOOK_OPERACIONES.md`:
+  - Troubleshooting y consultas SQL de diagnóstico.
+
+- `GOLIVE_CHECKLIST.md`:
+  - Checklist de producción (DB, OpenAI, Twilio, Make.com, secretos, pruebas).
+
+- `TWILIO_SETUP_GUIDE.md` y `MAKE_PIPELINE_DOCUMENTACION.md`:
+  - Detalle de configuración Twilio WhatsApp y pipeline de Make.com.
+
+---
+
+## 3. Convenciones que debes respetar
+
+- Comentarios en código: ESPAÑOL.
+- Documentación: ESPAÑOL.
+- Nombres de variables/funciones: inglés.
+- Mensajes de error al usuario final: ESPAÑOL.
+- Logs técnicos: inglés.
+- ORM: Prisma (no usar otros ORMs).
+- No introducir nuevas dependencias sin justificarlo.
+
+---
+
+## 4. Cómo debes trabajar a partir de Sprint 2
+
+1. Ubica cualquier nueva tarea dentro del contexto de Fase 2 usando:
+   - `FASE2_ROADMAP_Y_PROMPTS.md`.
+   - `SPRINT2_RECALIBRADO_COMPLETO.md`.
+
+2. Si la tarea toca automatizaciones, notificaciones o bots, revisa primero:
+   - `AUTOMATIZACIONES_MASTER.md`.
+   - `MAKE_SETUP_GUIDE.md`.
+   - `WEBHOOKS_CONFIG_GUIDE.md`.
+   - `TWILIO_SETUP_GUIDE.md`.
+   - `RUNBOOK_OPERACIONES.md`.
+   - `GOLIVE_CHECKLIST.md`.
+
+3. Antes de tocar código, consulta:
+   - `02_data_model.md` (modelo de datos).
+   - `03_api_contracts.md` (contratos de API).
+
+4. Implementa cambios respetando patrones de Sprint 2:
+   - Endurecimiento de endpoints.
+   - Uso de logs (`WebhookLog`, `notifications`, `messages`).
+   - Idempotencia en webhooks.
+   - Notificaciones asíncronas y rate limiting.
+
+5. Valida con tests (unitarios e integración) y, en automatizaciones,
+   apoyándote en las guías de Make.com y Twilio.
+
+6. Mantén la documentación alineada con los cambios, actualizando los
+   documentos existentes en `DocumentacionHagoProduce/FaseDos/`.
+```
+
 FIN
 
 ---

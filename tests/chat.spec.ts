@@ -4,6 +4,7 @@ test.describe('Floating Chat Assistant', () => {
   test('should open chat and send a message', async ({ page }) => {
     // Navigate to the homepage
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
     // Check if the chat button exists
     const chatButton = page.getByRole('button', { name: 'Abrir asistente' });
@@ -39,6 +40,7 @@ test.describe('Floating Chat Assistant', () => {
 
   test('should show and use quick suggestions', async ({ page }) => {
     await page.goto('/dashboard'); // Assuming dashboard route triggers specific suggestions
+    await page.waitForLoadState('networkidle');
     
     await page.getByRole('button', { name: 'Abrir asistente' }).click();
 
@@ -63,6 +65,7 @@ test.describe('Floating Chat Assistant', () => {
 
   test('should persist chat history and support multiple sessions', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     
     // Mock API
     await page.route('**/api/chat', async (route) => {
@@ -82,6 +85,7 @@ test.describe('Floating Chat Assistant', () => {
 
     // 2. Reload page
     await page.reload();
+    await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: 'Abrir asistente' }).click();
 
     // 3. Verify history is there

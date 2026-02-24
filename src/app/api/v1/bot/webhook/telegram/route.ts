@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { telegramService } from '@/lib/services/bot/telegram.service';
+import { linkTelegramChat } from '@/lib/services/telegram.service';
 import { BotQueryService } from '@/lib/services/bot/query.service';
 import { commandHandler } from '@/lib/services/bot/command-handler.service';
 import { isRateLimited, createRateLimitResponse } from '@/lib/utils/rate-limit';
@@ -66,7 +67,31 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Detectar si es un comando
+    const isStartCommand = messageData.text.startsWith('/start');
+
+    if (isStartCommand) {
+      const parts = messageData.text.trim().split(/\s+/);
+      const customerId = parts[1];
+
+      if (customerId) {
+        try {
+          await linkTelegramChat(customerId, messageData.chatId.toString());
+          await telegramService.sendMessage(
+            messageData.chatId,
+            'Tu chat de Telegram ha sido vinculado correctamente con tu cuenta de cliente.',
+          );
+        } catch (linkError) {
+          console.error('[TELEGRAM_LINK_ERROR]', linkError);
+          await telegramService.sendMessage(
+            messageData.chatId,
+            'No se pudo vincular tu chat de Telegram con tu cuenta. Verifica tu identificador de cliente e inténtalo de nuevo.',
+          );
+        }
+
+        return NextResponse.json({ success: true });
+      }
+    }
+
     const commandInfo = commandHandler.isCommand(messageData.text);
     
     // Log del mensaje recibido

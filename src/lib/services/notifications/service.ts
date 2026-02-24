@@ -1,5 +1,6 @@
 import prisma from '@/lib/db';
-import { NotificationChannel, NotificationPayload, NotificationTrigger } from '@/lib/services/notifications/types';
+import { NotificationChannel, NotificationPayload } from '@/lib/services/notifications/types';
+import { getCustomerChatId, sendNotification as sendTelegramNotification } from '@/lib/services/telegram.service';
 
 interface SendOptions {
   maxRetries?: number;
@@ -135,8 +136,19 @@ async function sendWithRetry(
 
       if (channel === 'email') {
         await sendEmailNotification(payload);
-      } else {
+      } else if (channel === 'webhook') {
         await sendWebhookNotification(payload);
+      } else if (channel === 'telegram') {
+        const chatId = await getCustomerChatId(payload.customerId);
+        if (!chatId) {
+          return;
+        }
+
+        const content = await getNotificationContent(payload);
+        const result = await sendTelegramNotification(chatId, content.message);
+        if (!result.success) {
+          throw new Error(result.error);
+        }
       }
 
       await logNotification(payload, channel, 'success', attempt);
@@ -214,4 +226,3 @@ export const NotificationsService = {
     await this.sendNotification(payload);
   },
 };
-

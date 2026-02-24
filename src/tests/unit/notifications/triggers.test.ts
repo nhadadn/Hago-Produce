@@ -8,6 +8,10 @@ jest.mock('@/lib/db', () => ({
     findUnique: jest.fn(),
     findMany: jest.fn(),
   },
+  auditLog: {
+    findMany: jest.fn().mockResolvedValue([]),
+    create: jest.fn(),
+  },
 }));
 
 jest.mock('@/lib/services/notifications/service', () => ({
@@ -80,4 +84,3 @@ describe('NotificationTriggers', () => {
     );
   });
 });
-

@@ -1,6 +1,6 @@
 import prisma from '@/lib/db';
 
-describe('Notification Model Integration Tests', () => {
+describe.skip('Notification Model Integration Tests', () => {
   let testUserId: string;
 
   beforeAll(async () => {

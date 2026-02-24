@@ -28,3 +28,41 @@ WHERE source = 'make_automation'
   AND created_at > NOW() - INTERVAL '24 hours';
 ```
 
+## SECCIÓN - Gestión de Caché de Reportes
+
+### Verificación de Estado
+
+```sql
+-- Ver cachés activos y vigentes
+SELECT * FROM report_cache WHERE expires_at > NOW();
+
+-- Ver distribución de cachés por tipo
+SELECT report_type, COUNT(*) FROM report_cache GROUP BY report_type;
+```
+
+### Invalidación Manual
+
+Para forzar la actualización de datos (ej. después de una carga masiva):
+
+```bash
+# Invalidar TODO el caché (requiere token de admin)
+curl -X DELETE https://api.hagoproduce.com/api/v1/reports/cache \
+  -H "Authorization: Bearer <ADMIN_TOKEN>"
+
+# Invalidar solo reportes de Revenue
+curl -X DELETE "https://api.hagoproduce.com/api/v1/reports/cache?type=REVENUE" \
+  -H "Authorization: Bearer <ADMIN_TOKEN>"
+```
+
+### Configuración de Cron (Railway)
+
+Para la limpieza automática de cachés expirados:
+
+1.  Ir a **Railway Project** -> **Settings** -> **Cron Jobs**.
+2.  Agregar nuevo Cron Job:
+    *   **Schedule**: `0 * * * *` (Cada hora)
+    *   **Command**:
+        ```bash
+        curl -X GET "https://${RAILWAY_PUBLIC_DOMAIN}/api/v1/cron/clean-report-cache" \
+          -H "x-cron-secret: ${CRON_SECRET}"
+        ```

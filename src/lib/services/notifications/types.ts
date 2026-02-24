@@ -1,6 +1,6 @@
 export type NotificationTrigger = 'status_change' | 'due_date' | 'overdue';
 
-export type NotificationChannel = 'email' | 'webhook';
+export type NotificationChannel = 'email' | 'webhook' | 'telegram';
 
 export interface NotificationPayloadBase {
   trigger: NotificationTrigger;
@@ -41,4 +41,3 @@ export interface NotificationLogEntry {
   errorMessage?: string;
   createdAt: Date;
 }
-

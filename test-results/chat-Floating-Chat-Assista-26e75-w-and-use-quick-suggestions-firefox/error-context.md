@@ -1,0 +1,180 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Quintas CRM" [ref=e6] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e7]:
+          - link "Dashboard" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Mapa" [ref=e9] [cursor=pointer]:
+            - /url: /mapa
+          - link "Ventas" [ref=e10] [cursor=pointer]:
+            - /url: /ventas
+          - link "Pagos" [ref=e11] [cursor=pointer]:
+            - /url: /pagos
+          - link "Clientes" [ref=e12] [cursor=pointer]:
+            - /url: /clientes
+          - link "Vendedores" [ref=e13] [cursor=pointer]:
+            - /url: /vendedores
+          - link "Portal Cliente" [ref=e14] [cursor=pointer]:
+            - /url: /portal
+      - generic [ref=e16]: AD
+  - generic [ref=e17]:
+    - complementary [ref=e18]:
+      - generic [ref=e19]:
+        - heading "Analytics" [level=2] [ref=e20]
+        - navigation [ref=e21]:
+          - link "Principal" [ref=e22] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e23]
+            - text: Principal
+          - link "Ventas" [ref=e28] [cursor=pointer]:
+            - /url: /dashboard/ventas
+            - img [ref=e29]
+            - text: Ventas
+          - link "Pagos" [ref=e33] [cursor=pointer]:
+            - /url: /dashboard/pagos
+            - img [ref=e34]
+            - text: Pagos
+          - link "Comisiones" [ref=e37] [cursor=pointer]:
+            - /url: /dashboard/comisiones
+            - img [ref=e38]
+            - text: Comisiones
+          - link "Reportes" [ref=e43] [cursor=pointer]:
+            - /url: /dashboard/reportes
+            - img [ref=e44]
+            - text: Reportes
+          - link "Configuración" [ref=e50] [cursor=pointer]:
+            - /url: /dashboard/configuracion
+            - img [ref=e51]
+            - text: Configuración
+    - main [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - heading "Dashboard Principal" [level=1] [ref=e57]
+          - paragraph [ref=e58]: Resumen general de rendimiento y KPIs
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - heading "Dashboard General" [level=1] [ref=e62]
+              - paragraph [ref=e63]: Resumen de operaciones y rendimiento
+            - generic [ref=e64]:
+              - combobox [ref=e66] [cursor=pointer]:
+                - option "Todo el periodo"
+                - option "Hoy"
+                - option "Esta Semana"
+                - option "Este Mes" [selected]
+                - option "Este Año"
+              - button "Actualizar datos" [ref=e67] [cursor=pointer]:
+                - img [ref=e68]
+              - button "Exportar" [expanded] [ref=e75] [cursor=pointer]:
+                - img [ref=e76]
+                - text: Exportar
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - generic [ref=e82]:
+                - generic [ref=e83]:
+                  - paragraph [ref=e84]: Ventas Totales
+                  - img [ref=e86]
+                - img [ref=e91]
+              - heading "0" [level=3] [ref=e95]
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - generic [ref=e98]:
+                  - paragraph [ref=e99]: Ingresos Cobrados
+                  - img [ref=e101]
+                - img [ref=e106]
+              - heading "$0" [level=3] [ref=e109]
+            - generic [ref=e110]:
+              - generic [ref=e111]:
+                - generic [ref=e112]:
+                  - paragraph [ref=e113]: Cartera Pendiente
+                  - img [ref=e115]
+                - img [ref=e120]
+              - heading "$0" [level=3] [ref=e123]
+            - generic [ref=e124]:
+              - generic [ref=e125]:
+                - generic [ref=e126]:
+                  - paragraph [ref=e127]: Lotes Vendidos
+                  - img [ref=e129]
+                - img [ref=e134]
+              - heading "0 unidades" [level=3] [ref=e139]
+          - generic [ref=e140]:
+            - generic [ref=e142]:
+              - generic [ref=e143]:
+                - heading "Evolución de Ventas" [level=3] [ref=e144]
+                - generic [ref=e145]:
+                  - button "Barras" [ref=e146] [cursor=pointer]
+                  - button "Líneas" [ref=e147] [cursor=pointer]
+              - application [ref=e151]
+            - generic [ref=e158]:
+              - heading "Estatus de Pagos" [level=3] [ref=e159]
+              - generic [ref=e160]:
+                - generic [ref=e162]:
+                  - generic [ref=e163]:
+                    - list
+                  - application [ref=e164]
+                - generic:
+                  - paragraph: "0"
+                  - paragraph: Pagos
+          - generic [ref=e165]:
+            - generic [ref=e167]:
+              - heading "Estado del Inventario" [level=3] [ref=e168]
+              - application [ref=e172]
+            - generic [ref=e179]:
+              - heading "Top Vendedores" [level=3] [ref=e180]
+              - application [ref=e184]
+          - generic [ref=e190]:
+            - generic [ref=e191]:
+              - heading "Ranking de Vendedores" [level=3] [ref=e193]:
+                - img [ref=e194]
+                - text: Ranking de Vendedores
+              - table [ref=e202]:
+                - rowgroup [ref=e203]:
+                  - row "# Vendedor Ventas Monto Total Promedio Comisiones" [ref=e204]:
+                    - columnheader "#" [ref=e205]
+                    - columnheader "Vendedor" [ref=e206]
+                    - columnheader "Ventas" [ref=e207] [cursor=pointer]:
+                      - generic [ref=e208]:
+                        - text: Ventas
+                        - img [ref=e209]
+                    - columnheader "Monto Total" [ref=e214] [cursor=pointer]:
+                      - generic [ref=e215]:
+                        - text: Monto Total
+                        - img [ref=e216]
+                    - columnheader "Promedio" [ref=e219] [cursor=pointer]:
+                      - generic [ref=e220]:
+                        - text: Promedio
+                        - img [ref=e221]
+                    - columnheader "Comisiones" [ref=e226] [cursor=pointer]:
+                      - generic [ref=e227]:
+                        - text: Comisiones
+                        - img [ref=e228]
+                - rowgroup
+            - generic [ref=e233]:
+              - generic [ref=e234]:
+                - heading "Pagos Recientes" [level=3] [ref=e235]
+                - generic [ref=e236]:
+                  - generic [ref=e237]: "Filtrar:"
+                  - combobox [ref=e238]:
+                    - option "Todos" [selected]
+                    - option "Pagados"
+                    - option "Pendientes"
+                    - option "Atrasados"
+              - table [ref=e240]:
+                - rowgroup [ref=e241]:
+                  - row "Fecha Cliente Venta/Lote Monto Estatus" [ref=e242]:
+                    - columnheader "Fecha" [ref=e243]
+                    - columnheader "Cliente" [ref=e244]
+                    - columnheader "Venta/Lote" [ref=e245]
+                    - columnheader "Monto" [ref=e246]
+                    - columnheader "Estatus" [ref=e247]
+                - rowgroup [ref=e248]:
+                  - row "No se encontraron pagos" [ref=e249]:
+                    - cell "No se encontraron pagos" [ref=e250]
+  - alert [ref=e251]
+```

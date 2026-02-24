@@ -45,7 +45,15 @@ export async function POST(req: NextRequest) {
 
     const trends = await getProductPriceTrends(productId, months ?? 6);
 
-    return NextResponse.json({ success: true, data: trends });
+    const response = NextResponse.json({ success: true, data: trends });
+    
+    if (trends._fromCache) {
+      response.headers.set('X-Cache', 'HIT');
+    } else {
+      response.headers.set('X-Cache', 'MISS');
+    }
+
+    return response;
   } catch (error) {
     console.error('[REPORTS_PRICE_TRENDS_POST]', error);
     return NextResponse.json(

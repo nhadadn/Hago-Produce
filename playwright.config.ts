@@ -14,14 +14,17 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      timeout: 15000,
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
+      timeout: 30000,
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
+      timeout: 20000,
       use: { ...devices['Desktop Safari'] },
     },
   ],

@@ -22,14 +22,75 @@ const INVENTORY_SUMMARY_KEYWORDS_EN = ['inventory summary', 'inventory overview'
 const OVERDUE_INVOICES_KEYWORDS_ES = ['facturas vencidas', 'facturas atrasadas'];
 const OVERDUE_INVOICES_KEYWORDS_EN = ['overdue invoices', 'late invoices'];
 
+const CREATE_PURCHASE_ORDER_KEYWORDS_ES = ['crear orden de compra', 'orden de compra', 'comprar a proveedor', 'pedido a proveedor'];
+const CREATE_PURCHASE_ORDER_KEYWORDS_EN = ['create purchase order', 'purchase order', 'supplier order', 'order from supplier'];
+
 function includesKeyword(message: string, keywords: string[]): boolean {
   const lower = message.toLowerCase();
   return keywords.some((kw) => lower.includes(kw));
 }
 
-export async function analyzeIntent(message: string, language: ChatLanguage = 'es'): Promise<DetectedIntent> {
+export async function analyzeIntent(message: string, language: ChatLanguage = 'es', context?: any): Promise<DetectedIntent> {
   const normalizedLanguage: ChatLanguage = language === 'en' ? 'en' : 'es';
   const lower = message.toLowerCase();
+
+  // 1. Check for pending order confirmation
+  if (context?.pendingOrder) {
+    const confirmKeywords = normalizedLanguage === 'en'
+      ? ["yes", "confirm", "ok", "proceed", "go ahead", "sure"]
+      : ["sí", "si", "confirmo", "confirmar", "ok", "dale", "adelante", "procede"];
+
+    const cancelKeywords = normalizedLanguage === 'en'
+      ? ["no", "cancel", "nevermind", "stop"]
+      : ["no", "cancelar", "cancel", "no gracias"];
+
+    // Check confirm
+    if (confirmKeywords.some(kw => lower === kw || lower.startsWith(kw + ' ') || lower.endsWith(' ' + kw))) {
+       return {
+         intent: 'confirm_order',
+         confidence: 1.0,
+         params: { language: normalizedLanguage, rawMessage: message }
+       };
+    }
+
+    // Check cancel
+    if (cancelKeywords.some(kw => lower === kw || lower.startsWith(kw + ' ') || lower.endsWith(' ' + kw))) {
+       return {
+         intent: 'cancel_order',
+         confidence: 1.0,
+         params: { language: normalizedLanguage, rawMessage: message }
+       };
+    }
+  }
+
+  // 1.1 Check for pending purchase order confirmation
+  if (context?.pendingPurchaseOrders) {
+    const confirmKeywords = normalizedLanguage === 'en'
+      ? ["yes", "confirm", "ok", "proceed", "go ahead", "sure"]
+      : ["sí", "si", "confirmo", "confirmar", "ok", "dale", "adelante", "procede"];
+
+    const cancelKeywords = normalizedLanguage === 'en'
+      ? ["no", "cancel", "nevermind", "stop"]
+      : ["no", "cancelar", "cancel", "no gracias"];
+
+    // Check confirm
+    if (confirmKeywords.some(kw => lower === kw || lower.startsWith(kw + ' ') || lower.endsWith(' ' + kw))) {
+       return {
+         intent: 'confirm_purchase_order',
+         confidence: 1.0,
+         params: { language: normalizedLanguage, rawMessage: message }
+       };
+    }
+
+    // Check cancel
+    if (cancelKeywords.some(kw => lower === kw || lower.startsWith(kw + ' ') || lower.endsWith(' ' + kw))) {
+       return {
+         intent: 'cancel_purchase_order',
+         confidence: 1.0,
+         params: { language: normalizedLanguage, rawMessage: message }
+       };
+    }
+  }
 
   const isPrice =
     includesKeyword(lower, PRICE_KEYWORDS_ES) || includesKeyword(lower, PRICE_KEYWORDS_EN);
@@ -51,6 +112,20 @@ export async function analyzeIntent(message: string, language: ChatLanguage = 'e
   const isOverdueInvoices =
     includesKeyword(lower, OVERDUE_INVOICES_KEYWORDS_ES) ||
     includesKeyword(lower, OVERDUE_INVOICES_KEYWORDS_EN);
+  const isCreatePurchaseOrder =
+    includesKeyword(lower, CREATE_PURCHASE_ORDER_KEYWORDS_ES) ||
+    includesKeyword(lower, CREATE_PURCHASE_ORDER_KEYWORDS_EN);
+
+  if (isCreatePurchaseOrder) {
+    return {
+      intent: 'create_purchase_order',
+      confidence: 0.85,
+      params: {
+        searchTerm: message,
+        language: normalizedLanguage,
+      },
+    };
+  }
 
   if (isOverdueInvoices) {
     return {

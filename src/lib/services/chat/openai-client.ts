@@ -66,6 +66,7 @@ function buildIntentClassificationSystemPrompt(language: ChatLanguage): string {
       '- inventory_summary',
       '- create_order',
       '- overdue_invoices',
+      '- create_purchase_order',
       'Respond with a strict JSON object with fields: intent (string) and params (object).',
     ].join(' ');
   }
@@ -83,6 +84,7 @@ function buildIntentClassificationSystemPrompt(language: ChatLanguage): string {
     '- inventory_summary',
     '- create_order',
     '- overdue_invoices',
+    '- create_purchase_order',
     'Responde con un objeto JSON estricto con campos: intent (string) y params (object).',
   ].join(' ');
 }
@@ -149,11 +151,12 @@ export async function classifyChatIntentWithOpenAI(
     }
 
     const parsed = JSON.parse(content) as { intent: ChatIntent; params?: Record<string, any> };
+    const baseParams = parsed.params ?? { searchTerm: message, language };
 
     return {
       intent: parsed.intent,
       confidence: 0.9,
-      params: parsed.params ?? { searchTerm: message, language },
+      params: { ...baseParams, rawMessage: message },
     };
   } catch (error) {
     console.error('[CHAT_INTENT_OPENAI_ERROR]', error);

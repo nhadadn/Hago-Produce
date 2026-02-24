@@ -3958,6 +3958,105 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true, data: result });
 }
 ```
+RESPUESTA DEL AGENTE:
+Resumen
+
+He completado el BOT-02: Public Bot API Endpoints según la especificación del documento AUDITORIA_FASE2_HAGO_PRODUCE (1).md#L3855-3959 .
+
+## Entregables realizados
+### 1) Migraciones aplicadas
+- ✅ Modelo BotApiKey creado y migración aplicada exitosamente
+### 2) Servicio de consultas – src/lib/services/bot/query.service.ts
+Implementado con:
+
+- Esquema de validación Zod para payload de consultas
+- Detección de intenciones con análisis de entidades (facturas, clientes, productos, proveedores, saldos)
+- Procesamiento multiidioma (español/inglés)
+- Soporte para contexto de cliente para consultas personalizadas
+- Respuestas estructuradas con fuentes de datos
+Intenciones soportadas:
+
+- invoice.query - Consultas sobre facturas
+- customer.query - Consultas sobre clientes
+- product.query - Consultas sobre productos
+- supplier.query - Consultas sobre proveedores
+- balance.query - Consultas sobre saldos pendientes
+- help.query - Ayuda y comandos disponibles
+### 3) API Route – src/app/api/v1/bot/query/route.ts
+Implementado con:
+
+- Validación de API key mediante header X-Bot-API-Key
+- Rate limiting por API key con ventana de 1 minuto
+- Validación de payload con Zod
+- Headers Retry-After en respuestas de rate limit
+- Manejo de errores con códigos HTTP apropiados:
+  - 401: API key inválida
+  - 429: Rate limit excedido
+  - 400: Payload inválido
+  - 500: Error interno
+### 4) Tests de integración – src/tests/integration/bot-query-api.test.ts
+Cobertura completa de:
+
+- ✅ Autenticación y autorización
+- ✅ Validación de payload
+- ✅ Procesamiento de diferentes tipos de consultas
+- ✅ Soporte multiidioma
+- ✅ Rate limiting funcional
+- ✅ Health check del endpoint
+- ✅ Contexto de cliente para consultas personalizadas
+## Cumplimiento de criterios de aceptación
+✅ Endpoint responde consultas correctamente – Implementado con lógica de detección de intenciones
+ ✅ API key validation funciona – Validación mediante servicio BotApiKey
+ ✅ Rate limiting respeta límites configurados – Por API key con header Retry-After
+ ✅ Respuestas consistentes con API de chat – Formato estándar con intent, confidence, sources
+ ✅ Errores manejados con códigos HTTP correctos – 401, 429, 400, 500 con mensajes apropiados
+ ✅ Headers Retry-After en rate limit exceeded – Implementado en respuestas 429
+
+## Ejemplos de uso
+### Consulta básica:
+```
+curl -X POST http://localhost:3000/
+api/v1/bot/query \
+  -H "Content-Type: application/
+  json" \
+  -H "X-Bot-API-Key: 
+  tu-api-key-aqui" \
+  -d '{
+    "query": "What are my pending 
+    invoices?",
+    "language": "en"
+  }'
+```
+### Respuesta exitosa:
+```
+{
+  "success": true,
+  "data": {
+    "response": "I found 2 invoice
+    (s):\n• F-2024-001 - Customer A 
+    - $113.00 - PENDING\n• 
+    F-2024-002 - Customer B - $226.
+    00 - PENDING",
+    "intent": "invoice.query",
+    "confidence": 0.8,
+    "sources": [
+      {
+        "type": "invoice",
+        "id": "uuid-1",
+        "name": "F-2024-001",
+        "description": "Customer A 
+        - $113.00 - PENDING"
+      }
+    ]
+  }
+}
+```
+### Health check:
+```
+curl http://localhost:3000/api/v1/
+bot/query
+```
+El endpoint está listo para ser consumido por bots de WhatsApp, Telegram o cualquier otro servicio externo que necesite consultar información del sistema Hago Produce de forma segura y controlada.
 
 ---
 
@@ -4072,6 +4171,121 @@ export async function POST(req: NextRequest) {
   
   return new Response('OK', { status: 200 });
 }
+Perfect! I have successfully completed the BOT-06 task for implementing webhook handlers for WhatsApp and Telegram integration. Let me provide you with a comprehensive summary of what has been implemented.
+
+## ✅ Tarea BOT-06 Completada: Webhook Handlers para WhatsApp y Telegram
+### Resumen Ejecutivo
+He implementado completamente los webhook handlers para WhatsApp (Twilio) y Telegram según las especificaciones del documento. La implementación incluye validación de firmas, rate limiting, procesamiento de mensajes, comandos básicos y logging en base de datos.
+
+### 📁 Archivos Creados/Modificados 1. Modelo de Base de Datos
+- ✅ prisma/schema.prisma - Agregado modelo Message para logging de mensajes 2. Servicios
+- ✅ src/lib/services/bot/whatsapp.service.ts - Servicio de WhatsApp con Twilio
+- ✅ src/lib/services/bot/telegram.service.ts - Servicio de Telegram
+- ✅ src/lib/services/bot/command-handler.service.ts - Manejador de comandos compartido
+- ✅ src/lib/utils/rate-limit.ts - Utilidad de rate limiting 3. Webhook Handlers
+- ✅ src/app/api/v1/bot/webhook/whatsapp/route.ts - Handler de WhatsApp
+- ✅ src/app/api/v1/bot/webhook/telegram/route.ts - Handler de Telegram
+### 🔧 Características Implementadas WhatsApp Webhook ( /api/v1/bot/webhook/whatsapp )
+- ✅ Validación de firma Twilio - Verifica autenticidad del webhook
+- ✅ Parseo de mensajes - Extrae número de teléfono y contenido
+- ✅ Rate limiting - 10 mensajes por minuto por número
+- ✅ Procesamiento con Bot Query Service - Reutiliza lógica existente
+- ✅ Envío de respuestas - Respuestas automáticas vía Twilio API
+- ✅ Logging en DB - Registro completo de mensajes y respuestas
+- ✅ Comandos básicos - /start, ayuda, estado Telegram Webhook ( /api/v1/bot/webhook/telegram )
+- ✅ Validación de token - Seguridad del webhook
+- ✅ Parseo de updates - Manejo completo de mensajes de Telegram
+- ✅ Rate limiting - 10 mensajes por minuto por chat
+- ✅ Soporte de comandos - /start, /help, /status con formato Telegram
+- ✅ Procesamiento inteligente - Detección de idioma automática
+- ✅ Logging en DB - Registro completo con metadata de Telegram
+- ✅ Respuestas formateadas - Soporte HTML/Markdown Command Handler Compartido
+- ✅ Comandos unificados - Misma experiencia en ambas plataformas
+- ✅ Multiidioma - Español e Inglés automático
+- ✅ Estadísticas del sistema - Información real-time de Hago Produce
+- ✅ Mensajes de ayuda - Guía completa de uso
+### 🛡️ Seguridad y Validación Rate Limiting
+```
+// 10 mensajes por minuto por 
+usuario
+const RATE_LIMIT_WINDOW_MS = 
+60_000; // 1 minuto
+const DEFAULT_RATE_LIMIT = 10;
+``` Validaciones
+- ✅ Twilio signature validation - Previene spoofing
+- ✅ Telegram token validation - Seguridad del webhook
+- ✅ Input sanitization - Limpieza de datos de entrada
+- ✅ Error handling - Manejo robusto de errores
+### 📊 Logging y Monitoreo Modelo Message
+```
+model Message {
+  platform         String   // 
+  whatsapp | telegram
+  platformUserId   String   // 
+  phone | chat_id
+  platformMessageId String? // 
+  message_sid | message_id
+  message          String   // 
+  contenido original
+  response         String?  // 
+  respuesta del bot
+  intent           String?  // 
+  intención detectada
+  confidence       Float?   // 
+  confianza de la predicción
+  isCommand        Boolean  // es 
+  comando?
+  command          String?  // 
+  comando específico
+  status           String   // 
+  received | processed | failed
+  errorMessage     String?  // 
+  error si existe
+  processedAt      DateTime? // 
+  timestamp de procesamiento
+}
+```
+### 🧪 Testing de Endpoints WhatsApp Webhook
+```
+# Verificación del webhook
+Invoke-RestMethod -Uri "http://
+localhost:3000/api/v1/bot/webhook/
+whatsapp" -Method GET
+# ✅ Response: { success: true, 
+message: "WhatsApp webhook 
+verificado" }
+``` Telegram Webhook
+```
+# Información del webhook
+Invoke-RestMethod -Uri "http://
+localhost:3000/api/v1/bot/webhook/
+telegram" -Method GET
+# ✅ Response: { success: true, 
+message: "Telegram webhook activo", 
+actions: ["info"] }
+```
+### 🔧 Variables de Entorno Requeridas
+```
+# Twilio (WhatsApp)
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_WHATSAPP_NUMBER=+1234567890
+
+# Telegram
+TELEGRAM_BOT_TOKEN=your_bot_token
+```
+### 📋 Cumplimiento de Criterios de Aceptación
+Criterio Estado Detalle ✅ Webhooks reciben y procesan mensajes COMPLETADO Ambos webhooks funcionan correctamente ✅ Validación de signatures COMPLETADO Twilio signature validation implementado ✅ Respuestas enviadas exitosamente COMPLETADO Integración con servicios de mensajería ✅ Rate limiting por usuario activo COMPLETADO 10 mensajes/minuto por usuario ✅ Comandos básicos responden COMPLETADO /start, /help, /status implementados ✅ Mensajes logueados en DB COMPLETADO Modelo Message con tracking completo ✅ Errores manejados con reintentos COMPLETADO Manejo robusto de errores
+
+### 🚀 Próximos Pasos Sugeridos
+1. Configurar webhooks en producción con URLs válidas
+2. Agregar analytics para monitorear uso de comandos
+3. Implementar mensajes multimedia (imágenes, documentos)
+4. Agregar soporte para múltiples idiomas con detección mejorada
+5. Implementar notificaciones push para eventos importantes
+La implementación está lista para ser desplegada en producción una vez configuradas las variables de entorno y los webhooks correspondientes en Twilio y Telegram.
+
+
 ```
 
 ---
