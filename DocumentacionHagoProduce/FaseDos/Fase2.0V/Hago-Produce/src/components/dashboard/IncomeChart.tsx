@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Bar,
   BarChart,
@@ -10,34 +11,38 @@ import {
   Tooltip,
 } from "recharts";
 
-const data = [
-  {
-    name: "Ene",
-    total: 12000,
-  },
-  {
-    name: "Feb",
-    total: 18000,
-  },
-  {
-    name: "Mar",
-    total: 15000,
-  },
-  {
-    name: "Abr",
-    total: 21000,
-  },
-  {
-    name: "May",
-    total: 19000,
-  },
-  {
-    name: "Jun",
-    total: 24000,
-  },
-];
+interface IncomeChartProps {
+  data?: { name: string; total: number }[];
+  isLoading?: boolean;
+}
 
-export function IncomeChart() {
+export function IncomeChart({ data, isLoading }: IncomeChartProps) {
+  if (isLoading) {
+    return (
+      <Card className="col-span-4">
+        <CardHeader>
+          <CardTitle>Ingresos Mensuales</CardTitle>
+        </CardHeader>
+        <CardContent className="pl-2">
+          <Skeleton className="h-[350px] w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card className="col-span-4">
+        <CardHeader>
+          <CardTitle>Ingresos Mensuales</CardTitle>
+        </CardHeader>
+        <CardContent className="pl-2 h-[350px] flex items-center justify-center text-muted-foreground">
+          No hay datos disponibles
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="col-span-4">
       <CardHeader>
@@ -64,7 +69,7 @@ export function IncomeChart() {
               formatter={(value: any) => [`$${value}`, "Ingresos"]}
               cursor={{ fill: "transparent" }}
             />
-            <Bar dataKey="total" fill="#0f172a" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="total" fill="#1e3a8a" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

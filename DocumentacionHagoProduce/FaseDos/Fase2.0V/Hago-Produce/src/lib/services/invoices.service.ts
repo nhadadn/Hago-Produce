@@ -249,9 +249,26 @@ export class InvoicesService {
       throw new Error('Invalid status transition');
     }
 
+    // Payment Integration (Simulation)
+    let updateData: any = { status: newStatus };
+
+    if (newStatus === InvoiceStatus.PAID && existing.status !== InvoiceStatus.PAID) {
+        // If transitioning to PAID, we assume payment is processed externally or via this call.
+        // In a real scenario, we might trigger a payment gateway here if source is provided.
+        // For now, we simulate a check.
+        const paymentResult = await paymentService.processPayment(Number(existing.total), 'USD', 'manual_entry');
+        if (!paymentResult.success) {
+            throw new Error(`Payment processing failed: ${paymentResult.error}`);
+        }
+        
+        // Append payment info to notes since we don't have dedicated columns yet
+        const paymentNote = `[Payment] ID: ${paymentResult.transactionId}, Date: ${new Date().toISOString()}`;
+        updateData.notes = existing.notes ? `${existing.notes}\n${paymentNote}` : paymentNote;
+    }
+
     const updated = await prisma.invoice.update({
       where: { id },
-      data: { status: newStatus },
+      data: updateData,
     });
 
     await logInvoiceStatusChange(
