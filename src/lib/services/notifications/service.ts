@@ -8,8 +8,6 @@ interface SendOptions {
 
 const DEFAULT_MAX_RETRIES = 3;
 
-const NOTIFICATIONS_WEBHOOK_URL = process.env.NOTIFICATIONS_WEBHOOK_URL;
-
 async function sendEmailNotification(payload: NotificationPayload): Promise<void> {
   console.info('[NOTIFICATION_EMAIL]', {
     trigger: payload.trigger,
@@ -19,7 +17,9 @@ async function sendEmailNotification(payload: NotificationPayload): Promise<void
 }
 
 async function sendWebhookNotification(payload: NotificationPayload): Promise<void> {
-  if (!NOTIFICATIONS_WEBHOOK_URL) {
+  const webhookUrl = process.env.NOTIFICATIONS_WEBHOOK_URL;
+  
+  if (!webhookUrl) {
     console.info('[NOTIFICATION_WEBHOOK_SKIPPED]', {
       trigger: payload.trigger,
       invoiceId: payload.invoiceId,
@@ -28,7 +28,7 @@ async function sendWebhookNotification(payload: NotificationPayload): Promise<vo
     return;
   }
 
-  await fetch(NOTIFICATIONS_WEBHOOK_URL, {
+  await fetch(webhookUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

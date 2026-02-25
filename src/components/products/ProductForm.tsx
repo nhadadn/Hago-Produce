@@ -205,7 +205,7 @@ export function ProductForm({
                             }}
                           >
                             <Plus className="mr-2 h-4 w-4" />
-                            Crear "{newCategory}"
+                            Crear &quot;{newCategory}&quot;
                           </Button>
                         </CommandEmpty>
                         <CommandGroup>
@@ -287,7 +287,7 @@ export function ProductForm({
                             }}
                           >
                             <Plus className="mr-2 h-4 w-4" />
-                            Crear "{newUnit}"
+                            Crear &quot;{newUnit}&quot;
                           </Button>
                         </CommandEmpty>
                         <CommandGroup>

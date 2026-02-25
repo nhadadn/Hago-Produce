@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       // Esto es común cuando los parámetros llegan como strings
       const manualFilters = {
         ...filters,
-        isCurrent: filters.isCurrent === 'true' || filters.isCurrent === true,
+        isCurrent: filters.isCurrent === 'true',
         page: Number(filters.page) || 1,
         limit: Number(filters.limit) || 50
       };

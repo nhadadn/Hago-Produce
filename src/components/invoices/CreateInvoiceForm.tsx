@@ -45,7 +45,7 @@ export default function CreateInvoiceForm() {
   const [loadingData, setLoadingData] = useState(true);
 
   const form = useForm<CreateInvoiceInput>({
-    resolver: zodResolver(createInvoiceSchema),
+    resolver: zodResolver(createInvoiceSchema) as any,
     defaultValues: {
       issueDate: new Date(),
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),

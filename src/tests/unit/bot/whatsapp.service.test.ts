@@ -1,90 +1,220 @@
+
 import prisma from '@/lib/db';
-import { WhatsAppService } from '@/lib/services/bot/whatsapp.service';
+import twilio from 'twilio';
 
+// Define mocks variables
+const mockMessagesCreate = jest.fn();
+const mockValidateRequest = jest.fn();
+
+// Mock Prisma
+jest.mock('@/lib/db', () => ({
+  message: {
+    create: jest.fn(),
+    update: jest.fn(),
+  },
+}));
+
+// Mock Twilio
 jest.mock('twilio', () => {
-  const messages = {
-    create: jest.fn().mockResolvedValue({ sid: 'SM123' }),
-  };
-
-  const client = jest.fn(() => ({ messages }));
-
-  (client as any).validateRequest = jest.fn().mockReturnValue(true);
-
-  return client;
+  const twilioFn: any = jest.fn(() => ({
+    messages: {
+      create: mockMessagesCreate,
+    },
+  }));
+  twilioFn.validateRequest = mockValidateRequest;
+  return twilioFn;
 });
 
-describe('WhatsAppService', () => {
-  const service = new WhatsAppService();
+describe('WhatsApp Service', () => {
+  const originalEnv = process.env;
+  let whatsAppService: any;
+  let prismaMock: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    jest.resetModules();
     jest.clearAllMocks();
-    process.env.TWILIO_ACCOUNT_SID = 'AC_TEST';
-    process.env.TWILIO_AUTH_TOKEN = 'token';
-    process.env.TWILIO_WHATSAPP_NUMBER = '+15550001111';
+    
+    process.env = { ...originalEnv };
+    process.env.TWILIO_ACCOUNT_SID = 'AC123';
+    process.env.TWILIO_AUTH_TOKEN = 'auth_token';
+    process.env.TWILIO_WHATSAPP_NUMBER = '14155552345';
+
+    // Dynamic import to pick up env vars and fresh mocks
+    const dbModule = await import('@/lib/db');
+    prismaMock = dbModule.default;
+    
+    const serviceModule = await import('@/lib/services/bot/whatsapp.service');
+    whatsAppService = serviceModule.whatsAppService;
   });
 
-  it('formats WhatsApp numbers with country code', () => {
-    const formatted = service.formatWhatsAppNumber('555 123 4567');
-    expect(formatted).toBe('+15551234567');
-
-    const alreadyFormatted = service.formatWhatsAppNumber('+15551234567');
-    expect(alreadyFormatted).toBe('+15551234567');
+  afterAll(() => {
+    process.env = originalEnv;
   });
 
-  it('throws error for invalid short numbers', () => {
-    expect(() => service.formatWhatsAppNumber('12345')).toThrow();
+  describe('sendMessage', () => {
+    it('should send a message successfully', async () => {
+      mockMessagesCreate.mockResolvedValue({ sid: 'SM123' });
+      const result = await whatsAppService.sendMessage('+12345678901', 'Hello');
+      
+      expect(mockMessagesCreate).toHaveBeenCalledWith({
+        from: 'whatsapp:14155552345',
+        to: 'whatsapp:+12345678901',
+        body: 'Hello',
+      });
+      expect(result).toBe('SM123');
+    });
+
+    it('should format number correctly (remove spaces/dashes)', async () => {
+      mockMessagesCreate.mockResolvedValue({ sid: 'SM123' });
+      // Use a number that triggers the +1 logic (not starting with 1)
+      await whatsAppService.sendMessage('555-456-7890', 'Hello');
+      
+      expect(mockMessagesCreate).toHaveBeenCalledWith(expect.objectContaining({
+        to: 'whatsapp:+15554567890', 
+      }));
+    });
+
+    it('should throw error if Twilio fails', async () => {
+      mockMessagesCreate.mockRejectedValue(new Error('Twilio error'));
+      await expect(whatsAppService.sendMessage('+12345678901', 'Hello'))
+        .rejects.toThrow('Error al enviar mensaje de WhatsApp');
+    });
   });
 
-  it('parses webhook body into structured fields', () => {
-    const body = 'From=whatsapp:%2B15551234567&To=whatsapp:%2B19998887777&Body=Hola&MessageSid=SM123&NumMedia=1';
+  describe('formatWhatsAppNumber', () => {
+    it('should return number as is if it starts with +', () => {
+      expect(whatsAppService.formatWhatsAppNumber('+521234567890')).toBe('+521234567890');
+    });
 
-    const parsed = service.parseWebhookBody(body);
+    it('should add +1 if 10 digits provided and does not start with 1', () => {
+      expect(whatsAppService.formatWhatsAppNumber('5554567890')).toBe('+15554567890');
+    });
 
-    expect(parsed.from).toBe('+15551234567');
-    expect(parsed.to).toBe('+19998887777');
-    expect(parsed.message).toBe('Hola');
-    expect(parsed.messageSid).toBe('SM123');
-    expect(parsed.numMedia).toBe(1);
+    it('should add + if digits start with 1 (even if length 10)', () => {
+       // Logic: if startsWith('1') -> `+${digitsOnly}`
+       expect(whatsAppService.formatWhatsAppNumber('1234567890')).toBe('+1234567890');
+    });
+    
+    it('should just add + for other cases', () => {
+       // Logic in code: return `+${digitsOnly}`
+       expect(whatsAppService.formatWhatsAppNumber('521234567890')).toBe('+521234567890');
+    });
+
+    it('should throw error if less than 10 digits', () => {
+      expect(() => whatsAppService.formatWhatsAppNumber('123')).toThrow('Número inválido: mínimo 10 dígitos');
+    });
   });
 
-  it('validates webhook signature using twilio helper', () => {
-    const result = service.validateWebhookSignature('sig', 'http://example.com', 'Body', 'secret');
-    expect(result).toBe(true);
+  describe('validateWebhookSignature', () => {
+    it('should return true if validation passes', () => {
+      mockValidateRequest.mockReturnValue(true);
+      const result = whatsAppService.validateWebhookSignature('sig', 'url', 'body', 'token');
+      expect(result).toBe(true);
+      expect(mockValidateRequest).toHaveBeenCalledWith('token', 'sig', 'url', 'body');
+    });
+
+    it('should return false if signature is missing', () => {
+      const result = whatsAppService.validateWebhookSignature(null, 'url', 'body', 'token');
+      expect(result).toBe(false);
+    });
+
+    it('should return false if validation throws', () => {
+      mockValidateRequest.mockImplementation(() => { throw new Error('Valid error'); });
+      const result = whatsAppService.validateWebhookSignature('sig', 'url', 'body', 'token');
+      expect(result).toBe(false);
+    });
   });
 
-  it('logs message to database', async () => {
-    const createSpy = jest.spyOn((prisma as any).message, 'create').mockResolvedValueOnce({ id: 'msg-1' });
+  describe('parseWebhookBody', () => {
+    it('should parse body correctly', () => {
+      const body = 'From=whatsapp%3A%2B1234567890&To=whatsapp%3A%2B0987654321&Body=Hello+World&MessageSid=SM123&NumMedia=0';
+      const result = whatsAppService.parseWebhookBody(body);
+      
+      expect(result).toEqual({
+        from: '+1234567890',
+        to: '+0987654321',
+        message: 'Hello World',
+        messageSid: 'SM123',
+        numMedia: 0,
+      });
+    });
 
-    await service.logMessage('user-1', 'Hola', 'Respuesta', 'intent', 0.9, 'processed');
+    it('should handle missing fields gracefully', () => {
+      const result = whatsAppService.parseWebhookBody('');
+      expect(result).toEqual({
+        from: '',
+        to: '',
+        message: '',
+        messageSid: '',
+        numMedia: 0,
+      });
+    });
+  });
 
-    expect(createSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
+  describe('logMessage', () => {
+    it('should create message in db', async () => {
+      await whatsAppService.logMessage('user1', 'Hello');
+      expect(prismaMock.message.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
           platform: 'whatsapp',
-          platformUserId: 'user-1',
-          message: 'Hola',
-          response: 'Respuesta',
-          intent: 'intent',
-          confidence: 0.9,
-          status: 'processed',
+          platformUserId: 'user1',
+          message: 'Hello',
         }),
-      }),
-    );
+      }));
+    });
+
+    it('should create message in db with processed status', async () => {
+      await whatsAppService.logMessage('user1', 'Hello', undefined, undefined, undefined, 'processed');
+      expect(prismaMock.message.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'processed',
+          processedAt: expect.any(Date),
+        }),
+      }));
+    });
+
+    it('should catch error and log it without throwing', async () => {
+      prismaMock.message.create.mockRejectedValue(new Error('DB Error'));
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      
+      await expect(whatsAppService.logMessage('user1', 'Hello')).resolves.not.toThrow();
+      
+      expect(consoleSpy).toHaveBeenCalledWith('[MESSAGE_LOG_ERROR]', expect.any(Error));
+      consoleSpy.mockRestore();
+    });
   });
 
-  it('updates message status in database', async () => {
-    const updateSpy = jest.spyOn((prisma as any).message, 'update').mockResolvedValueOnce({ id: 'msg-1' });
+  describe('updateMessageStatus', () => {
+    it('should update message in db', async () => {
+      await whatsAppService.updateMessageStatus('msg1', 'processed');
+      expect(prismaMock.message.update).toHaveBeenCalledWith({
+        where: { id: 'msg1' },
+        data: expect.objectContaining({
+          status: 'processed',
+        }),
+      });
+    });
 
-    await service.updateMessageStatus('msg-1', 'failed', 'error');
-
-    expect(updateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'msg-1' },
+    it('should update message with failed status', async () => {
+      await whatsAppService.updateMessageStatus('msg1', 'failed', 'some error');
+      expect(prismaMock.message.update).toHaveBeenCalledWith({
+        where: { id: 'msg1' },
         data: expect.objectContaining({
           status: 'failed',
-          errorMessage: 'error',
+          processedAt: undefined,
+          errorMessage: 'some error',
         }),
-      }),
-    );
+      });
+    });
+
+    it('should catch error and log it without throwing', async () => {
+      prismaMock.message.update.mockRejectedValue(new Error('DB Error'));
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      
+      await expect(whatsAppService.updateMessageStatus('msg1', 'processed')).resolves.not.toThrow();
+      
+      expect(consoleSpy).toHaveBeenCalledWith('[MESSAGE_UPDATE_ERROR]', expect.any(Error));
+      consoleSpy.mockRestore();
+    });
   });
 });

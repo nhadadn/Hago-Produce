@@ -40,7 +40,7 @@ export class WhatsAppService {
   validateWebhookSignature(
     signature: string | null,
     url: string,
-    body: string,
+    body: Record<string, any>,
     authToken: string
   ): boolean {
     if (!signature) {

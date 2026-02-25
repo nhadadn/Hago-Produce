@@ -15,7 +15,10 @@ jest.mock('@/lib/auth/middleware', () => ({
 }));
 jest.mock('@/lib/services/chat/intents');
 jest.mock('@/lib/services/chat/query-executor');
-jest.mock('@/lib/services/chat/openai-client');
+jest.mock('@/lib/services/chat/openai-client', () => ({
+  formatResponse: jest.fn(),
+  classifyChatIntentWithOpenAI: jest.fn(),
+}));
 
 const mockGetAuthenticatedUser = getAuthenticatedUser as jest.Mock;
 const mockUnauthorizedResponse = unauthorizedResponse as jest.Mock;

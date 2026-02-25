@@ -16,7 +16,9 @@ export async function POST(req: NextRequest) {
     // Twilio webhook validation requires the raw body and the exact URL
     // Next.js req.text() consumes the body, so we need to clone it if we use it later,
     // but here we use it immediately for validation and parsing.
-    const body = await req.text();
+    const bodyText = await req.text();
+    const params = new URLSearchParams(bodyText);
+    const bodyObj = Object.fromEntries(params.entries());
     
     // TAREA 2: Validación de Firma en Producción
     // En producción, es obligatorio validar la firma para asegurar que el request viene de Twilio
@@ -32,7 +34,7 @@ export async function POST(req: NextRequest) {
       const isValid = whatsAppService.validateWebhookSignature(
         signature,
         process.env.TWILIO_WEBHOOK_URL || url, // Use configured URL if behind proxy/load balancer
-        body,
+        bodyObj,
         process.env.TWILIO_AUTH_TOKEN
       );
 
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
          const isValid = whatsAppService.validateWebhookSignature(
            signature,
            url,
-           body,
+           bodyObj,
            process.env.TWILIO_AUTH_TOKEN
          );
          if (!isValid) {
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     // Parsear mensaje de WhatsApp usando helper que maneja x-www-form-urlencoded
     // El body de Twilio viene como form-urlencoded string
-    const params = new URLSearchParams(body);
+    // const params = new URLSearchParams(body); // Already parsed above
     const messageData = {
       from: params.get('From'),
       to: params.get('To'),

@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const recentInvoices = [
   {
@@ -46,6 +47,19 @@ const recentInvoices = [
   },
 ];
 
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case "Pagado":
+      return "default"; // Green
+    case "Pendiente":
+      return "secondary"; // Amber
+    case "Vencido":
+      return "destructive"; // Red
+    default:
+      return "outline";
+  }
+};
+
 export function RecentInvoices() {
   return (
     <Card className="col-span-3">
@@ -66,7 +80,11 @@ export function RecentInvoices() {
             {recentInvoices.map((invoice) => (
               <TableRow key={invoice.invoice}>
                 <TableCell className="font-medium">{invoice.invoice}</TableCell>
-                <TableCell>{invoice.status}</TableCell>
+                <TableCell>
+                  <Badge variant={getStatusVariant(invoice.status)}>
+                    {invoice.status}
+                  </Badge>
+                </TableCell>
                 <TableCell>{invoice.customer}</TableCell>
                 <TableCell className="text-right">{invoice.total}</TableCell>
               </TableRow>

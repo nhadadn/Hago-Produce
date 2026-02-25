@@ -65,6 +65,9 @@ export class InvoicesService {
             create: calculatedItems
           }
         },
+        include: {
+          items: true
+        }
       });
 
       return created;

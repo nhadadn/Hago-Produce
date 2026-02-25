@@ -1,5 +1,6 @@
 import jspdf from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import JSZip from 'jszip';
 import { stringify } from 'csv-stringify/sync';
 import {
   RevenueMetrics,
@@ -126,6 +127,21 @@ export function generateInvoicePDF(data: InvoicePDFData): Uint8Array {
   doc.text('Gracias por su preferencia.', 40, finalY + 60);
 
   return doc.output('arraybuffer');
+}
+
+export async function generateInvoicesZIP(invoices: InvoicePDFData[]): Promise<Blob> {
+  const zip = new JSZip();
+  
+  // Generate PDFs for each invoice
+  invoices.forEach((invoice) => {
+    const pdfData = generateInvoicePDF(invoice);
+    const fileName = `Factura-${invoice.invoiceNumber}.pdf`;
+    zip.file(fileName, pdfData);
+  });
+
+  // Generate the ZIP file
+  const content = await zip.generateAsync({ type: 'blob' });
+  return content;
 }
 
 export interface PurchaseOrderPDFData {

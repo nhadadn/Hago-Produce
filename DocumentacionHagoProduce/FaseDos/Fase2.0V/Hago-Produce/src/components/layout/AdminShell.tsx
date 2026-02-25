@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { FloatingChatAssistant } from "@/components/chat/FloatingChatAssistant";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -14,6 +15,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 p-4 lg:p-6">{children}</main>
       </div>
+      <FloatingChatAssistant />
     </div>
   );
 }

@@ -13,33 +13,6 @@ jest.mock('@/lib/auth/middleware', () => ({
     }),
 }));
 
-jest.mock('@/lib/db', () => {
-  const mockPrisma = {
-    invoice: {
-      aggregate: jest.fn(),
-      findMany: jest.fn(),
-      groupBy: jest.fn(),
-    },
-    customer: {
-      findMany: jest.fn(),
-    },
-    invoiceItem: {
-      groupBy: jest.fn(),
-    },
-    product: {
-      findMany: jest.fn(),
-    },
-    productPrice: {
-      findMany: jest.fn(),
-    },
-  };
-
-  return {
-    __esModule: true,
-    default: mockPrisma,
-  };
-});
-
 describe('Reports Export API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -380,6 +353,138 @@ describe('Reports Export API', () => {
       expect(csv).toContain('0-30');
       expect(csv).toContain('100.00');
       expect(csv).toContain('200.00');
+    });
+
+    it('should return CSV for top customers report', async () => {
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue({
+        userId: 'u1',
+        role: Role.ACCOUNTING,
+      });
+
+      (prisma.invoice.groupBy as jest.Mock).mockResolvedValue([
+        {
+          customerId: 'cust-1',
+          _sum: { total: 300 },
+          _count: { id: 3 },
+        },
+      ]);
+
+      (prisma.customer.findMany as jest.Mock).mockResolvedValue([
+        { id: 'cust-1', name: 'Customer 1' },
+      ]);
+
+      const req = new NextRequest('http://localhost/api/v1/reports/export/csv', {
+        method: 'POST',
+        body: JSON.stringify({
+          reportType: 'top-customers',
+          filters: {},
+        }),
+      });
+
+      const res = await EXPORT_CSV(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Content-Type')).toBe('text/csv; charset=utf-8');
+      expect(res.headers.get('Content-Disposition')).toMatch(/attachment; filename="top-customers-report-\d{4}-\d{2}-\d{2}\.csv"/);
+
+      const buffer = await res.arrayBuffer();
+      expect(buffer.byteLength).toBeGreaterThan(0);
+      
+      const csv = Buffer.from(buffer).toString('utf8');
+      expect(csv).toContain('Cliente');
+      expect(csv).toContain('Ingreso Total');
+      expect(csv).toContain('Customer 1');
+      expect(csv).toContain('300.00');
+    });
+
+    it('should return CSV for top products report', async () => {
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue({
+        userId: 'u1',
+        role: Role.MANAGEMENT,
+      });
+
+      (prisma.invoiceItem.groupBy as jest.Mock).mockResolvedValue([
+        {
+          productId: 'prod-1',
+          _sum: { quantity: 10, totalPrice: 500 },
+        },
+      ]);
+
+      (prisma.product.findMany as jest.Mock).mockResolvedValue([
+        { id: 'prod-1', name: 'Product 1' },
+      ]);
+
+      const req = new NextRequest('http://localhost/api/v1/reports/export/csv', {
+        method: 'POST',
+        body: JSON.stringify({
+          reportType: 'top-products',
+          filters: {},
+        }),
+      });
+
+      const res = await EXPORT_CSV(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Content-Type')).toBe('text/csv; charset=utf-8');
+      expect(res.headers.get('Content-Disposition')).toMatch(/attachment; filename="top-products-report-\d{4}-\d{2}-\d{2}\.csv"/);
+
+      const buffer = await res.arrayBuffer();
+      expect(buffer.byteLength).toBeGreaterThan(0);
+
+      const csv = Buffer.from(buffer).toString('utf8');
+      expect(csv).toContain('Producto');
+      expect(csv).toContain('Ingreso Total');
+      expect(csv).toContain('Product 1');
+      expect(csv).toContain('500.00');
+    });
+
+    it('should return CSV for price trends report', async () => {
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue({
+        userId: 'u1',
+        role: Role.ADMIN,
+      });
+
+      (prisma.productPrice.findMany as jest.Mock).mockResolvedValue([
+        {
+          productId: 'prod-1',
+          supplierId: 'sup-1',
+          costPrice: 10,
+          sellPrice: 20,
+          currency: 'USD',
+          effectiveDate: new Date('2024-01-10T00:00:00Z'),
+          isCurrent: true,
+          source: 'manual',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          supplier: {
+            id: 'sup-1',
+            name: 'Supplier 1',
+          },
+        },
+      ]);
+
+      const req = new NextRequest('http://localhost/api/v1/reports/export/csv', {
+        method: 'POST',
+        body: JSON.stringify({
+          reportType: 'price-trends',
+          filters: {
+            productId: 'prod-1',
+            months: 3,
+          },
+        }),
+      });
+
+      const res = await EXPORT_CSV(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Content-Type')).toBe('text/csv; charset=utf-8');
+      expect(res.headers.get('Content-Disposition')).toMatch(/attachment; filename="price-trends-report-\d{4}-\d{2}-\d{2}\.csv"/);
+
+      const buffer = await res.arrayBuffer();
+      expect(buffer.byteLength).toBeGreaterThan(0);
+
+      const csv = Buffer.from(buffer).toString('utf8');
+      expect(csv).toContain('Mes');
+      expect(csv).toContain('Precio Promedio');
+      expect(csv).toContain('2024-01');
+      expect(csv).toContain('20.00');
     });
 
     it('should return 403 for unauthorized role', async () => {

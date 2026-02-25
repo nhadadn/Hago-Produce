@@ -44,7 +44,7 @@ export class InMemoryRateLimiter {
    */
   public cleanup(windowMs: number) {
     const now = Date.now();
-    for (const [key, timestamps] of this.store.entries()) {
+    for (const [key, timestamps] of Array.from(this.store.entries())) {
       const validTimestamps = timestamps.filter(timestamp => now - timestamp < windowMs);
       if (validTimestamps.length === 0) {
         this.store.delete(key);

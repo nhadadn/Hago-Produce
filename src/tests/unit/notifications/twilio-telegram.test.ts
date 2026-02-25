@@ -49,5 +49,21 @@ describe('Twilio and Telegram notification services', () => {
 
     expect(global.fetch).toHaveBeenCalled();
   });
+
+  it('throws error when Telegram API fails', async () => {
+    process.env.TELEGRAM_BOT_TOKEN = 'bot:token';
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+
+    await expect(sendTelegramMessage('12345', 'Hello')).rejects.toThrow('Telegram sendMessage request failed');
+  });
+
+  it('throws error when Twilio API fails', async () => {
+    process.env.TWILIO_ACCOUNT_SID = 'AC123';
+    process.env.TWILIO_AUTH_TOKEN = 'token';
+    process.env.TWILIO_WHATSAPP_FROM = 'whatsapp:+5215555555555';
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+
+    await expect(sendWhatsAppMessage('whatsapp:+5215555550000', 'Hello')).rejects.toThrow('Twilio WhatsApp request failed');
+  });
 });
 

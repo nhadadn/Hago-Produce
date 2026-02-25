@@ -1,0 +1,55 @@
+name: Integration Tests
+
+on:
+  pull_request:
+    branches: [ main, develop, master ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5434/hago_produce_test?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5434/hago_produce_test?schema=public
+      OPENAI_API_KEY: sk-mock-key
+      TWILIO_ACCOUNT_SID: ACmock
+      TWILIO_AUTH_TOKEN: mock-token
+      TWILIO_PHONE_NUMBER: +1234567890
+      MAKE_WEBHOOK_SECRET: test-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Start Test Database
+        run: |
+          docker compose -f docker-compose.test.yml up -d
+          echo "Waiting for database to be ready..."
+          sleep 5 # Basic wait, setup script has retries
+
+      - name: Setup Test Database Schema
+        run: node scripts/setup-test-db.js
+
+      - name: Run Integration Tests
+        run: npm run test:integration -- --coverage
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-coverage
+          path: coverage/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v

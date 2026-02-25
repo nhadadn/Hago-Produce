@@ -1,6 +1,86 @@
 import prisma from '@/lib/db';
 
 describe('ReportCache Model Integration Tests', () => {
+  // Mock In-Memory Store
+  let store: any[] = [];
+
+  beforeAll(() => {
+    // Override create
+    (prisma.reportCache.create as jest.Mock).mockImplementation(async ({ data }) => {
+      const entry = {
+        id: `rc-${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...data,
+      };
+      store.push(entry);
+      return entry;
+    });
+
+    // Override createMany
+    (prisma.reportCache.createMany as jest.Mock).mockImplementation(async ({ data }) => {
+      const entries = (Array.isArray(data) ? data : [data]).map((d: any) => ({
+        id: `rc-${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...d,
+      }));
+      store.push(...entries);
+      return { count: entries.length };
+    });
+
+    // Override findMany
+    (prisma.reportCache.findMany as jest.Mock).mockImplementation(async (args) => {
+      const where = args?.where || {};
+      return store.filter(item => {
+        if (where.reportType && item.reportType !== where.reportType) return false;
+        if (where.expiresAt) {
+          if (where.expiresAt.gt && !(new Date(item.expiresAt) > new Date(where.expiresAt.gt))) return false;
+          if (where.expiresAt.lte && !(new Date(item.expiresAt) <= new Date(where.expiresAt.lte))) return false;
+        }
+        return true;
+      });
+    });
+
+    // Override findUnique
+    (prisma.reportCache.findUnique as jest.Mock).mockImplementation(async ({ where }) => {
+      return store.find(item => item.id === where.id) || null;
+    });
+
+    // Override update
+    (prisma.reportCache.update as jest.Mock).mockImplementation(async ({ where, data }) => {
+      const index = store.findIndex(item => item.id === where.id);
+      if (index === -1) throw new Error('Record not found');
+      const updated = { ...store[index], ...data };
+      store[index] = updated;
+      return updated;
+    });
+
+    // Override delete
+    (prisma.reportCache.delete as jest.Mock).mockImplementation(async ({ where }) => {
+      const index = store.findIndex(item => item.id === where.id);
+      if (index === -1) throw new Error('Record not found');
+      const deleted = store[index];
+      store.splice(index, 1);
+      return deleted;
+    });
+
+    // Override deleteMany
+    (prisma.reportCache.deleteMany as jest.Mock).mockImplementation(async ({ where }) => {
+      if (!where) {
+         const count = store.length;
+         store = [];
+         return { count };
+      }
+      const initialLen = store.length;
+      store = store.filter(item => {
+          if (where.reportType?.in && where.reportType.in.includes(item.reportType)) return false; // Delete
+          return true; // Keep
+      });
+      return { count: initialLen - store.length };
+    });
+  });
+
   afterAll(async () => {
     // Cleanup any report cache entries created during tests
     await prisma.reportCache.deleteMany({

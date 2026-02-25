@@ -19,7 +19,7 @@ export async function logAudit(entry: AuditLogEntry): Promise<void> {
         action: entry.action,
         entityType: entry.entityType,
         entityId: entry.entityId,
-        changes: entry.changes ?? undefined,
+        changes: (entry.changes as any) ?? undefined,
         ipAddress: entry.ipAddress,
       },
     });

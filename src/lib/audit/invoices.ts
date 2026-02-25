@@ -34,7 +34,7 @@ export async function logInvoiceUpdate(
   before: InvoiceSnapshot,
   after: InvoiceSnapshot,
 ): Promise<void> {
-  const changes = diffObjects(before, after, [
+  const changes = diffObjects(before as any, after as any, [
     'status',
     'subtotal',
     'taxRate',

@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     const { buffer, filename } = buildCSV(reportType as ReportType, data);
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Blob([buffer as any]), {
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',

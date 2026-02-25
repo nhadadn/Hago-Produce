@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
  * GET /api/v1/bot/query
  * Endpoint de health check para bots
  */
-export async function GET(): NextResponse {
+export async function GET(): Promise<NextResponse> {
   return NextResponse.json({
     success: true,
     data: {

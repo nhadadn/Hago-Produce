@@ -35,6 +35,12 @@ jest.mock('@/lib/db', () => {
     productPrice: {
       findMany: jest.fn(),
     },
+    reportCache: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      deleteMany: jest.fn(),
+    },
   };
 
   return {
