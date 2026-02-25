@@ -72,31 +72,15 @@ RESEND_API_KEY="re_..."
 # Genera una cadena aleatoria fuerte (ej. openssl rand -hex 32)
 MAKE_WEBHOOK_SECRET="tu_secreto_seguro_para_webhooks_hago_produce_2026"
 ```
+CREDENCIALES:
+**OPENAI:**
+(Ver archivo .env - No commitear credenciales reales)
 
----
+**TWILIO:**
+(Ver archivo .env - No commitear credenciales reales)
 
-## 🛠️ 3. Configuración Paso a Paso por Servicio
-
-### A. OpenAI (GPT) 🤖
-1.  **Crear cuenta:** Ve a [platform.openai.com](https://platform.openai.com/).
-2.  **API Key:** En el menú lateral, ve a **API Keys** > **Create new secret key**.
-    *   **Nombre:** `HagoProduce-Prod` (o Dev).
-    *   **Permisos:** "All" (o restringido a Model Capabilities si está disponible).
-    *   Copia la clave `sk-...` inmediatamente.
-3.  **Configuración:** Pégala en `OPENAI_API_KEY`.
-4.  **Billing:** Asegúrate de agregar créditos (Prepaid billing) en **Settings > Billing**, de lo contrario la API rechazará las peticiones.
-
-### B. Twilio (WhatsApp) 💬
-1.  **Crear cuenta:** Ve a [twilio.com](https://www.twilio.com/).
-2.  **Credenciales:** En el Dashboard principal copia el **Account SID** y **Auth Token**.
-3.  **WhatsApp Sandbox (Desarrollo):**
-    *   Ve a **Messaging** > **Try it out** > **Send a WhatsApp message**.
-    *   Sigue las instrucciones para unir tu número personal al Sandbox enviando un código al número de Twilio.
-    *   El número "From" suele ser `whatsapp:+14155238886`.
-4.  **Configuración Webhook (Recepción de Mensajes):**
-    *   En la configuración de Sandbox de Twilio, busca el campo **"When a message comes in"**.
-    *   URL: `https://tu-dominio.com/api/v1/bot/webhook/whatsapp`
-    *   Método: `POST`.
+**RESEND:**
+(Ver archivo .env - No commitear credenciales reales)
 
 ### C. Telegram Bot ✈️
 1.  **Crear Bot:** Abre Telegram y busca a **@BotFather**.

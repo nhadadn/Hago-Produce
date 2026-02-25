@@ -62,6 +62,52 @@ describe('ProductService', () => {
         }),
       }));
     });
+
+    it('should filter by isActive (true)', async () => {
+      (prisma.product.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.product.count as jest.Mock).mockResolvedValue(0);
+
+      await ProductService.getAll({ isActive: 'true', page: 1, limit: 10 });
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          isActive: true,
+        }),
+      }));
+    });
+
+    it('should filter by isActive (false)', async () => {
+      (prisma.product.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.product.count as jest.Mock).mockResolvedValue(0);
+
+      await ProductService.getAll({ isActive: 'false', page: 1, limit: 10 });
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          isActive: false,
+        }),
+      }));
+    });
+  });
+
+  describe('getById', () => {
+    it('should return a product by id', async () => {
+      const mockProduct = { id: '1', name: 'Product A' };
+      (prisma.product.findUnique as jest.Mock).mockResolvedValue(mockProduct);
+
+      const result = await ProductService.getById('1');
+
+      expect(prisma.product.findUnique).toHaveBeenCalledWith({
+        where: { id: '1' },
+      });
+      expect(result).toEqual(mockProduct);
+    });
+
+    it('should return null if not found', async () => {
+      (prisma.product.findUnique as jest.Mock).mockResolvedValue(null);
+      const result = await ProductService.getById('999');
+      expect(result).toBeNull();
+    });
   });
 
   describe('create', () => {

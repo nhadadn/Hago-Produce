@@ -23,7 +23,7 @@ export interface ChatRequestPayload {
 }
 
 export interface ChatSource {
-  type: 'product_price' | 'supplier' | 'invoice' | 'customer' | 'purchase_order';
+  type: 'product_price' | 'supplier' | 'invoice' | 'customer' | 'purchase_order' | 'product';
   id: string;
   label: string;
 }

@@ -27,6 +27,7 @@ describe('EmailService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.resetModules(); // Ensure module is re-evaluated to pick up env vars
     process.env = {
       ...originalEnv,
       EMAIL_PROVIDER: 'resend',
@@ -53,7 +54,7 @@ describe('EmailService', () => {
     expect(result.attempts).toBe(1);
     expect((Resend as jest.Mock).mock.calls[0][0]).toBe('test-resend-key');
     expect((__send as jest.Mock).mock.calls[0][0]).toMatchObject({
-      to: 'test@example.com',
+      to: ['test@example.com'],
       subject: 'Asunto de prueba',
     });
   });
@@ -155,6 +156,92 @@ describe('EmailService', () => {
     expect(result.messageId).toBe('sg-id-123');
     expect(sg.__setApiKey).toHaveBeenCalledWith('test-sendgrid-key');
     expect(sg.__send).toHaveBeenCalledTimes(1);
+  });
+
+  it('envía adjuntos con SendGrid', async () => {
+    process.env.EMAIL_PROVIDER = 'sendgrid';
+    process.env.SENDGRID_API_KEY = 'test-sendgrid-key';
+
+    const sgModule = await import('@sendgrid/mail');
+    const { default: sg } = sgModule as any;
+    (sg.__send as jest.Mock).mockResolvedValue([{ headers: { 'x-message-id': 'sg-attach-id' } }]);
+
+    const { sendEmail } = await import('@/lib/services/email.service');
+
+    const attachments = [{ filename: 'test.pdf', content: Buffer.from('PDF') }];
+    const result = await sendEmail('sg-att@example.com', 'SG Attach', 'Body', attachments);
+
+    expect(result.success).toBe(true);
+    const args = (sg.__send as jest.Mock).mock.calls[0][0];
+    expect(args.attachments).toHaveLength(1);
+    expect(args.attachments[0].filename).toBe('test.pdf');
+    expect(args.attachments[0].content).toBe(Buffer.from('PDF').toString('base64'));
+  });
+
+  it('maneja errores de SendGrid y reintenta', async () => {
+    process.env.EMAIL_PROVIDER = 'sendgrid';
+    process.env.SENDGRID_API_KEY = 'test-sendgrid-key';
+
+    const sgModule = await import('@sendgrid/mail');
+    const { default: sg } = sgModule as any;
+    (sg.__send as jest.Mock)
+      .mockRejectedValueOnce(new Error('SG Error 1'))
+      .mockResolvedValueOnce([{ headers: { 'x-message-id': 'sg-retry-id' } }]);
+
+    const { sendEmail } = await import('@/lib/services/email.service');
+
+    const result = await sendEmail('sg-fail@example.com', 'SG Fail', '<p>Fail</p>');
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toBe('sg-retry-id');
+    expect(result.attempts).toBe(2);
+  });
+
+  it('maneja errores explícitos de Resend (campo error)', async () => {
+    const { __send } = await import('resend' as any);
+    (__send as jest.Mock).mockResolvedValue({ data: null, error: { message: 'Resend API Error' } });
+
+    const { sendEmail } = await import('@/lib/services/email.service');
+
+    const result = await sendEmail('resend-err@example.com', 'Error', '<p>Error</p>');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Resend API Error');
+    expect(result.attempts).toBe(3); // Retries on error
+  });
+
+  it('usa proveedor Mock por defecto o explícitamente', async () => {
+    process.env.EMAIL_PROVIDER = 'mock';
+    // Remove other keys to force mock
+    delete process.env.RESEND_API_KEY;
+    delete process.env.SENDGRID_API_KEY;
+
+    const { sendEmail } = await import('@/lib/services/email.service');
+
+    const result = await sendEmail('mock@example.com', 'Mock', '<p>Mock</p>');
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toMatch(/^mock-email-/);
+  });
+
+  it('maneja errores en el proveedor Mock', async () => {
+    process.env.EMAIL_PROVIDER = 'mock';
+    delete process.env.RESEND_API_KEY;
+    delete process.env.SENDGRID_API_KEY;
+
+    // Forzamos un error en console.info para simular fallo en el bloque try del mock
+    const consoleSpy = jest.spyOn(console, 'info').mockImplementation(() => {
+      throw new Error('Mock Console Error');
+    });
+
+    const { sendEmail } = await import('@/lib/services/email.service');
+    const result = await sendEmail('mock-fail@example.com', 'Fail', 'Body');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Mock Console Error');
+    expect(result.attempts).toBe(3);
+
+    consoleSpy.mockRestore();
   });
 });
 

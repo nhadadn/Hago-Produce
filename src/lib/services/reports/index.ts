@@ -73,13 +73,6 @@ const REVENUE_STATUSES: InvoiceStatus[] = [
   InvoiceStatus.OVERDUE,
 ];
 
-function toPeriodKey(date: Date): string {
-  const year = date.getUTCFullYear();
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
-  const day = date.getUTCDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 function toMonthKey(date: Date): string {
   const year = date.getUTCFullYear();
   const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
@@ -151,8 +144,8 @@ export async function getRevenueMetrics(
       }),
     ]);
 
-    const totalRevenue = Number(aggregate._sum.total ?? 0);
-    const averageInvoiceAmount = Number(aggregate._avg.total ?? 0);
+    const totalRevenue = Number(aggregate._sum?.total ?? 0);
+    const averageInvoiceAmount = Number(aggregate._avg?.total ?? 0);
 
     const periodTotals = new Map<string, number>();
     for (const invoice of invoices) {
@@ -162,7 +155,7 @@ export async function getRevenueMetrics(
     }
 
     const monthlyRevenue = Array.from(periodTotals.entries())
-      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .sort(([a], [b]) => a.localeCompare(b))
       .map(([period, amount]) => ({ period, amount }));
 
     const { start: prevStart, end: prevEnd } = getPreviousPeriod(startDate, endDate);
@@ -188,7 +181,7 @@ export async function getRevenueMetrics(
       },
     });
 
-    const previousPeriodRevenue = Number(previousAggregate._sum.total ?? 0);
+    const previousPeriodRevenue = Number(previousAggregate._sum?.total ?? 0);
 
     let growthRate: number | null = null;
     if (previousPeriodRevenue > 0) {
@@ -263,6 +256,11 @@ export async function getAgingReport(
     const result = {
       asOfDate: asOfDate.toISOString(),
       buckets: summaries,
+    };
+
+    const cacheParams = {
+      asOfDate: asOfDate.toISOString(),
+      customerId: options?.customerId,
     };
 
     await setCachedReport('AGING', cacheParams, result);
@@ -521,7 +519,7 @@ export async function getProductPriceTrends(
     }
 
     const monthlyAverage: PriceTrendPoint[] = Array.from(monthlyTotals.entries())
-      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .sort(([a], [b]) => a.localeCompare(b))
       .map(([period, { sum, count }]) => ({ period, averagePrice: count > 0 ? sum / count : 0 }));
 
     let changeVsPreviousPeriod: number | null = null;

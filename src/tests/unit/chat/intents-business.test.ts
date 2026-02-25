@@ -8,6 +8,7 @@ jest.mock('@/lib/db', () => {
   const mockPrisma = {
     customer: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
     },
     product: {
       findFirst: jest.fn(),
@@ -16,6 +17,12 @@ jest.mock('@/lib/db', () => {
     invoice: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      create: jest.fn(),
+    },
+    notificationLog: {
+      create: jest.fn(),
+    },
+    auditLog: {
       create: jest.fn(),
     },
   };
@@ -38,11 +45,11 @@ describe('chat intents business logic', () => {
       const result = await createOrderIntent({}, 'es', 0.8);
 
       expect(result.data.created).toBe(false);
-      expect(result.data.reason).toBe('missing_customer_or_items');
+      expect(result.data.reason).toBe('extraction_failed');
     });
 
     it('returns customer_not_found when customer does not exist', async () => {
-      db.customer.findFirst.mockResolvedValueOnce(null);
+      db.customer.findMany.mockResolvedValueOnce([]);
 
       const result = await createOrderIntent(
         {
@@ -53,14 +60,14 @@ describe('chat intents business logic', () => {
         0.9,
       );
 
-      expect(db.customer.findFirst).toHaveBeenCalled();
+      expect(db.customer.findMany).toHaveBeenCalled();
       expect(result.data.created).toBe(false);
       expect(result.data.reason).toBe('customer_not_found');
     });
 
     it('returns product_not_found when any product is missing', async () => {
-      db.customer.findFirst.mockResolvedValueOnce({ id: 'cust-1', name: 'Cliente' });
-      db.product.findFirst.mockResolvedValueOnce(null);
+      db.customer.findMany.mockResolvedValueOnce([{ id: 'cust-1', name: 'Cliente' }]);
+      db.product.findMany.mockResolvedValueOnce([]);
 
       const result = await createOrderIntent(
         {
@@ -71,17 +78,28 @@ describe('chat intents business logic', () => {
         0.9,
       );
 
-      expect(db.product.findFirst).toHaveBeenCalled();
+      expect(db.product.findMany).toHaveBeenCalled();
       expect(result.data.created).toBe(false);
       expect(result.data.reason).toBe('product_not_found');
     });
 
-    it('creates draft invoice when customer and products exist', async () => {
-      db.customer.findFirst.mockResolvedValueOnce({ id: 'cust-1', name: 'Cliente' });
-      db.product.findFirst
-        .mockResolvedValueOnce({ id: 'prod-1', name: 'Producto 1' })
-        .mockResolvedValueOnce({ id: 'prod-2', name: 'Producto 2' });
-      db.invoice.create.mockResolvedValueOnce({ id: 'inv-1', number: 'DRAFT-123' });
+    it('returns pending order when customer and products exist', async () => {
+      db.customer.findMany.mockResolvedValueOnce([{ id: 'cust-1', name: 'Cliente' }]);
+      db.product.findMany
+        .mockResolvedValueOnce([
+          {
+            id: 'prod-1',
+            name: 'Producto 1',
+            prices: [{ amount: 10, isCurrent: true, sellPrice: 10 }],
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: 'prod-2',
+            name: 'Producto 2',
+            prices: [{ amount: 20, isCurrent: true, sellPrice: 20 }],
+          },
+        ]);
 
       const result = await createOrderIntent(
         {
@@ -95,11 +113,12 @@ describe('chat intents business logic', () => {
         0.95,
       );
 
-      expect(db.invoice.create).toHaveBeenCalled();
-      expect(result.data.created).toBe(true);
-      expect(result.data.invoiceId).toBe('inv-1');
-      expect(result.data.number).toBe('DRAFT-123');
-      expect(result.sources.some((s: any) => s.type === 'invoice')).toBe(true);
+      expect(db.invoice.create).not.toHaveBeenCalled();
+      expect(result.data.created).toBe(false);
+      expect(result.data.pendingOrder).toBeDefined();
+      expect(result.data.pendingOrder.customerId).toBe('cust-1');
+      expect(result.data.pendingOrder.items).toHaveLength(2);
+      expect(result.data.pendingOrder.total).toBeGreaterThan(0);
     });
   });
 

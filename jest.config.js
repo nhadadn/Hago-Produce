@@ -1,26 +1,29 @@
-const nextJest = require('next/jest')
+const nextJest = require('next/jest');
+const createJestConfig = nextJest({ dir: './' });
 
-const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
-  dir: './',
-})
-
-// Add any custom config to be passed to Jest
 const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/src/tests/jest.setup.ts'],
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  modulePathIgnorePatterns: [
-    '<rootDir>/DocumentacionHagoProduce/',
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/tests/'],
+  collectCoverageFrom: [
+    'src/lib/services/**/*.ts',
+    'src/app/api/**/*.ts',
+    'src/components/**/*.tsx',
+    '!src/**/*.d.ts',
+    '!src/**/__tests__/**',
+    '!src/**/node_modules/**',
   ],
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '<rootDir>/tests/',
-    '<rootDir>/src/tests/integration/bot-query-api.test.ts',
-  ],
-}
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 75,
+      lines: 80,
+      statements: 80,
+    },
+  },
+};
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-module.exports = createJestConfig(customJestConfig)
+module.exports = createJestConfig(customJestConfig);

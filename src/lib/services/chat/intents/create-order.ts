@@ -286,9 +286,22 @@ export async function createOrderIntent(
   confidence: number,
   context?: ChatServiceContext,
 ): Promise<QueryExecutionResult> {
-  const rawMessage: string = String(params.rawMessage || params.message || '').trim();
+  let extracted: ExtractedOrderParams | null = null;
 
-  const extracted = await extractOrderParams(rawMessage, language);
+  // Check if params already contain extracted data (e.g. from tests or previous extraction)
+  if (params.customerName && Array.isArray(params.items) && params.items.length > 0) {
+    extracted = {
+      customerName: params.customerName,
+      items: params.items,
+      notes: params.notes,
+      sendChannel: normalizeSendChannel(params.sendChannel),
+      deliveryDate: params.deliveryDate,
+      deliveryTime: params.deliveryTime,
+    };
+  } else {
+    const rawMessage: string = String(params.rawMessage || params.message || '').trim();
+    extracted = await extractOrderParams(rawMessage, language);
+  }
 
   if (!extracted) {
     return {
@@ -533,6 +546,7 @@ export async function confirmOrderIntent(
           description: item.productName,
         })),
         status: 'SENT',
+        issueDate: new Date(),
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         taxRate: pendingOrder.taxRate,
       },

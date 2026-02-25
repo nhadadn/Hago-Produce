@@ -43,18 +43,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform lg:translate-x-0 lg:static lg:block flex flex-col",
+          "fixed inset-y-0 left-0 z-50 w-64 border-r border-hago-primary-800 bg-hago-primary-900 transition-transform lg:translate-x-0 lg:static lg:block flex flex-col",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <div className="flex h-14 items-center border-b border-hago-primary-800 px-4 lg:h-[60px] lg:px-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <span className="text-xl font-bold">Hago Produce</span>
+            <span className="text-xl font-bold text-white">Hago Produce</span>
           </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="ml-auto lg:hidden"
+            className="ml-auto lg:hidden text-white hover:bg-hago-primary-800"
             onClick={onClose}
           >
             <X className="h-5 w-5" />
@@ -78,10 +78,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     }
                   }}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
                     isActive
-                      ? "bg-muted text-primary"
-                      : "text-muted-foreground"
+                      ? "bg-hago-primary-800 text-white"
+                      : "text-hago-primary-100 hover:bg-hago-primary-800 hover:text-white"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -92,10 +92,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </nav>
         </div>
         
-        <div className="border-t p-4">
+        <div className="border-t border-hago-primary-800 p-4">
           <Button 
             variant="outline" 
-            className="w-full justify-start gap-2" 
+            className="w-full justify-start gap-2 border-hago-primary-700 bg-transparent text-hago-primary-100 hover:bg-hago-primary-800 hover:text-white" 
             onClick={() => logout()}
           >
             <LogOut className="h-4 w-4" />

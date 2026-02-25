@@ -55,6 +55,12 @@ export class SupplierService {
     });
   }
 
+  async deleteSupplier(id: string) {
+    return prisma.supplier.delete({
+      where: { id },
+    });
+  }
+
   async getSuppliers(filters: SupplierFilters) {
     const { page = 1, limit = 10, search, isActive } = filters;
     const skip = (page - 1) * limit;

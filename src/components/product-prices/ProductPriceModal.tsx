@@ -50,7 +50,7 @@ export function ProductPriceModal({
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof productPriceSchema>>({
-    resolver: zodResolver(productPriceSchema),
+    resolver: zodResolver(productPriceSchema) as any,
     defaultValues: {
       productId: "",
       supplierId: "",

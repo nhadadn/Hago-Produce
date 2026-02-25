@@ -210,13 +210,13 @@ export function InvoiceDetail({ invoiceId }: InvoiceDetailProps) {
                         </div>
                       </td>
                       <td className="py-2 text-right">
-                        {item.quantity}
+                        {Number(item.quantity)}
                       </td>
                       <td className="py-2 text-right">
                         {formatCurrency(Number(item.unitPrice))}
                       </td>
                       <td className="py-2 text-right">
-                        {formatCurrency(Number((item as any).totalPrice ?? item.quantity * item.unitPrice))}
+                        {formatCurrency(Number((item as any).totalPrice ?? Number(item.quantity) * Number(item.unitPrice)))}
                       </td>
                     </tr>
                   ))}

@@ -48,13 +48,13 @@ export function IncomeChart() {
           <BarChart data={data}>
             <XAxis
               dataKey="name"
-              stroke="#888888"
+              stroke="#757575"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="#888888"
+              stroke="#757575"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -64,7 +64,7 @@ export function IncomeChart() {
               formatter={(value: any) => [`$${value}`, "Ingresos"]}
               cursor={{ fill: "transparent" }}
             />
-            <Bar dataKey="total" fill="#0f172a" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="total" fill="#2E7D32" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

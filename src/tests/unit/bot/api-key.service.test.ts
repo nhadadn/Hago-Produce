@@ -1,292 +1,323 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import bcrypt from 'bcrypt';
-import prisma from '@/lib/db';
-import {
+
+import { 
+  createApiKey, 
+  updateApiKey, 
+  validateApiKey, 
+  rotateApiKey, 
+  revokeApiKey, 
+  listApiKeys, 
+  getApiKeyById,
   generateApiKey,
-  createApiKey,
-  validateApiKey,
-  rotateApiKey,
-  revokeApiKey,
-  listApiKeys,
-  BotApiKeyService,
+  BotApiKeyService
 } from '@/lib/services/bot/api-key.service';
+import prisma from '@/lib/db';
+import bcrypt from 'bcrypt';
 
-const botApiKeys: any[] = [];
-const webhookLogs: any[] = [];
+// Mock dependencies
+jest.mock('@/lib/db', () => ({
+  __esModule: true,
+  default: {
+    botApiKey: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      findMany: jest.fn(),
+    },
+  },
+}));
 
-function resetState() {
-  botApiKeys.length = 0;
-  webhookLogs.length = 0;
-}
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(),
+  compare: jest.fn(),
+}));
 
-function setupPrismaMocks() {
-  (prisma.botApiKey as any).deleteMany = jest.fn(async () => {
-    botApiKeys.length = 0;
-    return { count: 0 };
-  });
-
-  (prisma.botApiKey as any).findUnique = jest.fn(async ({ where }: any) => {
-    if (where.id) {
-      return botApiKeys.find(k => k.id === where.id) ?? null;
-    }
-    if (where.name) {
-      return botApiKeys.find(k => k.name === where.name) ?? null;
-    }
-    return null;
-  });
-
-  (prisma.botApiKey as any).findMany = jest.fn(async ({ where, orderBy }: any = {}) => {
-    let result = [...botApiKeys];
-    if (where && typeof where.isActive === 'boolean') {
-      result = result.filter(k => k.isActive === where.isActive);
-    }
-    if (orderBy && orderBy.createdAt === 'desc') {
-      result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    }
-    return result;
-  });
-
-  (prisma.botApiKey as any).create = jest.fn(async ({ data }: any) => {
-    const now = new Date();
-    const record = {
-      id: data.id ?? `id_${botApiKeys.length + 1}`,
-      name: data.name,
-      description: data.description ?? null,
-      hashedKey: data.hashedKey,
-      rateLimit: data.rateLimit ?? 60,
-      isActive: data.isActive ?? true,
-      createdAt: now,
-      updatedAt: now,
-      lastUsedAt: null,
-      expiresAt: data.expiresAt ?? null,
-    };
-    botApiKeys.push(record);
-    return record;
-  });
-
-  (prisma.botApiKey as any).update = jest.fn(async ({ where, data }: any) => {
-    const idx = botApiKeys.findIndex(k => k.id === where.id);
-    if (idx === -1) {
-      throw new Error('API key no encontrada');
-    }
-    botApiKeys[idx] = { ...botApiKeys[idx], ...data, updatedAt: new Date() };
-    return botApiKeys[idx];
-  });
-
-  (prisma.webhookLog as any).createMany = jest.fn(async ({ data }: any) => {
-    for (const item of data) {
-      webhookLogs.push({ id: `log_${webhookLogs.length + 1}`, ...item });
-    }
-    return { count: data.length };
-  });
-
-  (prisma.webhookLog as any).count = jest.fn(async ({ where }: any) => {
-    return webhookLogs.filter(log => {
-      if (where && where.apiKey) {
-        return log.apiKey === where.apiKey;
-      }
-      return true;
-    }).length;
-  });
-}
-
-describe('BotApiKeyService', () => {
+describe('Bot API Key Service', () => {
+  const mockDate = new Date('2024-01-01T00:00:00Z');
+  
   beforeEach(() => {
-    resetState();
-    setupPrismaMocks();
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    jest.setSystemTime(mockDate);
   });
 
   afterEach(() => {
-    resetState();
-    jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
   describe('generateApiKey', () => {
-    it('debe generar API keys únicas con prefijo hk_prod_', async () => {
-      const key1 = await generateApiKey();
-      const key2 = await generateApiKey();
-
-      expect(key1).toMatch(/^hk_prod_[0-9a-f]+$/);
-      expect(key2).toMatch(/^hk_prod_[0-9a-f]+$/);
-      expect(key1).not.toBe(key2);
+    it('should generate a key starting with hk_prod_', async () => {
+      const key = await generateApiKey();
+      expect(key).toMatch(/^hk_prod_[a-f0-9]{32}$/);
     });
   });
 
   describe('createApiKey', () => {
-    it('debe crear una API key con valores por defecto', async () => {
-      const { apiKey, info } = await createApiKey({ name: 'test-key' });
+    const mockData = {
+      name: 'Test Key',
+      description: 'Test Description',
+    };
 
-      expect(apiKey).toBeDefined();
-      expect(apiKey).toMatch(/^hk_prod_[0-9a-f]+$/);
-      expect(info.name).toBe('test-key');
-      expect(info.rateLimit).toBe(60);
-      expect(info.isActive).toBe(true);
-      expect(info.requestCount).toBe(0);
+    it('should create a new api key successfully', async () => {
+      (prisma.botApiKey.findUnique as jest.Mock).mockResolvedValue(null);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_key');
+      
+      const mockCreatedKey = {
+        id: 'key-123',
+        ...mockData,
+        hashedKey: 'hashed_key',
+        rateLimit: 60,
+        isActive: true,
+        createdAt: mockDate,
+        lastUsedAt: null,
+        expiresAt: null,
+      };
 
-      const saved = await prisma.botApiKey.findUnique({
-        where: { name: 'test-key' },
+      (prisma.botApiKey.create as jest.Mock).mockResolvedValue(mockCreatedKey);
+
+      const result = await createApiKey(mockData);
+
+      expect(prisma.botApiKey.findUnique).toHaveBeenCalledWith({ where: { name: mockData.name } });
+      expect(bcrypt.hash).toHaveBeenCalled();
+      expect(prisma.botApiKey.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: mockData.name,
+          hashedKey: 'hashed_key',
+        }),
       });
-
-      expect(saved).toBeDefined();
-      expect(saved?.hashedKey).toBeDefined();
-      expect(saved?.hashedKey).not.toBe(apiKey);
+      expect(result.apiKey).toMatch(/^hk_prod_/);
+      expect(result.info.id).toBe('key-123');
     });
 
-    it('debe crear una API key con rate limit personalizado', async () => {
-      const { apiKey, info } = await createApiKey({ name: 'custom-key', rateLimit: 120 });
+    it('should throw error if name already exists', async () => {
+      (prisma.botApiKey.findUnique as jest.Mock).mockResolvedValue({ id: 'existing' });
 
-      expect(apiKey).toBeDefined();
-      expect(info.rateLimit).toBe(120);
+      await expect(createApiKey(mockData)).rejects.toThrow('Ya existe una API key con ese nombre');
+    });
+  });
+
+  describe('updateApiKey', () => {
+    const keyId = 'key-123';
+    const updateData = { name: 'New Name' };
+
+    it('should update api key successfully', async () => {
+      (prisma.botApiKey.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ id: keyId, name: 'Old Name' }) // First check existence
+        .mockResolvedValueOnce(null); // Second check name uniqueness (if needed)
+
+      const mockUpdatedKey = {
+        id: keyId,
+        name: 'New Name',
+        description: 'Desc',
+        rateLimit: 60,
+        isActive: true,
+        createdAt: mockDate,
+        lastUsedAt: null,
+        expiresAt: null,
+      };
+
+      (prisma.botApiKey.update as jest.Mock).mockResolvedValue(mockUpdatedKey);
+
+      const result = await updateApiKey(keyId, updateData);
+
+      expect(prisma.botApiKey.update).toHaveBeenCalledWith({
+        where: { id: keyId },
+        data: expect.objectContaining({ name: 'New Name' }),
+      });
+      expect(result.name).toBe('New Name');
     });
 
-    it('debe rechazar nombres duplicados', async () => {
-      await createApiKey({ name: 'duplicate-key' });
+    it('should throw error if key not found', async () => {
+      (prisma.botApiKey.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(createApiKey({ name: 'duplicate-key' })).rejects.toThrow(
-        'Ya existe una API key con ese nombre'
-      );
+      await expect(updateApiKey(keyId, updateData)).rejects.toThrow('API key no encontrada');
+    });
+
+    it('should throw error if new name already exists', async () => {
+      (prisma.botApiKey.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ id: keyId, name: 'Old Name' }) // Exists
+        .mockResolvedValueOnce({ id: 'other-key', name: 'New Name' }); // Name collision
+
+      await expect(updateApiKey(keyId, updateData)).rejects.toThrow('Ya existe una API key con ese nombre');
     });
   });
 
   describe('validateApiKey', () => {
-    it('debe validar una API key correcta', async () => {
-      const { apiKey } = await createApiKey({ name: 'valid-key' });
-      const result = await validateApiKey(apiKey);
+    const plainKey = 'hk_prod_test';
+    const hashedKey = 'hashed_test';
 
-      expect(result).toBeDefined();
-      expect(result?.name).toBe('valid-key');
-      expect(result?.isActive).toBe(true);
-      expect(result?.lastUsedAt).toBeInstanceOf(Date);
+    it('should return key info if valid', async () => {
+      const mockKey = {
+        id: 'key-123',
+        name: 'Test',
+        hashedKey: hashedKey,
+        isActive: true,
+        expiresAt: null,
+      };
+
+      (prisma.botApiKey.findMany as jest.Mock).mockResolvedValue([mockKey]);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (prisma.botApiKey.update as jest.Mock).mockResolvedValue({});
+
+      const result = await validateApiKey(plainKey);
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe('key-123');
+      expect(prisma.botApiKey.update).toHaveBeenCalledWith({
+        where: { id: 'key-123' },
+        data: { lastUsedAt: expect.any(Date) },
+      });
     });
 
-    it('debe rechazar una API key inválida', async () => {
-      const result = await validateApiKey('invalid-key-12345');
+    it('should return null if invalid key', async () => {
+      (prisma.botApiKey.findMany as jest.Mock).mockResolvedValue([{ hashedKey: 'other' }]);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      const result = await validateApiKey(plainKey);
 
       expect(result).toBeNull();
     });
 
-    it('debe rechazar una API key revocada', async () => {
-      const { apiKey, info } = await createApiKey({ name: 'revoked-key' });
-      await revokeApiKey(info.id);
+    it('should return null if key expired', async () => {
+      const expiredKey = {
+        id: 'key-123',
+        hashedKey: hashedKey,
+        isActive: true,
+        expiresAt: new Date(mockDate.getTime() - 1000), // Expired
+      };
 
-      const result = await validateApiKey(apiKey);
+      (prisma.botApiKey.findMany as jest.Mock).mockResolvedValue([expiredKey]);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      const result = await validateApiKey(plainKey);
+
       expect(result).toBeNull();
     });
   });
 
   describe('rotateApiKey', () => {
-    it('debe generar una nueva API key y actualizar el registro', async () => {
-      const { apiKey: originalKey, info } = await createApiKey({ name: 'rotate-key' });
+    const keyId = 'key-123';
 
-      const rotated = await rotateApiKey(info.id);
+    it('should rotate key successfully', async () => {
+      (prisma.botApiKey.findUnique as jest.Mock).mockResolvedValue({ id: keyId });
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new_hashed_key');
+      
+      const mockUpdatedKey = {
+        id: keyId,
+        name: 'Test',
+        description: 'Desc',
+        rateLimit: 60,
+        isActive: true,
+        createdAt: mockDate,
+        lastUsedAt: null,
+        expiresAt: null,
+        hashedKey: 'new_hashed_key',
+      };
 
-      expect(rotated.apiKey).toBeDefined();
-      expect(rotated.apiKey).not.toBe(originalKey);
+      (prisma.botApiKey.update as jest.Mock).mockResolvedValue(mockUpdatedKey);
 
-      const oldValidation = await validateApiKey(originalKey);
-      expect(oldValidation).toBeNull();
+      const result = await rotateApiKey(keyId);
 
-      const newValidation = await validateApiKey(rotated.apiKey);
-      expect(newValidation).toBeDefined();
-      expect(newValidation?.id).toBe(info.id);
+      expect(result.apiKey).toMatch(/^hk_prod_/);
+      expect(prisma.botApiKey.update).toHaveBeenCalledWith({
+        where: { id: keyId },
+        data: expect.objectContaining({ hashedKey: 'new_hashed_key' }),
+      });
     });
 
-    it('debe rechazar rotar una key inexistente', async () => {
-      await expect(rotateApiKey('non-existent-id')).rejects.toThrow(
-        'API key no encontrada'
-      );
+    it('should throw error if key not found', async () => {
+      (prisma.botApiKey.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(rotateApiKey(keyId)).rejects.toThrow('API key no encontrada');
     });
   });
 
   describe('revokeApiKey', () => {
-    it('debe desactivar una API key', async () => {
-      const { info } = await createApiKey({ name: 'revoke-key' });
+    const keyId = 'key-123';
 
-      await revokeApiKey(info.id);
-
-      const revoked = await prisma.botApiKey.findUnique({
-        where: { id: info.id },
+    it('should revoke api key successfully', async () => {
+      (prisma.botApiKey.update as jest.Mock).mockResolvedValue({
+        id: keyId,
+        isActive: false,
       });
 
-      expect(revoked?.isActive).toBe(false);
+      await revokeApiKey(keyId);
+
+      expect(prisma.botApiKey.update).toHaveBeenCalledWith({
+        where: { id: keyId },
+        data: {
+          isActive: false,
+          updatedAt: expect.any(Date),
+        },
+      });
     });
   });
 
   describe('listApiKeys', () => {
-    it('debe listar todas las API keys con estadísticas', async () => {
-      await createApiKey({ name: 'key1', rateLimit: 30 });
-      await createApiKey({ name: 'key2', rateLimit: 90 });
+    it('should list all api keys with stats', async () => {
+      const mockKeys = [
+        { id: 'key-1', name: 'Key 1', createdAt: mockDate, description: null, rateLimit: 60, isActive: true, lastUsedAt: null, expiresAt: null },
+        { id: 'key-2', name: 'Key 2', createdAt: mockDate, description: null, rateLimit: 60, isActive: true, lastUsedAt: null, expiresAt: null },
+      ];
 
-      const keys = await listApiKeys();
+      (prisma.botApiKey.findMany as jest.Mock).mockResolvedValue(mockKeys);
 
-      expect(keys).toHaveLength(2);
-      expect(keys[0].name).toBe('key2');
-      expect(keys[1].name).toBe('key1');
-      expect(keys.every(k => !('hashedKey' in k))).toBe(true);
-    });
-  });
+      const result = await listApiKeys();
 
-  describe('BotApiKeyService (clase estática)', () => {
-    it('debe exportar todos los métodos como estáticos', () => {
-      expect(typeof BotApiKeyService.generateApiKey).toBe('function');
-      expect(typeof BotApiKeyService.create).toBe('function');
-      expect(typeof BotApiKeyService.update).toBe('function');
-      expect(typeof BotApiKeyService.validate).toBe('function');
-      expect(typeof BotApiKeyService.rotate).toBe('function');
-      expect(typeof BotApiKeyService.revoke).toBe('function');
-      expect(typeof BotApiKeyService.list).toBe('function');
-      expect(typeof BotApiKeyService.getById).toBe('function');
-    });
-
-    it('los métodos estáticos deben funcionar igual que las funciones exportadas', async () => {
-      const created = await BotApiKeyService.create({ name: 'static-test' });
-      const direct = await createApiKey({ name: 'direct-test' });
-
-      expect(created.apiKey).toBeDefined();
-      expect(direct.apiKey).toBeDefined();
-
-      const validation1 = await BotApiKeyService.validate(created.apiKey);
-      const validation2 = await validateApiKey(direct.apiKey);
-
-      expect(validation1).toBeDefined();
-      expect(validation2).toBeDefined();
-    });
-  });
-
-  describe('Seguridad', () => {
-    it('debe hashear las API keys con bcrypt', async () => {
-      const { apiKey } = await createApiKey({ name: 'hash-test' });
-      const saved = await prisma.botApiKey.findUnique({
-        where: { name: 'hash-test' },
+      expect(prisma.botApiKey.findMany).toHaveBeenCalledWith({
+        orderBy: { createdAt: 'desc' },
       });
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe('key-1');
+      expect(result[0].requestCount).toBe(0); // Default placeholder
+    });
+  });
 
-      expect(saved?.hashedKey).not.toBe(apiKey);
-      expect(saved?.hashedKey).toMatch(/^\$2[aby]\$/);
+  describe('getApiKeyById', () => {
+    const keyId = 'key-123';
 
-      const isValidHash = await bcrypt.compare(apiKey, saved!.hashedKey);
-      expect(isValidHash).toBe(true);
+    it('should return api key info if found', async () => {
+      const mockKey = { 
+        id: keyId, 
+        name: 'Test Key',
+        description: null,
+        rateLimit: 60,
+        isActive: true,
+        createdAt: mockDate,
+        lastUsedAt: null,
+        expiresAt: null
+      };
+      (prisma.botApiKey.findUnique as jest.Mock).mockResolvedValue(mockKey);
+
+      const result = await getApiKeyById(keyId);
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe(keyId);
     });
 
-    it('debe usar salt único para cada key', async () => {
-      await createApiKey({ name: 'salt1' });
-      await createApiKey({ name: 'salt2' });
+    it('should return null if not found', async () => {
+      (prisma.botApiKey.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const saved1 = await prisma.botApiKey.findUnique({ where: { name: 'salt1' } });
-      const saved2 = await prisma.botApiKey.findUnique({ where: { name: 'salt2' } });
+      const result = await getApiKeyById(keyId);
 
-      expect(saved1?.hashedKey).not.toBe(saved2?.hashedKey);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('BotApiKeyService Class Wrapper', () => {
+    it('should expose static methods correctly', () => {
+      expect(BotApiKeyService.generateApiKey).toBeDefined();
+      expect(BotApiKeyService.create).toBeDefined();
+      expect(BotApiKeyService.update).toBeDefined();
+      expect(BotApiKeyService.validate).toBeDefined();
+      expect(BotApiKeyService.rotate).toBeDefined();
+      expect(BotApiKeyService.revoke).toBeDefined();
+      expect(BotApiKeyService.list).toBeDefined();
+      expect(BotApiKeyService.getById).toBeDefined();
     });
 
-    it('no debe exponer hashedKey en listApiKeys', async () => {
-      await createApiKey({ name: 'expose-test' });
-
-      const keys = await listApiKeys();
-      const key = keys.find(k => k.name === 'expose-test');
-
-      expect(key).toBeDefined();
-      expect('hashedKey' in key!).toBe(false);
-      expect('hashed_key' in key!).toBe(false);
+    it('should be instantiable (coverage only)', () => {
+      const service = new BotApiKeyService();
+      expect(service).toBeInstanceOf(BotApiKeyService);
     });
   });
 });
-

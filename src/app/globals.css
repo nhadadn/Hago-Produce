@@ -4,65 +4,92 @@
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
- 
+    /* === HAGO PRODUCE DESIGN TOKENS === */
+    
+    /* Primary Green — Marca principal */
+    --hago-primary-900: 133 55% 12%;   /* #0E2F13 - Adjusted to HSL */
+    --hago-primary-800: 123 41% 34%;   /* #2E7D32 — BASE */
+    --hago-primary-700: 123 38% 39%;   /* #388E3C */
+    --hago-primary-600: 123 36% 45%;   /* #43A047 */
+    --hago-primary-500: 122 39% 49%;   /* #4CAF50 */
+    --hago-primary-100: 125 39% 85%;   /* #C8E6C9 */
+    --hago-primary-50:  125 39% 93%;   /* #E8F5E9 */
+    
+    /* Secondary Amber — Acento */
+    --hago-secondary-900: 22 100% 45%; /* #E65100 */
+    --hago-secondary-800: 26 100% 50%; /* #FF6F00 — BASE */
+    --hago-secondary-700: 33 100% 50%; /* #FF8F00 */
+    --hago-secondary-600: 37 100% 50%; /* #FFA000 */
+    --hago-secondary-50:  37 100% 97%; /* #FFF3E0 */
+    
+    /* Neutrals */
+    --hago-gray-900: 0 0% 13%;   /* #212121 */
+    --hago-gray-800: 0 0% 26%;   /* #424242 */
+    --hago-gray-700: 0 0% 38%;   /* #616161 */
+    --hago-gray-600: 0 0% 46%;   /* #757575 */
+    --hago-gray-500: 0 0% 62%;   /* #9E9E9E */
+    --hago-gray-400: 0 0% 74%;   /* #BDBDBD */
+    --hago-gray-300: 0 0% 88%;   /* #E0E0E0 */
+    --hago-gray-200: 0 0% 93%;   /* #EEEEEE */
+    --hago-gray-100: 0 0% 96%;   /* #F5F5F5 */
+    --hago-gray-50:  0 0% 98%;   /* #FAFAFA */
+    
+    /* Semantic */
+    --hago-success: 122 39% 49%;  /* #4CAF50 */
+    --hago-warning: 36 100% 50%;  /* #FF9800 */
+    --hago-error:   4 90% 58%;    /* #F44336 */
+    --hago-info:    207 90% 54%;  /* #2196F3 */
+    
+    /* Channel Colors */
+    --hago-whatsapp: 142 70% 49%; /* #25D366 */
+    --hago-telegram: 200 100% 40%;/* #0088CC */
+    --hago-email:    211 71% 46%; /* #1976D2 */
+    --hago-make:     263 91% 57%; /* #6B2CF5 */
+    
+    /* shadcn compatibility — mapear a tokens de marca */
+    --background: var(--hago-gray-100);
+    --foreground: var(--hago-gray-900);
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
- 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
- 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
- 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
- 
+    --card-foreground: var(--hago-gray-900);
+    --primary: var(--hago-primary-800);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--hago-secondary-800);
+    --secondary-foreground: 0 0% 100%;
+    --muted: var(--hago-gray-200);
+    --muted-foreground: var(--hago-gray-600);
+    --accent: var(--hago-primary-50);
+    --accent-foreground: var(--hago-primary-800);
+    --destructive: var(--hago-error);
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--hago-gray-300);
+    --input: var(--hago-gray-300);
+    --ring: var(--hago-primary-800);
     --radius: 0.5rem;
+    --popover: 0 0% 100%;
+    --popover-foreground: var(--hago-gray-900);
   }
- 
+
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
- 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
- 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
- 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
- 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
- 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* TODO: Define dark mode tokens properly if needed, for now fallback to dark equivalents */
+    --background: var(--hago-gray-900);
+    --foreground: var(--hago-gray-100);
+    --card: var(--hago-gray-800);
+    --card-foreground: var(--hago-gray-100);
+    --popover: var(--hago-gray-800);
+    --popover-foreground: var(--hago-gray-100);
+    --primary: var(--hago-primary-500);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--hago-secondary-500);
+    --secondary-foreground: 0 0% 100%;
+    --muted: var(--hago-gray-800);
+    --muted-foreground: var(--hago-gray-400);
+    --accent: var(--hago-gray-800);
+    --accent-foreground: var(--hago-gray-100);
+    --destructive: var(--hago-error);
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--hago-gray-700);
+    --input: var(--hago-gray-700);
+    --ring: var(--hago-primary-500);
   }
 }
  

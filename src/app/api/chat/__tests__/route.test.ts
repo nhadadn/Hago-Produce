@@ -30,6 +30,9 @@ jest.mock('@/lib/db', () => ({
       create: jest.fn().mockResolvedValue({ sessionId: 'existing-session', messages: [] }),
       update: jest.fn().mockResolvedValue({}),
     },
+    auditLog: {
+      create: jest.fn(),
+    },
   },
 }));
 
@@ -92,7 +95,7 @@ describe('POST /api/chat', () => {
     expect(data.intent).toBe('greeting');
     expect(data.sessionId).toBeDefined();
 
-    expect(analyzeIntent).toHaveBeenCalledWith('Hi', 'es'); // Default language
+    expect(analyzeIntent).toHaveBeenCalledWith('Hi', 'es', {}); // Default language
     expect(executeQuery).toHaveBeenCalledWith(
       expect.objectContaining({ intent: 'greeting' }),
       'es',
@@ -130,7 +133,7 @@ describe('POST /api/chat', () => {
 
     await POST(req);
 
-    expect(analyzeIntent).toHaveBeenCalledWith('Hi', 'en');
+    expect(analyzeIntent).toHaveBeenCalledWith('Hi', 'en', {});
   });
 
   it('returns 429 when rate limit is exceeded', async () => {

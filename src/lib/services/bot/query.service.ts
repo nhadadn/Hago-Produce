@@ -88,6 +88,11 @@ export class BotQueryService {
       intent = 'invoice.query';
       confidence = 0.8;
     }
+    // Saldo pendiente
+    else if (this.isBalanceQuery(lowerQuery, language)) {
+      intent = 'balance.query';
+      confidence = 0.9;
+    }
     // Consultas sobre clientes
     else if (this.isCustomerQuery(lowerQuery, language)) {
       intent = 'customer.query';
@@ -102,11 +107,6 @@ export class BotQueryService {
     else if (this.isSupplierQuery(lowerQuery, language)) {
       intent = 'supplier.query';
       confidence = 0.8;
-    }
-    // Saldo pendiente
-    else if (this.isBalanceQuery(lowerQuery, language)) {
-      intent = 'balance.query';
-      confidence = 0.9;
     }
     // Ayuda general
     else if (this.isHelpQuery(lowerQuery, language)) {

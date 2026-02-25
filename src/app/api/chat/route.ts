@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
         action: 'RATE_LIMIT_EXCEEDED',
         entityType: 'chat',
         entityId: 'chat_api',
-        changes: { limit: rateLimit, endpoint: '/api/chat' },
+        changes: { 
+          limit: { old: null, new: rateLimit }, 
+          endpoint: { old: null, new: '/api/chat' } 
+        },
       });
 
       const rateLimitResponse = createRateLimitResponse('chat_api', user.userId, language);
@@ -114,7 +117,7 @@ export async function POST(req: NextRequest) {
     const lastMessages = existingMessages.slice(-20);
 
     const historyMessages = lastMessages.map((m: any) => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
+      role: (m.role === 'assistant' ? 'assistant' : 'user') as 'assistant' | 'user',
       content: String(m.content ?? ''),
     }));
 

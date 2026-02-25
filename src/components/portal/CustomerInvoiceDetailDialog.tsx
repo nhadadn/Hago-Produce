@@ -130,11 +130,11 @@ export function CustomerInvoiceDetailDialog({ invoiceId, open, onOpenChange }: P
                                 )}
                               </div>
                             </td>
-                            <td className="py-2 text-right">{item.quantity}</td>
+                            <td className="py-2 text-right">{Number(item.quantity)}</td>
                             <td className="py-2 text-right">{formatCurrency(Number(item.unitPrice))}</td>
                             <td className="py-2 text-right">
                               {formatCurrency(
-                                Number((item as any).totalPrice ?? item.quantity * item.unitPrice),
+                                Number((item as any).totalPrice ?? Number(item.quantity) * Number(item.unitPrice)),
                               )}
                             </td>
                           </tr>
