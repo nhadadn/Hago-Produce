@@ -55,8 +55,8 @@ export default function CustomersPage() {
     setLoading(true);
     try {
       const response = await fetchCustomers(filters);
-      setCustomers(response.data.data);
-      setTotalPages(response.data.meta.totalPages);
+      setCustomers(response.data.customers ?? []);
+      setTotalPages(response.data.meta?.totalPages ?? 1);
     } catch (error) {
       console.error('Error loading customers:', error);
     } finally {

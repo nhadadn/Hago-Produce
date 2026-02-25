@@ -21,7 +21,7 @@ export function CustomersTable({ customers, onEdit, isLoading }: CustomersTableP
     return <div className="text-center p-8">Cargando clientes...</div>;
   }
 
-  if (customers.length === 0) {
+  if (!customers || customers.length === 0) {
     return <div className="text-center p-8 border rounded-lg">No se encontraron clientes.</div>;
   }
 
