@@ -43,7 +43,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform lg:translate-x-0 lg:static lg:block flex flex-col",
+          "fixed inset-y-0 left-0 z-50 w-64 border-r bg-hago-primary-900 text-white transition-transform lg:translate-x-0 lg:static lg:block flex flex-col",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -78,10 +78,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     }
                   }}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-white hover:bg-hago-primary-800",
                     isActive
-                      ? "bg-muted text-primary"
-                      : "text-muted-foreground"
+                      ? "bg-hago-primary-800 text-white"
+                      : "text-gray-300"
                   )}
                 >
                   <Icon className="h-4 w-4" />

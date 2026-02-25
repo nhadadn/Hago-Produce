@@ -4,14 +4,17 @@ import { useState, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { FileDown, Loader2 } from 'lucide-react';
+import { generateInvoicePDF } from '@/lib/pdf-generator';
+import { InvoiceWithDetails } from '@/lib/api/invoices';
 
 interface DownloadPDFButtonProps extends React.ComponentProps<typeof Button> {
-  invoiceId: string;
+  invoice?: InvoiceWithDetails;
+  invoiceId?: string;
   stopPropagation?: boolean;
 }
 
 export function DownloadPDFButton(props: DownloadPDFButtonProps) {
-  const { invoiceId, stopPropagation, children, disabled, ...buttonProps } = props;
+  const { invoice, invoiceId, stopPropagation, children, disabled, ...buttonProps } = props;
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -27,49 +30,60 @@ export function DownloadPDFButton(props: DownloadPDFButtonProps) {
       }
     }
 
+    if (!invoice && !invoiceId) {
+      console.error('No invoice or invoiceId provided');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      let invoiceData = invoice;
 
-      const response = await fetch(`/api/v1/invoices/${invoiceId}/pdf`, {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!response.ok) {
-        let message = 'No se pudo generar el PDF de la factura.';
-
-        try {
-          const data = await response.json();
-          if (data?.error?.message) {
-            message = data.error.message;
-          }
-        } catch {}
-
-        toast({
-          title: 'Error al generar PDF',
-          description: message,
-          variant: 'destructive',
+      if (!invoiceData && invoiceId) {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+        const response = await fetch(`/api/v1/invoices/${invoiceId}`, {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
 
-        return;
+        if (!response.ok) {
+          throw new Error('No se pudo obtener la información de la factura.');
+        }
+
+        const json = await response.json();
+        if (json.success) {
+          invoiceData = json.data;
+        } else {
+          throw new Error(json.error?.message || 'Error al obtener datos de factura');
+        }
       }
 
-      const blob = await response.blob();
+      if (!invoiceData) {
+        throw new Error('No se encontraron datos para generar el PDF');
+      }
+
+      const blob = generateInvoicePDF(invoiceData);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `factura-${invoiceId}.pdf`;
+      link.download = `factura-${invoiceData.number}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch {
+      
+      toast({
+        title: 'PDF Generado',
+        description: `Factura ${invoiceData.number} descargada correctamente.`,
+      });
+
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
       toast({
         title: 'Error al generar PDF',
-        description: 'Ocurrió un error inesperado al generar el PDF.',
+        description: error.message || 'Ocurrió un error inesperado.',
         variant: 'destructive',
       });
     } finally {
@@ -97,4 +111,3 @@ export function DownloadPDFButton(props: DownloadPDFButtonProps) {
     </Button>
   );
 }
-

@@ -117,7 +117,7 @@ model Invoice {
 
   customer      Customer      @relation(fields: [customerId], references: [id])
   items         InvoiceItem[]
-  notes         InvoiceNote[]
+  invoiceNotes  InvoiceNote[]
 
   @@map("invoices")
   @@index([customerId])

@@ -18,6 +18,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
+        "hago-primary": {
+          800: "#1e40af", // Placeholder blue-800
+          900: "#1e3a8a", // Placeholder blue-900
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

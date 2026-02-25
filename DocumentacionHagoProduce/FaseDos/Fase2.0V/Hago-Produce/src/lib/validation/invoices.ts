@@ -12,7 +12,7 @@ export const createInvoiceSchema = z.object({
   customerId: z.string().min(1, "Customer ID is required"),
   issueDate: z.string().or(z.date()).transform((val) => new Date(val)),
   dueDate: z.string().or(z.date()).transform((val) => new Date(val)),
-  status: z.nativeEnum(InvoiceStatus).optional().default(InvoiceStatus.DRAFT),
+  status: z.nativeEnum(InvoiceStatus).default(InvoiceStatus.DRAFT),
   notes: z.string().optional(),
   taxRate: z.number().min(0).optional().default(0.13),
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
