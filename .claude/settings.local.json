@@ -8,7 +8,8 @@
       "Bash(python:*)",
       "Bash(npm test:*)",
       "Bash(sort:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
