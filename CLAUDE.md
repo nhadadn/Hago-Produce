@@ -1,4 +1,6 @@
-# CLAUDE.md — Hago Produce
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## ⚠️ DOCUMENTACIÓN OBLIGATORIA
 
@@ -8,22 +10,19 @@ Antes de implementar cualquier feature, **siempre consulta primero** la carpeta:
 DocumentacionHagoProduce/
 ```
 
-Esta carpeta contiene toda la documentación oficial del proyecto organizada por fase.
-
 ### Archivos clave a consultar según el contexto:
 
 | Archivo | Cuándo consultarlo |
 |---------|-------------------|
-| `docs/00_prompt_maestro_hago_produce.md` | Contexto general del proyecto |
-| `docs/01_architecture_c4.md` | Antes de tocar arquitectura o estructura de carpetas |
-| `docs/02_data_model.md` | Antes de modificar modelos o migraciones de Prisma |
-| `docs/03_api_contracts.md` | Antes de crear o modificar endpoints API |
-| `docs/04_roadmap.md` | Para entender prioridades y fases |
-| `docs/05_project_brief.md` | Contexto de negocio |
-| `FaseTres/SISTEMA_COLORES_HAGO_PRODUCE.md` | Para cualquier cambio de UI/CSS |
-| `FaseCuatro/PLAN_ESTRATEGICO_SPRINT4.md` | Sprint actual — tareas y prioridades |
-| `FaseCuatro/PROMPT_MAESTRO_RECALIBRACION_SPRINT4.md` | Instrucciones del sprint 4 |
-| `todo.md` | Tareas pendientes actuales |
+| `DocumentacionHagoProduce/docs/00_prompt_maestro_hago_produce.md` | Contexto general del proyecto |
+| `DocumentacionHagoProduce/docs/01_architecture_c4.md` | Antes de tocar arquitectura o estructura de carpetas |
+| `DocumentacionHagoProduce/docs/02_data_model.md` | Antes de modificar modelos o migraciones de Prisma |
+| `DocumentacionHagoProduce/docs/03_api_contracts.md` | Antes de crear o modificar endpoints API |
+| `DocumentacionHagoProduce/docs/04_roadmap.md` | Para entender prioridades y fases |
+| `DocumentacionHagoProduce/FaseTres/SISTEMA_COLORES_HAGO_PRODUCE.md` | Para cualquier cambio de UI/CSS |
+| `DocumentacionHagoProduce/FaseCuatro/PLAN_ESTRATEGICO_SPRINT4.md` | Sprint actual — tareas y prioridades |
+| `DocumentacionHagoProduce/FaseCuatro/PROMPT_MAESTRO_RECALIBRACION_SPRINT4.md` | Instrucciones del sprint 4 |
+| `DocumentacionHagoProduce/todo.md` | Tareas pendientes actuales |
 
 ### Estructura de fases:
 ```
@@ -74,17 +73,27 @@ DocumentacionHagoProduce/
 ## Key Commands
 
 ```bash
+# Development
 npm run dev              # Start dev server (localhost:3000)
 npm run build            # Production build
 npm run lint             # ESLint
-npm test                 # Jest unit tests
-npm run test:e2e         # Playwright E2E tests
 
-npx prisma migrate dev   # Create & apply DB migrations
+# Testing
+npm test                              # Jest unit tests (all)
+npm test -- --testPathPattern=chat    # Run a single test file/folder
+npm run test:integration              # Integration tests (requires test DB)
+npm run test:integration:up           # Start test DB in Docker
+npm run test:e2e                      # Playwright E2E tests
+
+# Database
+npx prisma migrate dev   # Create & apply DB migrations (dev)
+npx prisma migrate deploy # Apply migrations (production/staging)
 npx prisma db seed       # Seed database (prisma/seed.ts)
 npx prisma studio        # Open Prisma GUI
 
-docker-compose up        # Local dev environment (app + PostgreSQL 15)
+# Docker (local dev)
+docker-compose up -d db  # Start only PostgreSQL (recommended for dev)
+docker-compose up        # Start full stack (app + PostgreSQL)
 ```
 
 ---
@@ -95,7 +104,6 @@ docker-compose up        # Local dev environment (app + PostgreSQL 15)
 src/
 ├── app/                   # Next.js App Router
 │   ├── (admin)/           # Admin dashboard routes
-│   ├── (accounting)/      # Accounting module routes
 │   ├── (auth)/            # Authentication routes
 │   ├── (customer)/        # Customer portal routes
 │   └── api/
@@ -104,19 +112,51 @@ src/
 ├── lib/
 │   ├── db.ts              # Prisma client singleton
 │   ├── auth/              # Auth utilities
-│   ├── services/          # Business logic
+│   ├── services/          # Business logic layer
 │   ├── validation/        # Zod schemas
 │   ├── hooks/             # Custom React hooks
 │   ├── api/               # API client functions (fetch wrappers)
 │   └── audit/             # Audit logging
 ├── config/                # App configuration
-└── middleware.ts          # Next.js middleware
+└── middleware.ts          # Next.js middleware (role-based route protection)
 prisma/
 ├── schema.prisma          # Database schema
 ├── migrations/            # Migration history
 └── seed.ts                # Seed script
 DocumentacionHagoProduce/  # ← Documentación oficial del proyecto
 ```
+
+---
+
+## Architecture Patterns
+
+### Request flow
+`Component → src/lib/api/*.ts (fetch wrapper) → API Route /api/v1/* → src/lib/services/*.ts → Prisma → PostgreSQL`
+
+Never call `fetch` directly in components — always use the wrappers in `src/lib/api/`.
+
+### API response envelope
+All API routes return a consistent wrapper:
+```ts
+{ success: true, data: { ... } }          // success
+{ success: false, error: "message" }      // error
+```
+Services return domain objects directly (e.g. `CustomerService.getAll` returns `{ customers, meta }`, NOT `{ data, meta }`). The route handler wraps it.
+
+### Auth & roles
+- `src/middleware.ts` enforces role-based access on every request
+- Roles: `ADMIN`, `ACCOUNTING`, `MANAGEMENT`, `CUSTOMER`
+- Customer portal login is separate: `POST /api/v1/auth/customer-login` (uses TaxID + password)
+
+### Validation
+- Zod schemas live in `src/lib/validation/`
+- Used at API boundaries (route handlers), not inside services
+
+### Audit logging
+All write operations on invoices and critical entities must use `src/lib/audit/` helpers.
+
+### Prisma singleton
+Always import from `src/lib/db.ts`. Never instantiate `PrismaClient` directly.
 
 ---
 
@@ -141,41 +181,41 @@ DocumentacionHagoProduce/  # ← Documentación oficial del proyecto
 
 ---
 
-## Architecture Patterns
-
-- **Monorepo**: Frontend and backend co-located in a single Next.js app
-- **API versioning**: All backend routes under `/api/v1/`
-- **Route groups**: `(admin)`, `(accounting)`, `(auth)`, `(customer)` use Next.js route groups
-- **Validation**: Zod schemas in `src/lib/validation/` used at API boundaries
-- **Auth middleware**: `src/middleware.ts` protects routes by role
-- **Prisma singleton**: Import from `src/lib/db.ts`, never instantiate directly
-- **Audit logging**: Use `src/lib/audit/` for write operations
-- **API clients**: Fetch wrappers in `src/lib/api/` — use these in components, never fetch directly
-
----
-
 ## Known Fixes (no revertir)
 
 ### AdminShell layout
-`src/components/layout/AdminShell.tsx` **debe** tener `flex` en el wrapper:
+`src/components/layout/AdminShell.tsx` **debe** tener `flex` en el wrapper — sin esto el sidebar y el contenido se apilan verticalmente y los widgets no aparecen:
 ```tsx
 <div className="flex min-h-screen bg-background">   // ← flex es obligatorio
   <Sidebar ... />
   <div className="flex flex-col flex-1 min-w-0">    // ← flex-1 min-w-0, NO lg:pl-64
 ```
+Este fix se rompe cada vez que el compañero sube cambios a este archivo. Verificar siempre después de un merge.
 
 ### useAuth.ts
-`src/lib/hooks/useAuth.ts` debe importar de `next/navigation`, no `next/router`:
+`src/lib/hooks/useAuth.ts` debe importar de `next/navigation`, no `next/router` (App Router):
 ```ts
 import { useRouter } from 'next/navigation'; // ✅
 ```
 
 ---
 
+## Sprint 4 — Estado actual (Feb 2026)
+
+El backend está completo (~95%). El Sprint 4 se enfoca en productización y UX. Prioridades críticas bloqueantes para Staging:
+
+1. **Design Tokens** — `globals.css` y `tailwind.config.ts` deben usar los colores de marca Hago Produce (ver `DocumentacionHagoProduce/FaseTres/SISTEMA_COLORES_HAGO_PRODUCE.md`)
+2. **Tests** — Coverage >80%, mocks de OpenAI para `analyzeIntent`, 0 tests fallando en CI
+3. **Landing Page** — SPA pública profesional (LCP <2.5s, Lighthouse >90)
+4. **Portal cliente** — Gráficos interactivos de facturación del cliente
+5. **CI/CD** — GitHub Actions + Vercel Preview por PR
+
+---
+
 ## Environment Variables
 
 See `.env.example`. Key:
-- `DATABASE_URL` — `postgresql://postgres:postgres@localhost:5433/hago_produce` (local Docker)
+- `DATABASE_URL` — `postgresql://postgres:postgres@localhost:5433/hago_produce` (local Docker, port 5433)
 - `NEXTAUTH_SECRET` / `NEXTAUTH_URL`
 - `OPENAI_API_KEY`
 - `TWILIO_*` — WhatsApp
@@ -185,14 +225,16 @@ See `.env.example`. Key:
 
 ## Testing
 
-- **Unit tests**: `npm test` — Jest + @testing-library/jest-dom
-- **E2E tests**: `npm run test:e2e` — Playwright (Chrome, Firefox, Safari)
-- **CI**: GitHub Actions en PRs
+- **Unit**: `npm test` — Jest + @testing-library/jest-dom
+- **Integration**: `npm run test:integration` — requiere Docker DB de prueba (`npm run test:integration:up`)
+- **E2E**: `npm run test:e2e` — Playwright (Chrome, Firefox, Safari)
+- **CI**: GitHub Actions en PRs — todos los tests deben pasar
 
 ---
 
 ## Deployment
 
-- **Platform**: Railway
+- **Platform**: Railway (app + managed PostgreSQL)
 - **Config**: `railway.json`, `Dockerfile`
-- **Local dev**: `docker-compose up` → PostgreSQL 15 en puerto `5433`
+- **Local dev**: `docker-compose up -d db` → PostgreSQL 15 en puerto `5433`
+- **Seed admin**: `admin@hagoproduce.com` / `password123` (solo dev/staging)
