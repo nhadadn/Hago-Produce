@@ -12,8 +12,9 @@ import { CustomerForm } from '@/components/customers/CustomerForm';
 import { fetchCustomers, createCustomer, CustomerFilters } from '@/lib/api/customers';
 import { CustomerInput } from '@/lib/validation/customers';
 import { Customer } from '@prisma/client';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Copy, CheckCheck } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function CustomersPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -27,6 +28,8 @@ export default function CustomersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
+  const [createdCredentials, setCreatedCredentials] = useState<{ taxId: string; password: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -86,11 +89,20 @@ export default function CustomersPage() {
         const err = await res.json();
         throw new Error(err.error?.message || 'Error al actualizar cliente');
       }
+      setIsFormOpen(false);
+      loadCustomers();
     } else {
-      await createCustomer(data);
+      const result = await createCustomer(data);
+      setIsFormOpen(false);
+      loadCustomers();
+      setCreatedCredentials({ taxId: data.taxId, password: result.portalPassword });
     }
-    setIsFormOpen(false);
-    loadCustomers();
+  };
+
+  const handleCopyCredentials = () => {
+    navigator.clipboard.writeText(`Tax ID: ${createdCredentials?.taxId}\nContraseña: ${createdCredentials?.password}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (authLoading || !user) return <div className="p-8">Cargando...</div>;
@@ -172,6 +184,30 @@ export default function CustomersPage() {
           isEditing={!!selectedCustomer}
         />
       </CustomerModal>
+
+      <Dialog open={!!createdCredentials} onOpenChange={() => { setCreatedCredentials(null); setCopied(false); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Cliente creado exitosamente</DialogTitle>
+            <DialogDescription>
+              Comparte estas credenciales con el cliente para que acceda al portal.{' '}
+              <strong className="text-destructive">Esta contraseña no se mostrará de nuevo.</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="rounded-lg bg-muted p-4 font-mono text-sm space-y-2">
+              <div><span className="text-muted-foreground">Tax ID: </span><strong>{createdCredentials?.taxId}</strong></div>
+              <div><span className="text-muted-foreground">Contraseña: </span><strong>{createdCredentials?.password}</strong></div>
+            </div>
+            <Button className="w-full" onClick={handleCopyCredentials} variant="outline">
+              {copied
+                ? <><CheckCheck className="w-4 h-4 mr-2" />Copiado</>
+                : <><Copy className="w-4 h-4 mr-2" />Copiar credenciales</>
+              }
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

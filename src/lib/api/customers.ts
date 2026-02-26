@@ -11,7 +11,7 @@ export interface CustomerFilters {
 export interface CustomersResponse {
   success: boolean;
   data: {
-    data: Customer[];
+    customers: Customer[];
     meta: {
       total: number;
       page: number;
