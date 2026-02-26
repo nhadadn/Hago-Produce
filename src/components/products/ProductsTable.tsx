@@ -60,11 +60,11 @@ export function ProductsTable({
               <TableCell>{product.sku || "-"}</TableCell>
               <TableCell>
                 {product.isActive ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge variant="outline" className="bg-hago-primary-50 text-hago-primary-700 border-hago-primary-100">
                     <Check className="w-3 h-3 mr-1" /> Activo
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                  <Badge variant="outline" className="bg-hago-error/10 text-hago-error border-hago-error/20">
                     <X className="w-3 h-3 mr-1" /> Inactivo
                   </Badge>
                 )}
