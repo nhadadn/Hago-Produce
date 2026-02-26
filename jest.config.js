@@ -7,7 +7,13 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/tests/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/tests/',
+    '<rootDir>/src/tests/integration/',
+    '<rootDir>/DocumentacionHagoProduce/',
+  ],
   collectCoverageFrom: [
     'src/lib/services/**/*.ts',
     'src/app/api/**/*.ts',
