@@ -49,7 +49,7 @@ export async function fetchCustomers(filters: CustomerFilters): Promise<Customer
   return res.json();
 }
 
-export async function createCustomer(data: CustomerInput): Promise<Customer> {
+export async function createCustomer(data: CustomerInput): Promise<{ customer: Customer; portalPassword: string }> {
   const res = await fetch('/api/v1/customers', {
     method: 'POST',
     headers: getHeaders(),
