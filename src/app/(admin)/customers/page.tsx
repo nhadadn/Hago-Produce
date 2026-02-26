@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { CustomersTable } from '@/components/customers/CustomersTable';
 import { CustomerModal } from '@/components/customers/CustomerModal';
 import { CustomerForm } from '@/components/customers/CustomerForm';
-import { fetchCustomers, createCustomer, CustomerFilters } from '@/lib/api/customers';
+import { fetchCustomers, createCustomer, resetPortalPassword, CustomerFilters } from '@/lib/api/customers';
 import { CustomerInput } from '@/lib/validation/customers';
 import { Customer } from '@prisma/client';
 import { Plus, Search, Copy, CheckCheck } from 'lucide-react';
@@ -28,7 +28,7 @@ export default function CustomersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
-  const [createdCredentials, setCreatedCredentials] = useState<{ taxId: string; password: string } | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<{ taxId: string; password: string; isReset?: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -99,6 +99,15 @@ export default function CustomersPage() {
     }
   };
 
+  const handleResetPassword = async (customer: Customer) => {
+    try {
+      const result = await resetPortalPassword(customer.id);
+      setCreatedCredentials({ taxId: result.taxId, password: result.portalPassword, isReset: true });
+    } catch (error) {
+      console.error('Error resetting portal password:', error);
+    }
+  };
+
   const handleCopyCredentials = () => {
     navigator.clipboard.writeText(`Tax ID: ${createdCredentials?.taxId}\nContraseña: ${createdCredentials?.password}`);
     setCopied(true);
@@ -148,6 +157,7 @@ export default function CustomersPage() {
       <CustomersTable
         customers={customers}
         onEdit={handleEdit}
+        onResetPassword={user.role === Role.ADMIN ? handleResetPassword : undefined}
         isLoading={loading}
       />
 
@@ -188,7 +198,7 @@ export default function CustomersPage() {
       <Dialog open={!!createdCredentials} onOpenChange={() => { setCreatedCredentials(null); setCopied(false); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Cliente creado exitosamente</DialogTitle>
+            <DialogTitle>{createdCredentials?.isReset ? 'Acceso al portal generado' : 'Cliente creado exitosamente'}</DialogTitle>
             <DialogDescription>
               Comparte estas credenciales con el cliente para que acceda al portal.{' '}
               <strong className="text-destructive">Esta contraseña no se mostrará de nuevo.</strong>

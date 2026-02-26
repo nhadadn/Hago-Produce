@@ -94,3 +94,18 @@ export async function updateCustomer(id: string, data: CustomerUpdateInput): Pro
   const result = await res.json();
   return result.data;
 }
+
+export async function resetPortalPassword(id: string): Promise<{ taxId: string; portalPassword: string }> {
+  const res = await fetch(`/api/v1/customers/${id}/reset-portal-password`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || 'Error al generar acceso al portal');
+  }
+
+  const result = await res.json();
+  return result.data;
+}

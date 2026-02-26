@@ -110,4 +110,40 @@ export class CustomerService {
       data: { isActive: false },
     });
   }
+
+  static async resetPortalPassword(id: string): Promise<{ taxId: string; portalPassword: string }> {
+    const customer = await prisma.customer.findUnique({ where: { id } });
+    if (!customer) throw new Error('Customer not found');
+
+    const plainPassword = generateInitialPassword();
+    const hashedPassword = await hashPassword(plainPassword);
+
+    const existingUser = await prisma.user.findFirst({
+      where: { customerId: id, role: Role.CUSTOMER },
+    });
+
+    if (existingUser) {
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { password: hashedPassword, isActive: true },
+      });
+    } else {
+      const userEmail = customer.email && customer.email.trim() !== ''
+        ? customer.email
+        : `portal.${customer.taxId.toLowerCase().replace(/[^a-z0-9]/g, '')}@noreply.hagoproduce.com`;
+
+      await prisma.user.create({
+        data: {
+          email: userEmail,
+          password: hashedPassword,
+          firstName: customer.name,
+          role: Role.CUSTOMER,
+          customerId: customer.id,
+          isActive: true,
+        },
+      });
+    }
+
+    return { taxId: customer.taxId, portalPassword: plainPassword };
+  }
 }
