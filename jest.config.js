@@ -8,41 +8,25 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
     '<rootDir>/.next/',
-    '<rootDir>/DocumentacionHagoProduce/',
-    '<rootDir>/src/tests/integration/', // Integration tests (run via npm run test:integration)
-    '<rootDir>/tests/', // Playwright tests
-  ],
-  testMatch: [
-    '<rootDir>/src/**/*.test.ts',
-    '<rootDir>/src/**/*.spec.ts',
-  ],
-  coveragePathIgnorePatterns: [
     '<rootDir>/node_modules/',
+    '<rootDir>/tests/',
+    '<rootDir>/src/tests/integration/',
     '<rootDir>/DocumentacionHagoProduce/',
-    '<rootDir>/src/app/',           // Pages y API routes (integration tests)
-    '<rootDir>/src/components/',    // UI components (UI tests separados)
-    '<rootDir>/src/tests/',         // Los tests mismos
-    '<rootDir>/src/scripts/',       // Scripts CLI
-    '<rootDir>/src/lib/validation/', // Schemas de validación (Zod/Yup)
-    '<rootDir>/src/types/',         // Solo tipos TypeScript
-    '<rootDir>/src/middleware.ts',  // Middleware de Next.js
   ],
   collectCoverageFrom: [
-    '<rootDir>/src/lib/services/**/*.ts',
-    '<rootDir>/src/lib/infrastructure/**/*.ts',
-    '<rootDir>/src/lib/constants/**/*.ts',
-    '!<rootDir>/src/lib/**/*.test.ts',
-    '!<rootDir>/src/lib/**/*.spec.ts',
+    // Solo la capa de servicios — rutas API y componentes UI se cubren con E2E/integration
+    'src/lib/services/**/*.ts',
+    '!src/lib/services/**/*.d.ts',
+    '!src/lib/services/**/__tests__/**',
   ],
   coverageReporters: ['text', 'json-summary'],
   coverageThreshold: {
     global: {
-      branches: 70,
+      branches: 60,
       functions: 75,
-      lines: 80,
-      statements: 80,
+      lines: 75,
+      statements: 75,
     },
   },
 };

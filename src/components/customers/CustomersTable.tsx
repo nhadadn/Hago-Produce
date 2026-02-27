@@ -47,11 +47,11 @@ export function CustomersTable({ customers, onEdit, isLoading }: CustomersTableP
               <TableCell>{customer.phone || '-'}</TableCell>
               <TableCell>
                 {customer.isActive ? (
-                  <span className="flex items-center text-green-600 text-sm">
+                  <span className="flex items-center text-hago-primary-700 text-sm">
                     <CheckCircle className="w-4 h-4 mr-1" /> Activo
                   </span>
                 ) : (
-                  <span className="flex items-center text-red-600 text-sm">
+                  <span className="flex items-center text-hago-error text-sm">
                     <Ban className="w-4 h-4 mr-1" /> Inactivo
                   </span>
                 )}

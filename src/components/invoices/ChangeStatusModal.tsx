@@ -90,15 +90,17 @@ export function ChangeStatusModal({ invoiceId, open, onClose }: ChangeStatusModa
   const getStatusBadgeClass = (status: InvoiceStatus) => {
     switch (status) {
       case InvoiceStatus.PAID:
-        return 'bg-green-100 text-green-800';
+        return 'bg-hago-primary-100 text-hago-primary-800';
       case InvoiceStatus.DRAFT:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hago-gray-200 text-hago-gray-700';
       case InvoiceStatus.OVERDUE:
-        return 'bg-red-100 text-red-800';
+        return 'bg-hago-error/10 text-hago-error';
+      case InvoiceStatus.PENDING:
+        return 'bg-hago-warning/10 text-hago-warning';
       case InvoiceStatus.SENT:
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hago-info/10 text-hago-info';
       default:
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hago-info/10 text-hago-info';
     }
   };
 
