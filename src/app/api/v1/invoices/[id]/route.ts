@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { invoicesService } from '@/lib/services/invoices.service';
 import { updateInvoiceSchema } from '@/lib/validation/invoices';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json({ success: true, data: invoice });
   } catch (error) {
-    console.error('[INVOICE_GET]', error);
+    logger.error('[INVOICE_GET]', error);
     if (error instanceof Error && error.message.includes('not found')) {
         return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Factura no encontrada' } }, { status: 404 });
     }
@@ -75,7 +76,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         throw error;
     }
   } catch (error) {
-    console.error('[INVOICE_PUT]', error);
+    logger.error('[INVOICE_PUT]', error);
     return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
   }
 }

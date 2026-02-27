@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 import { getAuthenticatedUser } from '@/lib/auth/middleware';
 import prisma from '@/lib/db';
 import { generateInvoicePDF } from '@/lib/services/reports/export';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
         },
     });
   } catch (error) {
-      console.error("Error generating ZIP:", error);
+      logger.error("Error generating ZIP:", error);
       return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

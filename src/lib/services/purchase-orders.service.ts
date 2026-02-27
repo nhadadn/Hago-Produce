@@ -2,9 +2,12 @@ import prisma from '@/lib/db';
 import { PurchaseOrder, PurchaseOrderStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { generatePurchaseOrderPDF } from '@/lib/services/reports/export';
+import { logger } from '@/lib/logger/logger.service';
 import { sendPurchaseOrderEmail } from '@/lib/services/email.service';
 import { whatsAppService } from '@/lib/services/bot/whatsapp.service';
 import { createNotificationLog } from '@/lib/services/notifications/notification-log.service';
+
+import { taxCalculationService, TransactionType, extractProvinceFromAddress } from '@/lib/services/finance/tax-calculation.service';
 
 export interface CreatePurchaseOrderData {
   supplierId: string;
@@ -17,9 +20,9 @@ export interface CreatePurchaseOrderData {
     totalPrice: number;
   }[];
   subtotal: number;
-  taxRate: number;
-  taxAmount: number;
-  total: number;
+  taxRate?: number;
+  taxAmount?: number;
+  total?: number;
   notes?: string;
   deliveryDate?: Date;
   deliveryTime?: string;
@@ -35,18 +38,60 @@ export class PurchaseOrdersService {
     return `PO-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
-  async createPurchaseOrder(data: CreatePurchaseOrderData): Promise<PurchaseOrder> {
+  async createPurchaseOrder(data: CreatePurchaseOrderData) {
     const orderNumber = await this.generatePurchaseOrderNumber();
+
+    let taxRate: number | Decimal | undefined = data.taxRate;
+    let taxAmount: number | Decimal | undefined = data.taxAmount;
+    let total: number | Decimal | undefined = data.total;
+    const subtotalDecimal = new Decimal(data.subtotal);
+
+    // Auto-calculate tax if not provided
+      if (taxRate === undefined) {
+        const supplier = await prisma.supplier.findUnique({
+          where: { id: data.supplierId },
+          select: { address: true }
+        });
+
+        const province = extractProvinceFromAddress(supplier?.address);
+        
+        if (!province) {
+          logger.warn(`PurchaseOrder creation: Supplier ${data.supplierId} has no valid address/province. Delegating to TaxCalculationService fallback.`);
+        }
+
+        const taxResult = taxCalculationService.calculateTax(province, subtotalDecimal, TransactionType.PURCHASE);
+        taxRate = taxResult.taxRate;
+        
+        if (taxAmount === undefined) {
+          taxAmount = taxResult.taxAmount;
+        }
+      }
+
+    // Now taxRate is definitely defined (either from input or calculation)
+    // Calculate missing amounts based on rate
+    if (taxAmount === undefined && taxRate !== undefined) {
+        taxAmount = subtotalDecimal.times(new Decimal(taxRate));
+    }
+
+    if (total === undefined && taxAmount !== undefined) {
+        total = subtotalDecimal.plus(new Decimal(taxAmount));
+    }
+
+    // Ensure values are defined before creating (should be covered by logic above unless taxRate provided but calculation failed? No, calculateTax throws)
+    // Fallback for safety if somehow undefined (e.g. taxRate provided 0 but taxAmount undefined)
+    const finalTaxRate = taxRate ?? 0;
+    const finalTaxAmount = taxAmount ?? 0;
+    const finalTotal = total ?? data.subtotal;
 
     return prisma.purchaseOrder.create({
       data: {
         orderNumber,
         supplierId: data.supplierId,
         status: 'SENT', // As per requirements, we create it directly as SENT if we are sending it immediately
-        subtotal: new Decimal(data.subtotal),
-        taxRate: new Decimal(data.taxRate),
-        taxAmount: new Decimal(data.taxAmount),
-        total: new Decimal(data.total),
+        subtotal: subtotalDecimal,
+        taxRate: new Decimal(finalTaxRate),
+        taxAmount: new Decimal(finalTaxAmount),
+        total: new Decimal(finalTotal),
         notes: data.notes,
         deliveryDate: data.deliveryDate,
         deliveryTime: data.deliveryTime,
@@ -166,7 +211,7 @@ export class PurchaseOrdersService {
       return result;
 
     } catch (error) {
-      console.error('Error sending purchase order:', error);
+      logger.error('Error sending purchase order:', error);
       
       await createNotificationLog({
         channel,

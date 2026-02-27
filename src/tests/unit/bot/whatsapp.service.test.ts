@@ -5,12 +5,23 @@ import twilio from 'twilio';
 // Define mocks variables
 const mockMessagesCreate = jest.fn();
 const mockValidateRequest = jest.fn();
+const mockLoggerError = jest.fn();
 
 // Mock Prisma
 jest.mock('@/lib/db', () => ({
   message: {
     create: jest.fn(),
     update: jest.fn(),
+  },
+}));
+
+// Mock Logger
+jest.mock('@/lib/logger/logger.service', () => ({
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
   },
 }));
 
@@ -29,6 +40,7 @@ describe('WhatsApp Service', () => {
   const originalEnv = process.env;
   let whatsAppService: any;
   let prismaMock: any;
+  let loggerMock: any;
 
   beforeEach(async () => {
     jest.resetModules();
@@ -42,6 +54,9 @@ describe('WhatsApp Service', () => {
     // Dynamic import to pick up env vars and fresh mocks
     const dbModule = await import('@/lib/db');
     prismaMock = dbModule.default;
+
+    const loggerModule = await import('@/lib/logger/logger.service');
+    loggerMock = loggerModule.logger;
     
     const serviceModule = await import('@/lib/services/bot/whatsapp.service');
     whatsAppService = serviceModule.whatsAppService;
@@ -122,6 +137,7 @@ describe('WhatsApp Service', () => {
       mockValidateRequest.mockImplementation(() => { throw new Error('Valid error'); });
       const result = whatsAppService.validateWebhookSignature('sig', 'url', 'body', 'token');
       expect(result).toBe(false);
+      expect(loggerMock.error).toHaveBeenCalledWith('[TWILIO_VALIDATION_ERROR]', expect.any(Error));
     });
   });
 
@@ -175,12 +191,10 @@ describe('WhatsApp Service', () => {
 
     it('should catch error and log it without throwing', async () => {
       prismaMock.message.create.mockRejectedValue(new Error('DB Error'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       
       await expect(whatsAppService.logMessage('user1', 'Hello')).resolves.not.toThrow();
       
-      expect(consoleSpy).toHaveBeenCalledWith('[MESSAGE_LOG_ERROR]', expect.any(Error));
-      consoleSpy.mockRestore();
+      expect(loggerMock.error).toHaveBeenCalledWith('[MESSAGE_LOG_ERROR]', expect.any(Error));
     });
   });
 
@@ -209,12 +223,10 @@ describe('WhatsApp Service', () => {
 
     it('should catch error and log it without throwing', async () => {
       prismaMock.message.update.mockRejectedValue(new Error('DB Error'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       
       await expect(whatsAppService.updateMessageStatus('msg1', 'processed')).resolves.not.toThrow();
       
-      expect(consoleSpy).toHaveBeenCalledWith('[MESSAGE_UPDATE_ERROR]', expect.any(Error));
-      consoleSpy.mockRestore();
+      expect(loggerMock.error).toHaveBeenCalledWith('[MESSAGE_UPDATE_ERROR]', expect.any(Error));
     });
   });
 });

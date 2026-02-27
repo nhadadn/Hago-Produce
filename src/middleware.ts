@@ -1,17 +1,28 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { v4 as uuidv4 } from 'uuid';
 
 export function middleware(request: NextRequest) {
-  // Check for protected routes
-  // For now, we only protect /api routes that are not auth related
-  // In a real scenario, we might want to protect specific UI routes here too
-  // or rely on the client-side useProtectedRoute hook for UX and API protection for security.
-  
-  // This is a simplified middleware example.
-  // The real protection happens in the API routes using `getAuthenticatedUser`
-  // and on the client side using `useProtectedRoute`.
-  
-  return NextResponse.next();
+  // Generate correlation ID
+  const correlationId = request.headers.get('x-correlation-id') || uuidv4();
+
+  // Create response
+  const response = NextResponse.next();
+
+  // Add correlation ID to response headers for client visibility
+  response.headers.set('x-correlation-id', correlationId);
+
+  // Add correlation ID to request headers for downstream processing (Server Components/Actions)
+  // Note: In Next.js middleware, mutating request headers for downstream requires setting them on the request passed to next()
+  // But NextResponse.next({ request: { headers } }) is the way to pass modified headers forward.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-correlation-id', correlationId);
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

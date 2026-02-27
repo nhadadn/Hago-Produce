@@ -58,7 +58,7 @@ function buildRevenuePDF(metrics: RevenueMetrics): Uint8Array {
     });
   }
 
-  return doc.output('arraybuffer');
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 export interface InvoicePDFData {
@@ -72,6 +72,7 @@ export interface InvoicePDFData {
     total: number;
   }>;
   subtotal: number;
+  taxRate?: number;
   taxAmount: number;
   total: number;
 }
@@ -115,7 +116,9 @@ export function generateInvoicePDF(data: InvoicePDFData): Uint8Array {
   doc.text(`Subtotal:`, 350, finalY);
   doc.text(`$${data.subtotal.toFixed(2)}`, 450, finalY, { align: 'right' });
   
-  doc.text(`Impuestos (13%):`, 350, finalY + 15);
+  const taxRate = data.taxRate !== undefined ? data.taxRate : 0.13;
+  const taxPercentage = (taxRate * 100).toFixed(2).replace(/\.00$/, '');
+  doc.text(`Impuestos (${taxPercentage}%):`, 350, finalY + 15);
   doc.text(`$${data.taxAmount.toFixed(2)}`, 450, finalY + 15, { align: 'right' });
   
   doc.setFontSize(12);
@@ -126,7 +129,7 @@ export function generateInvoicePDF(data: InvoicePDFData): Uint8Array {
   doc.setFontSize(8);
   doc.text('Gracias por su preferencia.', 40, finalY + 60);
 
-  return doc.output('arraybuffer');
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 export async function generateInvoicesZIP(invoices: InvoicePDFData[]): Promise<Blob> {
@@ -219,7 +222,7 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData): Uint8Array
     doc.text(data.notes, 40, finalY + 75, { maxWidth: 500 });
   }
 
-  return doc.output('arraybuffer');
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 function buildAgingPDF(report: AgingReport): Uint8Array {
@@ -238,7 +241,7 @@ function buildAgingPDF(report: AgingReport): Uint8Array {
     styles: { fontSize: 9 },
   });
 
-  return doc.output('arraybuffer');
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 function buildTopCustomersPDF(customers: TopCustomer[]): Uint8Array {
@@ -259,7 +262,7 @@ function buildTopCustomersPDF(customers: TopCustomer[]): Uint8Array {
     styles: { fontSize: 9 },
   });
 
-  return doc.output('arraybuffer');
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 function buildTopProductsPDF(products: TopProduct[]): Uint8Array {
@@ -280,7 +283,7 @@ function buildTopProductsPDF(products: TopProduct[]): Uint8Array {
     styles: { fontSize: 9 },
   });
 
-  return doc.output('arraybuffer');
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 function buildPriceTrendsPDF(trends: ProductPriceTrends): Uint8Array {
@@ -308,7 +311,7 @@ function buildPriceTrendsPDF(trends: ProductPriceTrends): Uint8Array {
     });
   }
 
-  return doc.output('arraybuffer');
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 export function buildPDF(reportType: ReportType, data: any): { buffer: Uint8Array; filename: string } {
@@ -363,7 +366,7 @@ function buildTopCustomersCSV(customers: TopCustomer[]): { buffer: Uint8Array; f
     ['Cliente', 'Facturas', 'Ingreso Total', 'Promedio por Factura'],
     ...customers.map((c) => [
       c.customerName,
-      String(c.invoiceCount),
+      c.invoiceCount,
       c.totalRevenue.toFixed(2),
       c.averageInvoiceAmount.toFixed(2),
     ]),

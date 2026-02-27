@@ -21,6 +21,7 @@ import { InvoiceFilters } from "@/components/invoices/InvoiceFilters";
 import { fetchCustomers } from "@/lib/api/customers";
 import type { Customer } from "@prisma/client";
 import { DownloadPDFButton } from "@/components/invoices/DownloadPDFButton";
+import { clientLogger as logger } from "@/lib/logger/client-logger";
 
 export default function InvoiceList() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function InvoiceList() {
         const res = await fetchCustomers({ limit: 100, isActive: true });
         setCustomers(res.data.data);
       } catch (error) {
-        console.error("Failed to load customers:", error);
+        logger.error("Failed to load customers:", error);
       }
     }
     loadCustomers();
@@ -79,7 +80,7 @@ export default function InvoiceList() {
         setTotalPages(res.data.meta.totalPages);
       } catch (error) {
         if (!cancelled) {
-          console.error("Failed to load invoices:", error);
+          logger.error("Failed to load invoices:", error);
         }
       } finally {
         if (!cancelled) {

@@ -7,6 +7,8 @@ import { createNotificationLog } from '@/lib/services/notifications/notification
 import { sendInvoiceDocument } from '@/lib/services/telegram.service';
 import { WhatsAppService } from '@/lib/services/bot/whatsapp.service';
 import { logAudit } from '@/lib/audit/logger';
+import { logger } from '@/lib/logger/logger.service';
+import { taxCalculationService, TransactionType, extractProvinceFromAddress } from '@/lib/services/finance/tax-calculation.service';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
@@ -442,8 +444,12 @@ export async function createOrderIntent(
   }
 
   const subtotal = pendingItems.reduce((acc, it) => acc + it.totalPrice, 0);
-  const taxRate = 0.13;
-  const taxAmount = subtotal * taxRate;
+  
+  const province = extractProvinceFromAddress(customer.address);
+  const taxResult = taxCalculationService.calculateTax(province, subtotal, TransactionType.SALE);
+
+  const taxRate = Number(taxResult.taxRate);
+  const taxAmount = Number(taxResult.taxAmount);
   const total = subtotal + taxAmount;
 
   let resolvedSendChannel: SendChannel | null = extracted.sendChannel;
@@ -541,7 +547,7 @@ export async function confirmOrderIntent(
         customerId: customer.id,
         items: pendingOrder.items.map((item) => ({
           productId: item.productId,
-          quantity: item.quantity,
+          quantity: Number(item.quantity),
           unitPrice: item.unitPrice,
           description: item.productName,
         })),
@@ -560,7 +566,7 @@ export async function confirmOrderIntent(
       date: invoice.createdAt,
       items: invoice.items.map((item) => ({
         description: item.description || '',
-        quantity: item.quantity,
+        quantity: Number(item.quantity),
         unitPrice: Number(item.unitPrice),
         total: Number(item.totalPrice),
       })),
@@ -718,7 +724,7 @@ export async function confirmOrderIntent(
       ],
     };
   } catch (error) {
-    console.error('[CONFIRM_ORDER_ERROR]', error);
+    logger.error('[CONFIRM_ORDER_ERROR]', error);
     return {
       intent: 'confirm_order',
       confidence,

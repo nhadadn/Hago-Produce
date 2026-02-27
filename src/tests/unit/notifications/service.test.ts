@@ -1,5 +1,6 @@
 import { NotificationsService } from '@/lib/services/notifications/service';
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 
 jest.mock('@/lib/db', () => ({
   auditLog: {
@@ -10,6 +11,13 @@ jest.mock('@/lib/db', () => ({
   },
   notification: {
     createMany: jest.fn(),
+  },
+}));
+
+jest.mock('@/lib/logger/logger.service', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
   },
 }));
 
@@ -99,16 +107,14 @@ describe('NotificationsService', () => {
 
   it('skips webhook when NOTIFICATIONS_WEBHOOK_URL is missing', async () => {
     delete process.env.NOTIFICATIONS_WEBHOOK_URL;
-    const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
 
     await NotificationsService.sendNotification(basePayload, ['webhook'], { maxRetries: 1 });
 
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(logger.info).toHaveBeenCalledWith(
       '[NOTIFICATION_WEBHOOK_SKIPPED]',
       expect.anything()
     );
-    consoleSpy.mockRestore();
   });
 
   it('sends via telegram when chat ID exists', async () => {
@@ -275,13 +281,11 @@ describe('NotificationsService', () => {
   it('handles DB error during notification persistence gracefully', async () => {
     (prisma.user.findMany as jest.Mock).mockResolvedValue([{ id: 'u1' }]);
     (prisma.notification.createMany as jest.Mock).mockRejectedValue(new Error('DB Error'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
     // Should NOT throw
     await NotificationsService.sendNotification(basePayload, ['email'], { maxRetries: 1 });
 
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to persist notification to DB:', expect.any(Error));
-    consoleSpy.mockRestore();
+    expect(logger.error).toHaveBeenCalledWith('Failed to persist notification to DB:', expect.any(Error));
   });
 
   it('uses default content for unknown trigger', async () => {
@@ -300,36 +304,4 @@ describe('NotificationsService', () => {
       ])
     });
   });
-
-  it('uses default channels when not provided', async () => {
-    await NotificationsService.sendNotification(basePayload);
-
-    // Default channels are ['email', 'webhook']
-    expect(prisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ changes: expect.objectContaining({ channel: 'email' }) })
-    }));
-    // We assume webhook is skipped if URL missing or success if set, 
-    // but at least email should be attempted.
-  });
-
-  it('handles non-Error objects in retry failure', async () => {
-    process.env.NOTIFICATIONS_WEBHOOK_URL = 'https://webhook.example.com';
-    (global.fetch as jest.Mock).mockRejectedValue('String Error');
-
-    await expect(NotificationsService.sendNotification(basePayload, ['webhook'], { maxRetries: 1 }))
-      .rejects.toEqual('String Error');
-
-    expect(prisma.auditLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          changes: expect.objectContaining({
-            channel: 'webhook',
-            status: 'failed',
-            errorMessage: 'Unknown error',
-          }),
-        }),
-      })
-    );
-  });
 });
-

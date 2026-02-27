@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger/logger.service';
 import { validateApiKey } from '@/lib/services/bot/api-key.service';
 import { BotQueryService, botQuerySchema } from '@/lib/services/bot/query.service';
 
@@ -168,7 +169,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[BOT_QUERY_ERROR]', error);
+    logger.error('[BOT_QUERY_ERROR]', error);
     return internalErrorResponse();
   }
 }

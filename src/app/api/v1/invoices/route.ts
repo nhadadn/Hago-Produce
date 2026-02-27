@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { invoicesService } from '@/lib/services/invoices.service';
 import { createInvoiceSchema, invoiceFilterSchema } from '@/lib/validation/invoices';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('[INVOICES_GET]', error);
+    logger.error('[INVOICES_GET]', error);
     return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
   }
 }
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     const invoice = await invoicesService.create(validation.data, user.userId);
     return NextResponse.json({ success: true, data: invoice }, { status: 201 });
   } catch (error) {
-    console.error('[INVOICES_POST]', error);
+    logger.error('[INVOICES_POST]', error);
     return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
   }
 }

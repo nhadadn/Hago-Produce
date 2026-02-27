@@ -1,6 +1,7 @@
 import prisma from '@/lib/db';
 import { InvoiceStatus } from '@prisma/client';
 import { getCachedReport, setCachedReport, ReportType } from '@/lib/utils/report-cache';
+import { logger } from '@/lib/logger/logger.service';
 
 export interface RevenueMetrics {
   totalRevenue: number;
@@ -196,7 +197,7 @@ export async function getRevenueMetrics(
       averageInvoiceAmount,
     };
   } catch (error) {
-    console.error('[REPORTS_REVENUE_METRICS_ERROR]', error);
+    logger.error('[REPORTS_REVENUE_METRICS_ERROR]', error);
     throw error;
   }
 }
@@ -267,7 +268,7 @@ export async function getAgingReport(
 
     return result;
   } catch (error) {
-    console.error('[REPORTS_AGING_ERROR]', error);
+    logger.error('[REPORTS_AGING_ERROR]', error);
     throw error;
   }
 }
@@ -349,7 +350,7 @@ export async function getTopCustomers(
 
     return mappedResult;
   } catch (error) {
-    console.error('[REPORTS_TOP_CUSTOMERS_ERROR]', error);
+    logger.error('[REPORTS_TOP_CUSTOMERS_ERROR]', error);
     throw error;
   }
 }
@@ -431,7 +432,7 @@ export async function getTopProducts(
 
     return mappedResult;
   } catch (error) {
-    console.error('[REPORTS_TOP_PRODUCTS_ERROR]', error);
+    logger.error('[REPORTS_TOP_PRODUCTS_ERROR]', error);
     throw error;
   }
 }
@@ -543,7 +544,7 @@ export async function getProductPriceTrends(
 
     return result;
   } catch (error) {
-    console.error('[REPORTS_PRICE_TRENDS_ERROR]', error);
+    logger.error('[REPORTS_PRICE_TRENDS_ERROR]', error);
     throw error;
   }
 }

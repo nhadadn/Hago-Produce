@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { userService } from '@/lib/services/users.service';
 import { createUserSchema } from '@/lib/validation/users';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    console.error('Get users error:', error);
+    logger.error('Get users error:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: newUser }, { status: 201 });
   } catch (error) {
-    console.error('Create user error:', error);
+    logger.error('Create user error:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }

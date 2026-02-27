@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { NotificationsService } from '@/lib/services/notifications/service';
 import { InvoiceStatus } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: { processed } });
   } catch (error) {
-    console.error('[CRON_OVERDUE_NOTIFICATIONS]', error);
+    logger.error('[CRON_OVERDUE_NOTIFICATIONS]', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 },

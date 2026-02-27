@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const productPriceSchema = z.object({
+  id: z.string().uuid().optional(),
   productId: z.string().uuid({ message: "Product ID must be a valid UUID" }),
   supplierId: z.string().uuid({ message: "Supplier ID must be a valid UUID" }),
   costPrice: z.number().min(0, { message: "Cost price must be non-negative" }),

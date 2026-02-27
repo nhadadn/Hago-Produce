@@ -3,6 +3,7 @@ import { POST } from '@/app/api/v1/webhooks/make/route';
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/db';
 import { InvoicesService } from '@/lib/services/invoices.service';
+import { ProductPriceService } from '@/lib/services/product-prices/product-prices.service';
 
 // Mock Prisma
 jest.mock('@/lib/db', () => {
@@ -31,6 +32,14 @@ jest.mock('@/lib/services/invoices.service', () => {
     })),
   };
 });
+
+// Mock ProductPriceService
+jest.mock('@/lib/services/product-prices/product-prices.service', () => ({
+  ProductPriceService: {
+    create: jest.fn(),
+    update: jest.fn(),
+  },
+}));
 
 describe('POST /api/v1/webhooks/make', () => {
   const API_KEY = 'test-api-key';
@@ -188,11 +197,8 @@ describe('POST /api/v1/webhooks/make', () => {
 
     expect(res.status).toBe(200);
     expect(body.data.result.action).toBe('created');
-    expect(prisma.productPrice.updateMany).toHaveBeenCalled(); 
-    expect(prisma.productPrice.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        costPrice: 10,
-      })
+    expect(ProductPriceService.create).toHaveBeenCalledWith(expect.objectContaining({
+      costPrice: 10,
     }));
   });
 
@@ -216,12 +222,10 @@ describe('POST /api/v1/webhooks/make', () => {
 
     expect(res.status).toBe(200);
     expect(body.data.result.action).toBe('created');
-    expect(prisma.productPrice.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        costPrice: 5,
-        productId: validUuid,
-        supplierId: validUuid,
-      })
+    expect(ProductPriceService.create).toHaveBeenCalledWith(expect.objectContaining({
+      costPrice: 5,
+      productId: validUuid,
+      supplierId: validUuid,
     }));
   });
 
@@ -239,6 +243,7 @@ describe('POST /api/v1/webhooks/make', () => {
     (prisma.product.findFirst as jest.Mock).mockResolvedValue({ id: validUuid });
     (prisma.supplier.findUnique as jest.Mock).mockResolvedValue(null);
     (prisma.supplier.create as jest.Mock).mockResolvedValue({ id: 'new-supplier-id' });
+    (ProductPriceService.create as jest.Mock).mockResolvedValue({ id: 'new-price-id' });
 
     const req = createRequest(payload);
     const res = await POST(req);
@@ -249,10 +254,8 @@ describe('POST /api/v1/webhooks/make', () => {
     expect(prisma.supplier.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ name: 'New Farm' })
     }));
-    expect(prisma.productPrice.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        supplierId: 'new-supplier-id',
-      })
+    expect(ProductPriceService.create).toHaveBeenCalledWith(expect.objectContaining({
+      supplierId: 'new-supplier-id',
     }));
   });
 
@@ -292,7 +295,7 @@ describe('POST /api/v1/webhooks/make', () => {
       },
     };
 
-    (prisma.productPrice.update as jest.Mock).mockResolvedValue({ id: validUuid });
+    (ProductPriceService.update as jest.Mock).mockResolvedValue({ id: validUuid });
 
     const req = createRequest(payload);
     const res = await POST(req);
@@ -300,9 +303,8 @@ describe('POST /api/v1/webhooks/make', () => {
 
     expect(res.status).toBe(200);
     expect(body.data.result.action).toBe('updated');
-    expect(prisma.productPrice.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: validUuid },
-      data: expect.objectContaining({ costPrice: 20 })
+    expect(ProductPriceService.update).toHaveBeenCalledWith(validUuid, expect.objectContaining({
+      costPrice: 20
     }));
   });
 

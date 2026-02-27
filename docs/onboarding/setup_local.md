@@ -64,7 +64,8 @@ Esto instalará todas las dependencias definidas en `package.json`.
    APP_URL=http://localhost:3000
 
    # Base de datos (PostgreSQL local o Railway)
-   DATABASE_URL=postgresql://user:password@localhost:5432/hago_produce
+   # Nota: El puerto 5433 es el expuesto por docker-compose para evitar conflictos
+   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/hago_produce
 
    # Auth
    NEXTAUTH_SECRET=alguna-cadena-aleatoria

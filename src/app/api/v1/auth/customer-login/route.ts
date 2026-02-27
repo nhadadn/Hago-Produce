@@ -4,6 +4,7 @@ import { comparePassword } from '@/lib/auth/password';
 import { generateAccessToken } from '@/lib/auth/jwt';
 import { customerLoginSchema } from '@/lib/validation/auth';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -117,7 +118,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('[CUSTOMER_LOGIN]', error);
+    logger.error('[CUSTOMER_LOGIN]', error);
     return NextResponse.json(
       {
         success: false,

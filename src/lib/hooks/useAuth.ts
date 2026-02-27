@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { clientLogger } from '@/lib/logger/client-logger';
 
 export interface User {
   id: string;
@@ -57,7 +58,7 @@ export function useAuth() {
         });
       }
     } catch (error) {
-      console.error('Failed to fetch user', error);
+      clientLogger.error('Failed to fetch user', error);
       // Don't auto logout on network error to avoid bad UX
       setAuthState(prev => ({ ...prev, isLoading: false }));
     }

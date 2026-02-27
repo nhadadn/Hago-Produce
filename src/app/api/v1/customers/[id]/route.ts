@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { CustomerService } from '@/lib/services/customers.service';
 import { updateCustomerSchema } from '@/lib/validation/customers';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json({ success: true, data: customer });
   } catch (error) {
-    console.error('[CUSTOMER_GET]', error);
+    logger.error('[CUSTOMER_GET]', error);
     return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
   }
 }
@@ -69,11 +70,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       if (error.code === 'P2025') {
           return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Cliente no encontrado' } }, { status: 404 });
       }
-      console.error('[CUSTOMER_PATCH] Update Error:', error);
+      logger.error('[CUSTOMER_PATCH] Update Error:', error);
       return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
     }
   } catch (error) {
-    console.error('[CUSTOMER_PATCH]', error);
+    logger.error('[CUSTOMER_PATCH]', error);
     return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
   }
 }
@@ -94,11 +95,11 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       if (error.code === 'P2025') {
         return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Cliente no encontrado' } }, { status: 404 });
       }
-      console.error('[CUSTOMER_DELETE] Delete Error:', error);
+      logger.error('[CUSTOMER_DELETE] Delete Error:', error);
       return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
     }
   } catch (error) {
-    console.error('[CUSTOMER_DELETE]', error);
+    logger.error('[CUSTOMER_DELETE]', error);
     return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
   }
 }

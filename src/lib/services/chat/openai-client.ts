@@ -1,4 +1,5 @@
 import { ChatIntent, ChatLanguage, DetectedIntent, QueryExecutionResult } from '@/lib/chat/types';
+import { logger } from '@/lib/logger/logger.service';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
@@ -112,6 +113,12 @@ export async function classifyChatIntentWithOpenAI(
     { role: 'user', content: message },
   ];
 
+  logger.debug('OpenAI intent classification request', {
+    model,
+    messageLength: message.length,
+    language
+  });
+
   try {
     const response = await fetch(OPENAI_API_URL, {
       method: 'POST',
@@ -159,7 +166,7 @@ export async function classifyChatIntentWithOpenAI(
       params: { ...baseParams, rawMessage: message },
     };
   } catch (error) {
-    console.error('[CHAT_INTENT_OPENAI_ERROR]', error);
+    logger.error('[CHAT_INTENT_OPENAI_ERROR]', error);
     return {
       intent: 'price_lookup',
       confidence: 0.5,
@@ -279,7 +286,7 @@ export async function formatResponse(
     }
     return content.trim();
   } catch (error) {
-    console.error('[CHAT_OPENAI_ERROR]', error);
+    logger.error('[CHAT_OPENAI_ERROR]', error);
     return fallbackFormat(intent, language, executionResult);
   }
 }
