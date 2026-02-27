@@ -74,7 +74,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json({ success: true, data: updatedSupplier });
   } catch (error) {
-     console.error('Update supplier error:', error);
+     logger.error('Update supplier error:', error);
      return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }
@@ -106,7 +106,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     return NextResponse.json({ success: true, message: 'Proveedor eliminado correctamente' });
   } catch (error) {
-    console.error('Delete supplier error:', error);
+    logger.error('Delete supplier error:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }

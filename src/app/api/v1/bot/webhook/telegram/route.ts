@@ -5,6 +5,7 @@ import { BotQueryService } from '@/lib/services/bot/query.service';
 import { commandHandler } from '@/lib/services/bot/command-handler.service';
 import { isRateLimited, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 
 /**
  * POST /api/v1/bot/webhook/telegram
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     const token = url.searchParams.get('token');
     
     if (token && !telegramService.validateWebhookToken(token)) {
-      console.error('[TELEGRAM_WEBHOOK] Token inválido');
+      logger.error('[TELEGRAM_WEBHOOK] Token inválido');
       return NextResponse.json(
         { success: false, error: { code: 'INVALID_TOKEN' } },
         { status: 401 }
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     try {
       update = await req.json();
     } catch (error) {
-      console.error('[TELEGRAM_WEBHOOK] Error al parsear JSON:', error);
+      logger.error('[TELEGRAM_WEBHOOK] Error al parsear JSON:', error);
       return NextResponse.json(
         { success: false, error: { code: 'INVALID_JSON' } },
         { status: 400 }
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
     const messageData = telegramService.parseWebhookUpdate(update);
     
     if (!messageData) {
-      console.error('[TELEGRAM_WEBHOOK] Update inválido o sin mensaje de texto');
+      logger.error('[TELEGRAM_WEBHOOK] Update inválido o sin mensaje de texto');
       return NextResponse.json(
         { success: false, error: { code: 'INVALID_UPDATE' } },
         { status: 400 }
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     // Verificar rate limiting por chat ID
     if (isRateLimited('telegram', messageData.chatId.toString())) {
-      console.warn(`[TELEGRAM_RATE_LIMIT] Chat ${messageData.chatId} excedió el límite`);
+      logger.warn(`[TELEGRAM_RATE_LIMIT] Chat ${messageData.chatId} excedió el límite`);
       const rateLimitResponse = createRateLimitResponse('telegram', messageData.chatId.toString(), 'es');
       
       // Enviar mensaje de rate limit al usuario
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
           rateLimitResponse.error.message
         );
       } catch (sendError) {
-        console.error('[TELEGRAM_SEND_ERROR] Error al enviar mensaje de rate limit:', sendError);
+        logger.error('[TELEGRAM_SEND_ERROR] Error al enviar mensaje de rate limit:', sendError);
       }
       
       return NextResponse.json(rateLimitResponse, {
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
             'Tu chat de Telegram ha sido vinculado correctamente con tu cuenta de cliente.',
           );
         } catch (linkError) {
-          console.error('[TELEGRAM_LINK_ERROR]', linkError);
+          logger.error('[TELEGRAM_LINK_ERROR]', linkError);
           await telegramService.sendMessage(
             messageData.chatId,
             'No se pudo vincular tu chat de Telegram con tu cuenta. Verifica tu identificador de cliente e inténtalo de nuevo.',
@@ -109,7 +110,7 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (logError) {
-      console.error('[MESSAGE_LOG_ERROR] Error al registrar mensaje:', logError);
+      logger.error('[MESSAGE_LOG_ERROR] Error al registrar mensaje:', logError);
     }
 
     // Procesar el mensaje
@@ -143,7 +144,7 @@ export async function POST(req: NextRequest) {
         confidence = queryResult.confidence;
       }
     } catch (error) {
-      console.error('[BOT_QUERY_ERROR]', error);
+      logger.error('[BOT_QUERY_ERROR]', error);
       response = 'Lo siento, ocurrió un error al procesar tu consulta. Por favor, intenta nuevamente.';
       intent = 'error';
       confidence = 0;
@@ -169,7 +170,7 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch (sendError) {
-      console.error('[TELEGRAM_SEND_ERROR]', sendError);
+      logger.error('[TELEGRAM_SEND_ERROR]', sendError);
       
       // Actualizar el registro con el error
       if (messageRecord) {
@@ -190,11 +191,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`[TELEGRAM_WEBHOOK] Mensaje procesado exitosamente para chat ${messageData.chatId}`);
+    logger.info(`[TELEGRAM_WEBHOOK] Mensaje procesado exitosamente para chat ${messageData.chatId}`);
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error('[TELEGRAM_WEBHOOK_ERROR]', error);
+    logger.error('[TELEGRAM_WEBHOOK_ERROR]', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR' } },
       { status: 500 }
@@ -233,7 +234,7 @@ export async function GET(req: NextRequest) {
           },
         });
       } catch (error) {
-        console.error('[TELEGRAM_BOT_INFO_ERROR]', error);
+        logger.error('[TELEGRAM_BOT_INFO_ERROR]', error);
         return NextResponse.json(
           { success: false, error: { code: 'BOT_INFO_ERROR' } },
           { status: 500 }

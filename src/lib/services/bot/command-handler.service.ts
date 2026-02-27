@@ -1,4 +1,5 @@
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 
 /**
  * Manejador de comandos básicos para bots de WhatsApp y Telegram
@@ -204,7 +205,7 @@ export class CommandHandler {
         confidence: 1.0,
       };
     } catch (error) {
-      console.error('[STATUS_COMMAND_ERROR]', error);
+      logger.error('[STATUS_COMMAND_ERROR]', error);
       
       return {
         response: language === 'es'

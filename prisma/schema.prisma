@@ -51,6 +51,7 @@ model Supplier {
   prices      ProductPrice[]
   purchaseOrders PurchaseOrder[]
   purchaseOrderItems PurchaseOrderItem[]
+  priceLists  PriceList[]
 
   @@map("suppliers")
 }
@@ -71,6 +72,8 @@ model Product {
   prices      ProductPrice[]
   invoiceItems InvoiceItem[]
   purchaseOrderItems PurchaseOrderItem[]
+  priceVersions PriceVersion[]
+  preInvoiceItems PreInvoiceItem[]
 
   @@map("products")
   @@index([name])
@@ -112,13 +115,16 @@ model Invoice {
   issueDate     DateTime      @map("issue_date")
   dueDate       DateTime      @map("due_date")
   subtotal      Decimal       @db.Decimal(10, 2)
-  taxRate       Decimal       @default(0.13) @map("tax_rate") @db.Decimal(5, 4)
+  taxRate       Decimal       @map("tax_rate") @db.Decimal(5, 4)
   taxAmount     Decimal       @map("tax_amount") @db.Decimal(10, 2)
   total         Decimal       @db.Decimal(10, 2)
   notes         String?
   
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  preInvoiceId String? @unique @map("pre_invoice_id")
+  preInvoice   PreInvoice? @relation(fields: [preInvoiceId], references: [id])
 
   customer      Customer      @relation(fields: [customerId], references: [id])
   items         InvoiceItem[]
@@ -163,6 +169,7 @@ model InvoiceNote {
   @@index([userId])
 }
 
+/// @deprecated Use PriceVersion instead
 model ProductPrice {
   id            String   @id @default(uuid())
   productId     String   @map("product_id")
@@ -201,6 +208,7 @@ model Customer {
 
   invoices    Invoice[]
   users       User[]
+  preInvoices PreInvoice[]
 
   @@map("customers")
   @@index([name])
@@ -310,6 +318,7 @@ model ChatSession {
   lastActivityAt DateTime  @default(now()) @map("last_activity_at")
 
   user User @relation(fields: [userId], references: [id])
+  botDecisions BotDecision[]
 
   @@map("chat_sessions")
   @@index([userId])
@@ -338,7 +347,7 @@ model PurchaseOrder {
   supplier    Supplier @relation(fields: [supplierId], references: [id])
   status      PurchaseOrderStatus @default(DRAFT)
   subtotal    Decimal  @db.Decimal(10, 2)
-  taxRate     Decimal  @default(0.13) @db.Decimal(5, 4)
+  taxRate     Decimal  @db.Decimal(5, 4)
   taxAmount   Decimal  @db.Decimal(10, 2)
   total       Decimal  @db.Decimal(10, 2)
   notes       String?
@@ -382,3 +391,116 @@ enum PurchaseOrderStatus {
   CANCELLED
 }
 
+model PriceList {
+  id          String   @id @default(uuid())
+  name        String
+  supplierId  String   @map("supplier_id")
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  isCurrent   Boolean  @default(false) @map("is_current")
+  validFrom   DateTime @map("valid_from")
+  validTo     DateTime? @map("valid_to")
+  
+  prices      PriceVersion[]
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("price_lists")
+  @@index([supplierId])
+  @@index([isCurrent])
+}
+
+model PriceVersion {
+  id          String    @id @default(uuid())
+  priceListId String    @map("price_list_id")
+  productId   String    @map("product_id")
+  price       Decimal   @db.Decimal(10, 2)
+  validFrom   DateTime  @map("valid_from")
+  validTo     DateTime? @map("valid_to")
+  
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id])
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("price_versions")
+  @@index([priceListId])
+  @@index([productId])
+}
+
+enum PreInvoiceStatus {
+  DRAFT
+  PENDING_APPROVAL
+  CONVERTED
+  REJECTED
+}
+
+enum PreInvoiceSource {
+  SYSTEM
+  AI
+  MANUAL
+}
+
+model PreInvoice {
+  id          String   @id @default(uuid())
+  customerId  String   @map("customer_id")
+  status      PreInvoiceStatus @default(DRAFT)
+  subtotal    Decimal  @db.Decimal(10, 2)
+  taxRate     Decimal  @map("tax_rate") @db.Decimal(5, 4)
+  taxAmount   Decimal  @map("tax_amount") @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+  notes       String?
+  generatedBy PreInvoiceSource @default(MANUAL) @map("generated_by")
+  
+  customer    Customer @relation(fields: [customerId], references: [id])
+  items       PreInvoiceItem[]
+  invoice     Invoice?
+   botDecisionId String? @unique @map("bot_decision_id")
+   botDecision BotDecision? @relation(fields: [botDecisionId], references: [id])
+   
+   createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("pre_invoices")
+  @@index([customerId])
+  @@index([status])
+}
+
+model PreInvoiceItem {
+  id           String     @id @default(uuid())
+  preInvoiceId String     @map("pre_invoice_id")
+  productId    String     @map("product_id")
+  quantity     Decimal    @db.Decimal(10, 2)
+  unitPrice    Decimal    @map("unit_price") @db.Decimal(10, 2)
+  totalPrice   Decimal    @map("total_price") @db.Decimal(10, 2)
+  
+  preInvoice   PreInvoice @relation(fields: [preInvoiceId], references: [id], onDelete: Cascade)
+  product      Product    @relation(fields: [productId], references: [id])
+
+  @@map("pre_invoice_items")
+  @@index([preInvoiceId])
+  @@index([productId])
+}
+
+model BotDecision {
+  id          String   @id @default(uuid())
+  sessionId   String   @map("session_id")
+  intent      String
+  confidence  Float
+  decision    Json
+  executedAt  DateTime @default(now()) @map("executed_at")
+  
+  preInvoice   PreInvoice?
+
+  chatSession ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("bot_decisions")
+  @@index([sessionId])
+  @@index([intent])
+  @@index([executedAt])
+  @@index([createdAt])
+}

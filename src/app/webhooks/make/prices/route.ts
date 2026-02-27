@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProductPriceService } from '@/lib/services/product-prices/product-prices.service';
-
-const MAKE_WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET;
+import { logger } from '@/lib/logger/logger.service';
 
 export async function POST(req: NextRequest) {
+  const MAKE_WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET;
   try {
     // 1. Verificación de API Key
     const apiKey = req.headers.get('x-api-key');
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error processing Make.com webhook:', error);
+    logger.error('Error processing Make.com webhook:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error processing webhook' } },
       { status: 500 }

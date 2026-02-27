@@ -8,6 +8,8 @@ import { productPriceSchema } from '@/lib/validation/product-price';
 import { createInvoiceSchema, updateInvoiceSchema } from '@/lib/validation/invoices';
 import { InvoiceStatus } from '@prisma/client';
 import { InvoicesService } from '@/lib/services/invoices.service';
+import { ProductPriceService } from '@/lib/services/product-prices/product-prices.service';
+import { logger } from '@/lib/logger/logger.service';
 
 type RateLimitKey = string;
 
@@ -165,7 +167,7 @@ async function logWebhook(params: {
       },
     });
   } catch (error) {
-    console.error('[WEBHOOK_LOG_ERROR]', error);
+    logger.error('[WEBHOOK_LOG_ERROR]', error);
   }
 }
 
@@ -312,33 +314,16 @@ async function processPriceEvent(eventType: z.infer<typeof eventTypeSchema>, dat
     const parsed = parsedStandard.data;
 
     if (eventType === 'price.created') {
-      await prisma.$transaction(async (tx) => {
-        if (parsed.isCurrent) {
-          await tx.productPrice.updateMany({
-            where: {
-              productId: parsed.productId,
-              supplierId: parsed.supplierId,
-              isCurrent: true,
-            },
-            data: {
-              isCurrent: false,
-            },
-          });
-        }
-
-        await tx.productPrice.create({
-          data: {
-            ...(parsed.id ? { id: parsed.id } : {}),
-            productId: parsed.productId,
-            supplierId: parsed.supplierId,
-            costPrice: parsed.costPrice,
-            sellPrice: parsed.sellPrice,
-            currency: parsed.currency,
-            effectiveDate: parsed.effectiveDate,
-            isCurrent: parsed.isCurrent,
-            source: parsed.source ?? 'make_automation',
-          },
-        });
+      await ProductPriceService.create({
+        id: parsed.id,
+        productId: parsed.productId,
+        supplierId: parsed.supplierId,
+        costPrice: parsed.costPrice,
+        sellPrice: parsed.sellPrice,
+        currency: parsed.currency,
+        effectiveDate: parsed.effectiveDate,
+        isCurrent: parsed.isCurrent,
+        source: parsed.source ?? 'make_automation',
       });
 
       return { action: 'created' };
@@ -348,16 +333,13 @@ async function processPriceEvent(eventType: z.infer<typeof eventTypeSchema>, dat
       throw new Error('Para price.updated se requiere id del registro de precio.');
     }
 
-    await prisma.productPrice.update({
-      where: { id: parsed.id },
-      data: {
-        costPrice: parsed.costPrice,
-        sellPrice: parsed.sellPrice,
-        currency: parsed.currency,
-        effectiveDate: parsed.effectiveDate,
-        isCurrent: parsed.isCurrent,
-        source: parsed.source ?? 'make_automation',
-      },
+    await ProductPriceService.update(parsed.id, {
+      costPrice: parsed.costPrice,
+      sellPrice: parsed.sellPrice,
+      currency: parsed.currency,
+      effectiveDate: parsed.effectiveDate,
+      isCurrent: parsed.isCurrent,
+      source: parsed.source ?? 'make_automation',
     });
 
     return { action: 'updated' };
@@ -395,35 +377,21 @@ async function processPriceEvent(eventType: z.infer<typeof eventTypeSchema>, dat
     ? new Date(makeParsed.effective_date)
     : new Date();
 
-  const result = await prisma.$transaction(async (tx) => {
-    await tx.productPrice.updateMany({
-      where: {
-        productId: product.id,
-        supplierId: supplier!.id,
-        isCurrent: true,
-      },
-      data: {
-        isCurrent: false,
-      },
-    });
-
-    await tx.productPrice.create({
-      data: {
-        productId: product.id,
-        supplierId: supplier!.id,
-        costPrice: makeParsed.cost_price,
-        sellPrice: makeParsed.sell_price,
-        currency: makeParsed.currency || 'CAD',
-        effectiveDate,
-        isCurrent: true,
-        source: makeParsed.source ?? 'make_automation',
-      },
-    });
-
-    return { action: 'created' as const };
+  const result = await ProductPriceService.create({
+    productId: product.id,
+    supplierId: supplier!.id,
+    costPrice: Number(makeParsed.cost_price),
+    sellPrice: makeParsed.sell_price ? Number(makeParsed.sell_price) : undefined,
+    currency: makeParsed.currency,
+    effectiveDate: effectiveDate,
+    isCurrent: true,
+    source: 'make_automation',
   });
 
-  return result;
+  return {
+    action: 'created',
+    data: result
+  };
 }
 
 async function processInvoiceEvent(eventType: z.infer<typeof eventTypeSchema>, data: unknown) {
@@ -522,7 +490,7 @@ export async function POST(req: NextRequest) {
     };
     httpStatus = 200;
   } catch (error) {
-    console.error('[MAKE_WEBHOOK_ERROR]', error);
+    logger.error('[MAKE_WEBHOOK_ERROR]', error);
 
     httpStatus = 500;
     responseBody = {

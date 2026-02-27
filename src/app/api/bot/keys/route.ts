@@ -3,6 +3,7 @@ import { BotApiKeyService } from '@/lib/services/bot/api-key.service';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { logAudit } from '@/lib/audit/logger';
 import { InMemoryRateLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(request: Request) {
   try {
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
     const keys = await BotApiKeyService.list();
     return NextResponse.json({ success: true, data: keys });
   } catch (error: any) {
-    console.error('Error listing API keys:', error);
+    logger.error('Error listing API keys:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: error.message || 'Error al listar las claves de API' } },
       { status: 500 }
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
     // Retornamos la clave generada solo una vez
     return NextResponse.json({ success: true, data: result }, { status: 201 });
   } catch (error: any) {
-    console.error('Error creating API key:', error);
+    logger.error('Error creating API key:', error);
     
     if (error.message === 'Ya existe una API key con ese nombre') {
       return NextResponse.json(

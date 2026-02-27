@@ -100,67 +100,40 @@ Desde la terminal, se puede verificar la conexión usando `psql` o cualquier cli
 docker exec -it hago-produce-db-1 psql -U postgres -d hago_produce -c "\dt"
 ```
 
-### Política de Respaldo (Sugerida)
-Para entornos de producción (ej. Railway), configurar respaldos automáticos diarios. En local, se puede realizar un dump manual:
+## 4. Logging
 
-```bash
-pg_dump -h localhost -p 5433 -U postgres -d hago_produce > backup_$(date +%Y%m%d).sql
+### Regla de los Dos Loggers (TD-LOGGER-001)
+
+El proyecto utiliza dos sistemas de logging distintos para separar las responsabilidades entre el servidor (Node.js/Next.js API) y el cliente (Browser/React). Es crucial usar el logger correcto según el contexto de ejecución para evitar errores de compilación y dependencias.
+
+#### 1. Logger del Servidor (`logger.service.ts`)
+- **Archivo**: `src/lib/logger/logger.service.ts`
+- **Implementación**: Winston + Sentry (Node.js)
+- **Contexto**: `Server Components`, `API Routes`, `Server Actions`, `Services`, `Scripts`.
+- **Directorios Típicos**:
+  - `src/app/api/**`
+  - `src/lib/services/**`
+  - `src/lib/infrastructure/**`
+  - `src/scripts/**`
+
+#### 2. Logger del Cliente (`client-logger.ts`)
+- **Archivo**: `src/lib/logger/client-logger.ts`
+- **Implementación**: `console` wrapper (seguro para navegador)
+- **Contexto**: `Client Components` (con "use client"), `Hooks`, `Contexts`.
+- **Directorios Típicos**:
+  - `src/components/**`
+  - `src/lib/hooks/**`
+  - `src/app/**/page.tsx` (si tiene "use client")
+
+#### Error Común y Solución
+**Error**: `Module parse failed: Unexpected character '�' (1:0)` o errores relacionados con binarios de Sentry/Winston en el navegador.
+**Causa**: Importar `logger.service.ts` en un componente de cliente (`"use client"`).
+**Solución**: Cambiar la importación a `client-logger.ts`.
+
+```typescript
+// ❌ INCORRECTO en componentes de cliente ("use client")
+import { logger } from "@/lib/logger/logger.service";
+
+// ✅ CORRECTO en componentes de cliente
+import { clientLogger as logger } from "@/lib/logger/client-logger";
 ```
-
-## 4. Infraestructura Común (Docker)
-
-### Archivo `docker-compose.yml`
-El proyecto incluye un archivo `docker-compose.yml` que define los servicios necesarios (Base de datos PostgreSQL).
-
-### Levantar el Stack
-Para iniciar la infraestructura (base de datos) en segundo plano:
-
-```bash
-docker-compose up -d db
-```
-
-*Nota: El servicio `app` también está definido pero para desarrollo local se recomienda correr `npm run dev` en el host para mejor experiencia de desarrollo (HMR), usando solo Docker para la base de datos.*
-
-### Verificar Estado
-```bash
-docker-compose ps
-```
-Todos los contenedores deben estar en estado `Up`.
-
-## 5. Integración y Pruebas Finales
-
-### Comando de Validación Completa
-Para asegurar la calidad del código antes de un commit o despliegue, ejecutar la siguiente cadena de comandos:
-
-```bash
-npm run lint && npm run test
-```
-
-- **Lint**: Verifica estilo y errores estáticos.
-- **Test**: Ejecuta pruebas unitarias con Jest.
-- **E2E**: Para pruebas end-to-end (requiere servidor corriendo): `npm run test:e2e` (Playwright).
-
-### Checklist de Verificación Manual
-1. [ ] `docker-compose up -d db` ejecuta sin errores.
-2. [ ] `npx prisma migrate dev` aplica migraciones correctamente.
-3. [ ] `npm run dev` inicia el servidor en puerto 3000.
-4. [ ] La página de inicio carga correctamente en el navegador.
-5. [ ] Login/Registro funciona (crea usuario en DB).
-
-## 6. Documentación de Entrega (Resumen)
-
-### Instalación Rápida
-1. **Clonar repositorio**: `git clone <url-repo>`
-2. **Configurar entorno**: `cp .env.example .env` (ajustar valores si es necesario).
-3. **Iniciar DB**: `docker-compose up -d db`
-4. **Instalar dependencias**: `npm install`
-5. **Migrar DB**: `npx prisma migrate dev`
-6. **Iniciar App**: `npm run dev`
-
-### Solución de Problemas Frecuentes
-- **Error de conexión a DB**: Verificar que el contenedor de Docker esté corriendo (`docker-compose ps`) y que el puerto `5433` no esté ocupado.
-- **Errores de Prisma**: Si hay errores de esquema, intentar `npx prisma generate` y luego `npx prisma migrate dev`.
-- **Puerto 3000 ocupado**: Verificar procesos node o cambiar puerto en `package.json` o comando de inicio (`port=3001 npm run dev`).
-
-### Contacto
-Para soporte técnico, contactar al equipo de desarrollo o crear un issue en el repositorio.

@@ -1,9 +1,11 @@
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 import { ChatLanguage, ChatServiceContext, ChatSource, QueryExecutionResult } from '@/lib/chat/types';
 import { Decimal } from '@prisma/client/runtime/library';
 import { logAudit } from '@/lib/audit/logger';
 import { createNotificationLog } from '@/lib/services/notifications/notification-log.service';
 import { purchaseOrdersService } from '@/lib/services/purchase-orders.service';
+import { taxCalculationService, TransactionType, extractProvinceFromAddress } from '@/lib/services/finance/tax-calculation.service';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
@@ -28,6 +30,7 @@ interface SupplierItemMatch {
   productName: string;
   supplierId: string;
   supplierName: string;
+  supplierAddress: string | null;
   quantity: number;
   unit: string;
   unitPrice: number;
@@ -119,7 +122,7 @@ export async function extractPurchaseOrderParams(
     });
 
     if (!response.ok) {
-      console.error('OpenAI API error:', response.statusText);
+      logger.error('OpenAI API error:', response.statusText);
       return basicRegexFallback(message);
     }
 
@@ -144,7 +147,7 @@ export async function extractPurchaseOrderParams(
       recipientName: args.recipient_name,
     };
   } catch (error) {
-    console.error('Error extracting purchase order params:', error);
+    logger.error('Error extracting purchase order params:', error);
     return basicRegexFallback(message);
   }
 }
@@ -240,6 +243,7 @@ async function findBestSuppliersForItems(
       productName: product.name,
       supplierId: bestPrice.supplierId,
       supplierName: bestPrice.supplier.name,
+      supplierAddress: bestPrice.supplier.address,
       quantity,
       unit: item.unit,
       unitPrice,
@@ -274,8 +278,13 @@ function generatePendingPurchaseOrders(
     const supplierName = items[0].supplierName;
 
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-    const taxRate = 0.13; // 13% HST
-    const taxAmount = subtotal * taxRate;
+    const supplierAddress = items[0].supplierAddress;
+
+    const province = extractProvinceFromAddress(supplierAddress);
+    const taxResult = taxCalculationService.calculateTax(province, subtotal, TransactionType.PURCHASE);
+
+    const taxRate = Number(taxResult.taxRate);
+    const taxAmount = Number(taxResult.taxAmount);
     const total = subtotal + taxAmount;
 
     pendingOrders.push({
@@ -450,7 +459,7 @@ export async function confirmPurchaseOrderIntent(
       if (channel) {
           await purchaseOrdersService.sendPurchaseOrderToSupplier(order.id, channel);
       } else {
-          console.warn(`No contact channel found for supplier ${po.supplierName} (PO: ${order.orderNumber})`);
+          logger.warn(`No contact channel found for supplier ${po.supplierName} (PO: ${order.orderNumber})`);
           // Registrar fallo de notificación
           await createNotificationLog({
             channel: 'UNKNOWN',
@@ -462,8 +471,9 @@ export async function confirmPurchaseOrderIntent(
       }
 
     } catch (error) {
-      console.error('Error creating purchase order:', error);
-      errors.push({ supplierName: po.supplierName, error: String(error) });
+      logger.error('Error creating purchase order:', error);
+      errors.push({
+        supplierName: po.supplierName, error: String(error) });
     }
   }
 

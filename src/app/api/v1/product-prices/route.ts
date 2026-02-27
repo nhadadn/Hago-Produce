@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { ProductPriceService } from '@/lib/services/product-prices/product-prices.service';
 import { productPriceFilterSchema, productPriceSchema } from '@/lib/validation/product-price';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
       meta: result.meta,
     });
   } catch (error) {
-    console.error('Error fetching product prices:', error);
+    logger.error('Error fetching product prices:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating product price:', error);
+    logger.error('Error creating product price:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error al crear precio' } },
       { status: 500 }

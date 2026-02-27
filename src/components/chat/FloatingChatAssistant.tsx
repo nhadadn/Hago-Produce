@@ -11,6 +11,7 @@ import { QuickSuggestions } from '@/components/chat/QuickSuggestions';
 import { getSuggestionsForRoute } from '@/lib/chat/suggestions';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { clientLogger as logger } from '@/lib/logger/client-logger';
 
 interface Message {
   id: string;
@@ -62,7 +63,7 @@ export function FloatingChatAssistant({
           loadedSessions = JSON.parse(savedSessions);
           setSessions(loadedSessions);
         } catch (e) {
-          console.error('Failed to parse sessions', e);
+          logger.error('Failed to parse sessions', e);
         }
       }
 
@@ -95,7 +96,7 @@ export function FloatingChatAssistant({
             localStorage.removeItem('hago-chat-session-id');
           }
         } catch (e) {
-          console.error('Migration failed', e);
+          logger.error('Migration failed', e);
         }
       }
 
@@ -122,7 +123,7 @@ export function FloatingChatAssistant({
         }));
         setMessages(hydrated);
       } catch (e) {
-        console.error('Failed to parse messages', e);
+        logger.error('Failed to parse messages', e);
         setMessages([]);
       }
     } else {
@@ -292,7 +293,7 @@ export function FloatingChatAssistant({
       if (!isOpen) setHasUnread(true);
 
     } catch (error) {
-      console.error('Chat error:', error);
+      logger.error('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',

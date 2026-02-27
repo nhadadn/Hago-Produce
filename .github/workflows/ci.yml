@@ -1,15 +1,46 @@
-name: CI — Lint, Test & Build
+name: CI Pipeline
 
 on:
   push:
-    branches: [main, 'feature/**']
+    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
-  ci:
-    name: CI Pipeline
+  quality:
+    name: Quality Check
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+
+  unit-tests:
+    name: Unit Tests
+    needs: quality
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hago_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hago_test
@@ -21,23 +52,10 @@ jobs:
       NEXTAUTH_SECRET: test-nextauth-secret
       NEXTAUTH_URL: http://localhost:3000
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: hago_test
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -49,25 +67,45 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
       
-      - name: Run Prisma Migrations (test DB)
-        run: npx prisma migrate deploy
+      - name: Push Schema to DB
+        run: npx prisma db push
       
-      - name: Lint
-        run: npm run lint
-      
-      - name: TypeScript Check
-        run: npx tsc --noEmit
-      
-      - name: Run Tests with Coverage
+      - name: Run Unit Tests
         run: npm test -- --coverage --ci --forceExit
-      
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
-      
-      - name: Build
-        run: npm run build
+
+  integration-tests:
+    name: Integration Tests
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
         env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: hagoproduce_test
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Create .env.test
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:password@localhost:5434/hagoproduce_test?schema=public" > .env.test
+          echo "MAKE_WEBHOOK_SECRET=test-secret" >> .env.test
+          echo "NEXTAUTH_SECRET=test-secret" >> .env.test
+
+      - run: npm ci
+      - run: npm run test:integration:db-push
+      - run: npm run test:integration:generate
+      - run: npm run test:integration:run

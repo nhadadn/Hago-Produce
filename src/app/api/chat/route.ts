@@ -7,6 +7,7 @@ import { ChatLanguage } from '@/lib/chat/types';
 import { isRateLimited, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import prisma from '@/lib/db';
 import { logAudit } from '@/lib/audit/logger';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -184,7 +185,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[CHAT_API_ERROR]', error);
+    logger.error('[CHAT_API_ERROR]', error);
     return NextResponse.json(
       { error: 'Internal Server Error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

@@ -1,4 +1,5 @@
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 import { NotificationChannel, NotificationPayload } from '@/lib/services/notifications/types';
 import { getCustomerChatId, sendNotification as sendTelegramNotification } from '@/lib/services/telegram.service';
 
@@ -9,7 +10,7 @@ interface SendOptions {
 const DEFAULT_MAX_RETRIES = 3;
 
 async function sendEmailNotification(payload: NotificationPayload): Promise<void> {
-  console.info('[NOTIFICATION_EMAIL]', {
+  logger.info('[NOTIFICATION_EMAIL]', {
     trigger: payload.trigger,
     invoiceId: payload.invoiceId,
     customerId: payload.customerId,
@@ -20,7 +21,7 @@ async function sendWebhookNotification(payload: NotificationPayload): Promise<vo
   const webhookUrl = process.env.NOTIFICATIONS_WEBHOOK_URL;
   
   if (!webhookUrl) {
-    console.info('[NOTIFICATION_WEBHOOK_SKIPPED]', {
+    logger.info('[NOTIFICATION_WEBHOOK_SKIPPED]', {
       trigger: payload.trigger,
       invoiceId: payload.invoiceId,
       reason: 'Missing NOTIFICATIONS_WEBHOOK_URL',
@@ -115,7 +116,7 @@ async function logNotification(
         });
       }
     } catch (error) {
-      console.error('Failed to persist notification to DB:', error);
+      logger.error('Failed to persist notification to DB:', error);
       // Don't throw here to avoid breaking the notification flow if DB persistence fails
     }
   }

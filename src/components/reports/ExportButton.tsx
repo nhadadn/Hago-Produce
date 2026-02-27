@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { clientLogger as logger } from '@/lib/logger/client-logger';
 
 export type ReportType = 'revenue' | 'aging' | 'top-customers' | 'top-products' | 'price-trends';
 
@@ -65,7 +66,7 @@ export function ExportButton({ reportType, filters, disabled }: ExportButtonProp
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(err);
+      logger.error('Error exporting report', err);
       alert('Error al exportar');
     } finally {
       setLoading(null);

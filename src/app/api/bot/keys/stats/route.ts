@@ -170,7 +170,7 @@ export async function GET(request: Request) {
     });
 
   } catch (error: any) {
-    console.error('Error getting bot stats:', error);
+    logger.error('Error getting bot stats:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: error.message || 'Error al obtener estadísticas' } },
       { status: 500 }

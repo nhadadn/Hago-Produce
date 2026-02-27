@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { BotApiKeyService } from '@/lib/services/bot/api-key.service';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { logAudit } from '@/lib/audit/logger';
+import { logger } from '@/lib/logger/logger.service';
 
 interface RouteParams {
   params: {
@@ -58,7 +59,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, message: 'API Key revocada exitosamente' });
   } catch (error: any) {
-    console.error('Error revoking API key:', error);
+    logger.error('Error revoking API key:', error);
     
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: error.message || 'Error al revocar la clave de API' } },
@@ -171,7 +172,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     });
 
   } catch (error: any) {
-    console.error('Error updating/rotating API key:', error);
+    logger.error('Error updating/rotating API key:', error);
 
     if (error.message === 'API key no encontrada' || error.code === 'P2025') {
        return NextResponse.json(

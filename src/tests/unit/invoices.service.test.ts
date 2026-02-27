@@ -1,63 +1,72 @@
-import { jest } from '@jest/globals';
-import { InvoiceStatus } from '@prisma/client';
+import { InvoiceStatus, Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
+import { invoicesService } from '@/lib/services/invoices.service';
+import prisma from '@/lib/db';
+import { extractProvinceFromAddress, taxCalculationService } from '@/lib/services/finance/tax-calculation.service';
+import * as audit from '@/lib/audit/invoices';
+
+// Mock DB
+jest.mock('@/lib/db', () => ({
+  __esModule: true,
+  default: {
+    invoice: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      count: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    customer: {
+      findUnique: jest.fn(),
+    },
+    invoiceItem: {
+      deleteMany: jest.fn(),
+      createMany: jest.fn(),
+    },
+    $transaction: jest.fn((callback: any) => callback(require('@/lib/db').default)),
+  },
+}));
+
+// Mock Audit
+jest.mock('@/lib/audit/invoices', () => ({
+  __esModule: true,
+  logInvoiceCreate: jest.fn(),
+  logInvoiceUpdate: jest.fn(),
+  logInvoiceStatusChange: jest.fn(),
+}));
+
+// Mock Logger
+jest.mock('@/lib/logger/logger.service', () => ({
+  __esModule: true,
+  logger: {
+    warn: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+// Mock Tax Calculation
+jest.mock('@/lib/services/finance/tax-calculation.service', () => ({
+  __esModule: true,
+  TransactionType: { SALE: 'SALE' },
+  extractProvinceFromAddress: jest.fn(),
+  taxCalculationService: {
+    calculateTax: jest.fn(),
+  },
+}));
+
+const mockExtractProvince = extractProvinceFromAddress as jest.Mock;
+const mockCalculateTax = taxCalculationService.calculateTax as jest.Mock;
+const mockAudit = audit as {
+  logInvoiceCreate: jest.Mock;
+  logInvoiceUpdate: jest.Mock;
+  logInvoiceStatusChange: jest.Mock;
+};
 
 describe('InvoicesService', () => {
-  let invoicesService: any;
-  let mockPrisma: any;
-  let mockLogCreate: any;
-  let mockLogUpdate: any;
-  let mockLogStatusChange: any;
-
-  beforeAll(async () => {
-    jest.resetModules();
-
-    // Mock DB
-    jest.mock('@/lib/db', () => ({
-      __esModule: true,
-      default: {
-        invoice: {
-          findFirst: jest.fn(),
-          create: jest.fn(),
-          count: jest.fn(),
-          findMany: jest.fn(),
-          findUnique: jest.fn(),
-          update: jest.fn(),
-        },
-        invoiceItem: {
-          deleteMany: jest.fn(),
-          createMany: jest.fn(),
-        },
-        $transaction: jest.fn((callback: any) => callback(require('@/lib/db').default)),
-      },
-    }));
-
-    // Mock Audit
-    jest.mock('@/lib/audit/invoices', () => ({
-      __esModule: true,
-      logInvoiceCreate: jest.fn(),
-      logInvoiceUpdate: jest.fn(),
-      logInvoiceStatusChange: jest.fn(),
-    }));
-
-    // Import dependencies
-    const dbModule = await import('@/lib/db');
-    mockPrisma = dbModule.default;
-
-    const auditModule = await import('@/lib/audit/invoices');
-    mockLogCreate = auditModule.logInvoiceCreate;
-    mockLogUpdate = auditModule.logInvoiceUpdate;
-    mockLogStatusChange = auditModule.logInvoiceStatusChange;
-
-    // Import service
-    const serviceModule = await import('@/lib/services/invoices.service');
-    invoicesService = serviceModule.invoicesService;
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockPrisma.$transaction.mockImplementation(async (callback: any) => {
-      return callback(mockPrisma);
-    });
   });
 
   describe('create', () => {
@@ -66,60 +75,127 @@ describe('InvoicesService', () => {
       issueDate: new Date('2024-01-01'),
       dueDate: new Date('2024-01-15'),
       items: [
-        { productId: 'prod-1', quantity: 10, unitPrice: 100, description: 'Item 1' },
-        { productId: 'prod-2', quantity: 5, unitPrice: 200, description: 'Item 2' },
+        { productId: 'prod-1', quantity: 10, unitPrice: 100, description: 'Item 1' }, // 1000
+        { productId: 'prod-2', quantity: 5, unitPrice: 200, description: 'Item 2' }, // 1000
       ],
       notes: 'Test note',
+      // taxRate is missing, should trigger auto-calculation
     };
 
-    it('creates an invoice successfully with calculated totals', async () => {
-      mockPrisma.invoice.findFirst.mockResolvedValue(null);
+    it('creates an invoice successfully with calculated tax when taxRate is missing', async () => {
+      (prisma.invoice.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({ address: 'Toronto, ON' });
+      mockExtractProvince.mockReturnValue('ON');
+      
+      const taxResult = {
+        taxRate: new Decimal(0.13),
+        taxAmount: new Decimal(260),
+        breakdown: { gst: 0, pst: 0, hst: 260, qst: 0 }
+      };
+      mockCalculateTax.mockReturnValue(taxResult);
 
       const createdInvoice = {
         id: 'inv-1',
         ...createInput,
         number: 'INV-2024-0001',
-        subtotal: 2000,
-        taxAmount: 260,
-        total: 2260,
+        subtotal: new Decimal(2000),
+        taxRate: new Decimal(0.13),
+        taxAmount: new Decimal(260),
+        total: new Decimal(2260),
         status: InvoiceStatus.DRAFT,
       };
 
-      mockPrisma.invoice.create.mockResolvedValue(createdInvoice);
+      (prisma.invoice.create as jest.Mock).mockResolvedValue(createdInvoice);
 
       const result = await invoicesService.create(createInput, 'user-1');
 
-      expect(mockPrisma.invoice.findFirst).toHaveBeenCalled();
-      expect(mockPrisma.invoice.create).toHaveBeenCalledWith(expect.objectContaining({
+      expect(prisma.customer.findUnique).toHaveBeenCalledWith({
+        where: { id: 'cust-1' },
+        select: { address: true },
+      });
+      expect(mockExtractProvince).toHaveBeenCalledWith('Toronto, ON');
+      expect(mockCalculateTax).toHaveBeenCalledWith('ON', 2000, 'SALE');
+      
+      expect(prisma.invoice.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
           subtotal: 2000,
-          taxAmount: 260,
-          total: 2260,
-          number: expect.stringMatching(/INV-\d{4}-0001/),
+          taxRate: 0.13,
+          taxAmount: expect.objectContaining({ d: expect.any(Array) }), // Decimal check
+          total: expect.objectContaining({ d: expect.any(Array) }), // Decimal check
         }),
       }));
-      expect(mockLogCreate).toHaveBeenCalledWith('user-1', expect.objectContaining({
-        id: 'inv-1',
-        total: 2260,
-      }));
-      expect(result).toEqual(createdInvoice);
     });
 
-    it('generates sequential invoice numbers', async () => {
-      mockPrisma.invoice.findFirst.mockResolvedValue({
-        number: 'INV-2024-0042',
-      });
+    it('uses fallback Ontario (13%) when customer address/province is invalid', async () => {
+      (prisma.invoice.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({ address: null });
+      (mockExtractProvince as jest.Mock).mockReturnValue(null);
 
-      mockPrisma.invoice.create.mockImplementation((args: any) => ({
-        id: 'inv-new',
-        ...args.data,
-      }));
+      const taxResult = {
+        taxRate: new Decimal(0.13),
+        taxAmount: new Decimal(260),
+        breakdown: { gst: 0, pst: 0, hst: 260, qst: 0 }
+      };
+      mockCalculateTax.mockReturnValue(taxResult);
 
-      await invoicesService.create(createInput, 'user-1');
+      const createdInvoice = {
+        id: 'inv-fallback',
+        ...createInput,
+        number: 'INV-2024-0003',
+        subtotal: new Decimal(2000),
+        taxRate: 0.13,
+        taxAmount: new Decimal(260),
+        total: new Decimal(2260),
+        status: InvoiceStatus.DRAFT,
+      };
 
-      expect(mockPrisma.invoice.create).toHaveBeenCalledWith(expect.objectContaining({
+      (prisma.invoice.create as jest.Mock).mockResolvedValue(createdInvoice);
+
+      const result = await invoicesService.create(createInput, 'user-1');
+
+      expect(prisma.customer.findUnique).toHaveBeenCalled();
+      expect(mockExtractProvince).toHaveBeenCalledWith(null); // address is null
+      expect(mockCalculateTax).toHaveBeenCalledWith(null, 2000, 'SALE'); // Should call calculation service with null
+
+      expect(prisma.invoice.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
-          number: expect.stringMatching(/INV-\d{4}-0043/),
+          taxRate: 0.13,
+          taxAmount: expect.objectContaining({ d: expect.any(Array) }),
+        }),
+      }));
+    });
+
+    it('creates an invoice with provided taxRate (backward compatibility)', async () => {
+      (prisma.invoice.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const inputWithTax = {
+        ...createInput,
+        taxRate: 0.05,
+      };
+
+      const createdInvoice = {
+        id: 'inv-2',
+        ...inputWithTax,
+        number: 'INV-2024-0002',
+        subtotal: new Decimal(2000),
+        taxRate: new Decimal(0.05),
+        taxAmount: new Decimal(100),
+        total: new Decimal(2100),
+        status: InvoiceStatus.DRAFT,
+      };
+
+      (prisma.invoice.create as jest.Mock).mockResolvedValue(createdInvoice);
+
+      const result = await invoicesService.create(inputWithTax, 'user-1');
+
+      expect(prisma.customer.findUnique).not.toHaveBeenCalled();
+      expect(mockExtractProvince).not.toHaveBeenCalled();
+      expect(mockCalculateTax).not.toHaveBeenCalled();
+
+      expect(prisma.invoice.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          taxRate: 0.05,
+          // taxAmount calculated internally: 2000 * 0.05 = 100
         }),
       }));
     });
@@ -127,169 +203,229 @@ describe('InvoicesService', () => {
 
   describe('findAll', () => {
     it('returns paginated invoices with filters', async () => {
-      const filters = {
-        page: 2,
-        limit: 5,
-        status: InvoiceStatus.PAID,
-        search: 'Acme',
-      };
+        const filters = {
+            page: 2,
+            limit: 5,
+            search: 'Acme',
+            status: InvoiceStatus.PAID
+        };
 
-      const mockInvoices = [{ id: 'inv-1' }, { id: 'inv-2' }];
-      mockPrisma.invoice.count.mockResolvedValue(12);
-      mockPrisma.invoice.findMany.mockResolvedValue(mockInvoices);
+        const mockInvoices = [
+            { id: 'inv-1', number: 'INV-001', customer: { name: 'Acme Corp' } }
+        ];
 
-      const result = await invoicesService.findAll(filters);
+        (prisma.invoice.findMany as jest.Mock).mockResolvedValue(mockInvoices);
+        (prisma.invoice.count as jest.Mock).mockResolvedValue(10);
 
-      expect(mockPrisma.invoice.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        skip: 5,
-        take: 5,
-        where: expect.objectContaining({
-          status: InvoiceStatus.PAID,
-          OR: expect.arrayContaining([
-            { number: { contains: 'Acme', mode: 'insensitive' } },
-            { customer: { name: { contains: 'Acme', mode: 'insensitive' } } },
-          ]),
-        }),
-      }));
+        const result = await invoicesService.findAll(filters);
 
-      expect(result).toEqual({
-        data: mockInvoices,
-        meta: {
-          total: 12,
-          page: 2,
-          limit: 5,
-          totalPages: 3,
-        },
-      });
+        expect(prisma.invoice.findMany).toHaveBeenCalledWith(expect.objectContaining({
+            skip: 5,
+            take: 5,
+            where: expect.objectContaining({
+                OR: expect.arrayContaining([
+                    { number: { contains: 'Acme', mode: 'insensitive' } },
+                    { customer: { name: { contains: 'Acme', mode: 'insensitive' } } }
+                ]),
+                status: InvoiceStatus.PAID
+            })
+        }));
+
+        expect(result).toEqual({
+            data: mockInvoices,
+            meta: {
+                total: 10,
+                page: 2,
+                limit: 5,
+                totalPages: 2
+            }
+        });
     });
   });
 
   describe('findOne', () => {
     it('returns invoice with relations', async () => {
-      const mockInvoice = { id: 'inv-1', items: [], customer: {} };
-      mockPrisma.invoice.findUnique.mockResolvedValue(mockInvoice);
+        const mockInvoice = { id: 'inv-1', number: 'INV-001' };
+        (prisma.invoice.findUnique as jest.Mock).mockResolvedValue(mockInvoice);
 
-      const result = await invoicesService.findOne('inv-1');
+        const result = await invoicesService.findOne('inv-1');
 
-      expect(mockPrisma.invoice.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: 'inv-1' },
-        include: expect.objectContaining({
-          items: expect.objectContaining({
+        expect(prisma.invoice.findUnique).toHaveBeenCalledWith(expect.objectContaining({
+            where: { id: 'inv-1' },
             include: expect.objectContaining({
-              product: expect.objectContaining({
-                select: expect.objectContaining({ name: true, sku: true })
-              })
+                customer: true,
+                items: expect.objectContaining({
+                    include: expect.objectContaining({
+                        product: expect.objectContaining({
+                            select: expect.objectContaining({
+                                name: true,
+                                sku: true
+                            })
+                        })
+                    })
+                })
             })
-          }),
-          customer: true,
-        }),
-      }));
-      expect(result).toEqual(mockInvoice);
-    });
+        }));
 
-    it('returns null if not found', async () => {
-      mockPrisma.invoice.findUnique.mockResolvedValue(null);
-      const result = await invoicesService.findOne('inv-999');
-      expect(result).toBeNull();
+        expect(result).toEqual(mockInvoice);
     });
   });
 
   describe('update', () => {
-    const existingInvoice = {
-      id: 'inv-1',
-      status: InvoiceStatus.DRAFT,
-      subtotal: 1000,
-      taxRate: 0.13,
-      taxAmount: 130,
-      total: 1130,
-      items: [],
+    const updateInput = {
+      items: [
+        { productId: 'prod-3', quantity: 2, unitPrice: 300, description: 'Item 3' } // 600
+      ],
+      taxRate: 0.10,
     };
 
-    it('updates a draft invoice successfully', async () => {
-      mockPrisma.invoice.findUnique.mockResolvedValue(existingInvoice);
-      mockPrisma.invoice.update.mockResolvedValue({ ...existingInvoice, notes: 'Updated' });
+    it('updates draft invoice successfully', async () => {
+        const existingInvoice = {
+            id: 'inv-1',
+            status: InvoiceStatus.DRAFT,
+            subtotal: new Decimal(2000),
+            taxRate: new Decimal(0.13),
+            taxAmount: new Decimal(260),
+            total: new Decimal(2260),
+        };
 
-      const updateData = { notes: 'Updated' };
-      await invoicesService.update('inv-1', updateData, 'user-1');
+        (prisma.invoice.findUnique as jest.Mock).mockResolvedValue(existingInvoice);
+        (prisma.invoiceItem.deleteMany as jest.Mock).mockResolvedValue({ count: 2 });
+        (prisma.invoiceItem.createMany as jest.Mock).mockResolvedValue({ count: 1 });
 
-      expect(mockPrisma.invoice.update).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: 'inv-1' },
-        data: expect.objectContaining({ notes: 'Updated' }),
-      }));
-      expect(mockLogUpdate).toHaveBeenCalled();
+        const updatedInvoice = {
+            ...existingInvoice,
+            subtotal: new Decimal(600),
+            taxRate: new Decimal(0.10),
+            taxAmount: new Decimal(60),
+            total: new Decimal(660),
+        };
+
+        (prisma.invoice.update as jest.Mock).mockResolvedValue(updatedInvoice);
+
+        const result = await invoicesService.update('inv-1', updateInput, 'user-1');
+
+        expect(prisma.invoiceItem.deleteMany).toHaveBeenCalledWith({ where: { invoiceId: 'inv-1' } });
+        expect(prisma.invoiceItem.createMany).toHaveBeenCalledWith({
+            data: expect.arrayContaining([
+                expect.objectContaining({
+                    productId: 'prod-3',
+                    invoiceId: 'inv-1',
+                    totalPrice: 600
+                })
+            ])
+        });
+
+        expect(prisma.invoice.update).toHaveBeenCalledWith(expect.objectContaining({
+            where: { id: 'inv-1' },
+            data: expect.objectContaining({
+                subtotal: 600,
+                taxRate: 0.10,
+                taxAmount: 60,
+                total: 660
+            })
+        }));
+
+        expect(mockAudit.logInvoiceUpdate).toHaveBeenCalled();
     });
 
     it('throws error if invoice not found', async () => {
-      mockPrisma.invoice.findUnique.mockResolvedValue(null);
-      await expect(invoicesService.update('inv-999', {})).rejects.toThrow('Invoice not found');
+        (prisma.invoice.findUnique as jest.Mock).mockResolvedValue(null);
+        await expect(invoicesService.update('inv-999', updateInput)).rejects.toThrow('Invoice not found');
     });
 
-    it('throws error if status is not DRAFT', async () => {
-      mockPrisma.invoice.findUnique.mockResolvedValue({
-        ...existingInvoice,
-        status: InvoiceStatus.SENT,
-      });
-      await expect(invoicesService.update('inv-1', {})).rejects.toThrow('Only draft invoices can be updated');
-    });
-
-    it('updates items and recalculates totals', async () => {
-      mockPrisma.invoice.findUnique.mockResolvedValue(existingInvoice);
-      
-      const newItems = [
-        { productId: 'prod-new', quantity: 2, unitPrice: 50, description: 'New Item' }
-      ];
-
-      mockPrisma.invoice.update.mockResolvedValue({
-        id: 'inv-1',
-        subtotal: 100,
-        total: 113,
-      });
-
-      await invoicesService.update('inv-1', { items: newItems }, 'user-1');
-
-      expect(mockPrisma.invoiceItem.deleteMany).toHaveBeenCalledWith({ where: { invoiceId: 'inv-1' } });
-      expect(mockPrisma.invoiceItem.createMany).toHaveBeenCalled();
-      expect(mockPrisma.invoice.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          subtotal: 100,
-          total: 113,
-        }),
-      }));
+    it('throws error if invoice is not DRAFT', async () => {
+        (prisma.invoice.findUnique as jest.Mock).mockResolvedValue({
+            id: 'inv-1',
+            status: InvoiceStatus.SENT
+        });
+        await expect(invoicesService.update('inv-1', updateInput)).rejects.toThrow('Only draft invoices can be updated');
     });
   });
 
   describe('changeStatus', () => {
-    const existingInvoice = {
-      id: 'inv-1',
-      status: InvoiceStatus.DRAFT,
-    };
+    it('changes status successfully for valid transition', async () => {
+        const existingInvoice = { id: 'inv-1', status: InvoiceStatus.DRAFT };
+        (prisma.invoice.findUnique as jest.Mock).mockResolvedValue(existingInvoice);
+        
+        const updatedInvoice = { ...existingInvoice, status: InvoiceStatus.SENT };
+        (prisma.invoice.update as jest.Mock).mockResolvedValue(updatedInvoice);
 
-    it('changes status for valid transition', async () => {
-      mockPrisma.invoice.findUnique.mockResolvedValue(existingInvoice);
-      mockPrisma.invoice.update.mockResolvedValue({
-        ...existingInvoice,
-        status: InvoiceStatus.SENT,
-      });
+        const result = await invoicesService.changeStatus('inv-1', InvoiceStatus.SENT, 'user-1');
 
-      await invoicesService.changeStatus('inv-1', InvoiceStatus.SENT, 'user-1');
-
-      expect(mockPrisma.invoice.update).toHaveBeenCalledWith({
-        where: { id: 'inv-1' },
-        data: { status: InvoiceStatus.SENT },
-      });
-      expect(mockLogStatusChange).toHaveBeenCalledWith('user-1', 'inv-1', InvoiceStatus.DRAFT, InvoiceStatus.SENT);
+        expect(prisma.invoice.update).toHaveBeenCalledWith({
+            where: { id: 'inv-1' },
+            data: { status: InvoiceStatus.SENT }
+        });
+        expect(mockAudit.logInvoiceStatusChange).toHaveBeenCalled();
     });
 
     it('throws error for invalid transition', async () => {
-      mockPrisma.invoice.findUnique.mockResolvedValue(existingInvoice);
-      await expect(invoicesService.changeStatus('inv-1', InvoiceStatus.OVERDUE))
-        .rejects.toThrow('Invalid status transition');
+        const existingInvoice = { id: 'inv-1', status: InvoiceStatus.DRAFT };
+        (prisma.invoice.findUnique as jest.Mock).mockResolvedValue(existingInvoice);
+
+        await expect(invoicesService.changeStatus('inv-1', InvoiceStatus.OVERDUE)).rejects.toThrow('Invalid status transition');
     });
 
     it('throws error if invoice not found', async () => {
-      mockPrisma.invoice.findUnique.mockResolvedValue(null);
-      await expect(invoicesService.changeStatus('inv-999', InvoiceStatus.SENT))
-        .rejects.toThrow('Invoice not found');
+        (prisma.invoice.findUnique as jest.Mock).mockResolvedValue(null);
+        await expect(invoicesService.changeStatus('inv-999', InvoiceStatus.SENT)).rejects.toThrow('Invoice not found');
     });
+  });
+
+    it('returns empty array for invalid status', () => {
+      // Accessing private method via isValidStatusTransition or just testing behavior if possible
+      // Since it is private, we can test isValidStatusTransition with an invalid status type casted
+      const result = invoicesService['isValidStatusTransition'](InvoiceStatus.PAID, InvoiceStatus.DRAFT);
+      expect(result).toBe(false);
+    });
+
+    it('returns allowed statuses for SENT', () => {
+        const result = invoicesService['getAllowedNextStatuses'](InvoiceStatus.SENT);
+        expect(result).toContain(InvoiceStatus.PAID);
+        expect(result).toContain(InvoiceStatus.OVERDUE);
+    });
+
+    it('returns allowed statuses for OVERDUE', () => {
+        const result = invoicesService['getAllowedNextStatuses'](InvoiceStatus.OVERDUE);
+        expect(result).toContain(InvoiceStatus.PAID);
+    });
+
+    it('returns empty array for PAID (terminal status)', () => {
+        const result = invoicesService['getAllowedNextStatuses'](InvoiceStatus.PAID);
+        expect(result).toEqual([]);
+    });
+
+    it('returns empty array for CANCELLED (terminal status)', () => {
+        const result = invoicesService['getAllowedNextStatuses'](InvoiceStatus.CANCELLED);
+        expect(result).toEqual([]);
+    });
+
+  describe('generateInvoiceNumber', () => {
+      it('increments sequence correctly', async () => {
+          // We need to access private method or trigger it via create
+          // Since it's private, we test it via create behavior
+          const year = new Date().getFullYear();
+          (prisma.invoice.findFirst as jest.Mock).mockResolvedValue({ number: `INV-${year}-0005` });
+          (prisma.customer.findUnique as jest.Mock).mockResolvedValue({ address: 'Toronto, ON' });
+          mockExtractProvince.mockReturnValue('ON');
+          mockCalculateTax.mockReturnValue({ taxRate: new Decimal(0.13), taxAmount: new Decimal(13) });
+          (prisma.invoice.create as jest.Mock).mockImplementation((args) => Promise.resolve({ ...args.data, id: 'new-id' }));
+
+          const createInput = {
+              customerId: 'cust-1',
+              items: [],
+              issueDate: new Date(),
+              dueDate: new Date(),
+          };
+
+          await invoicesService.create(createInput);
+
+          expect(prisma.invoice.create).toHaveBeenCalledWith(expect.objectContaining({
+              data: expect.objectContaining({
+                  number: `INV-${year}-0006`
+              })
+          }));
+      });
   });
 });

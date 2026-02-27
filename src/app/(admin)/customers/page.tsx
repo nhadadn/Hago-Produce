@@ -14,6 +14,7 @@ import { CustomerInput } from '@/lib/validation/customers';
 import { Customer } from '@prisma/client';
 import { Plus, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { clientLogger as logger } from '@/lib/logger/client-logger';
 
 export default function CustomersPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -55,10 +56,10 @@ export default function CustomersPage() {
     setLoading(true);
     try {
       const response = await fetchCustomers(filters);
-      setCustomers(response.data.customers ?? []);
+      setCustomers(response.data.data ?? []);
       setTotalPages(response.data.meta?.totalPages ?? 1);
     } catch (error) {
-      console.error('Error loading customers:', error);
+      logger.error('Error loading customers:', error);
     } finally {
       setLoading(false);
     }

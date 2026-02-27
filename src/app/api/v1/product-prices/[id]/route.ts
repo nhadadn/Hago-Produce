@@ -3,6 +3,8 @@ import prisma from "@/lib/db";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/middleware";
 import { Role } from "@prisma/client";
 import { productPriceUpdateSchema } from "@/lib/validation/product-price";
+import { logger } from "@/lib/logger/logger.service";
+import { ProductPriceService } from "@/lib/services/product-prices/product-prices.service";
 
 // GET /api/v1/product-prices/[id]
 export async function GET(
@@ -27,7 +29,7 @@ export async function GET(
 
     return NextResponse.json(price);
   } catch (error) {
-    console.error("[PRODUCT_PRICE_GET]", error);
+    logger.error("[PRODUCT_PRICE_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
@@ -49,49 +51,17 @@ export async function PATCH(
     const json = await req.json();
     const body = productPriceUpdateSchema.parse(json);
 
-    const price = await prisma.productPrice.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!price) {
-      return new NextResponse("Product price not found", { status: 404 });
+    try {
+      const updatedPrice = await ProductPriceService.update(params.id, body);
+      return NextResponse.json(updatedPrice);
+    } catch (error: any) {
+      if (error.message === 'Product price not found') {
+        return new NextResponse("Product price not found", { status: 404 });
+      }
+      throw error;
     }
-
-    // Si se establece como actual, necesitamos manejar la lógica de otros precios actuales
-    // Típicamente, editar un registro existente para que sea actual podría requerir una transacción
-    // Por simplicidad, solo actualizamos. La lógica de creación maneja mejor el escenario "nuevo actual".
-    // Si el usuario establece manualmente isCurrent=true aquí, probablemente deberíamos actualizar otros a false.
-    
-    let updatedPrice;
-    
-    if (body.isCurrent === true && !price.isCurrent) {
-       updatedPrice = await prisma.$transaction(async (tx) => {
-         // Marcar otros como no actuales
-         await tx.productPrice.updateMany({
-           where: {
-             productId: price.productId,
-             supplierId: price.supplierId,
-             isCurrent: true,
-             id: { not: params.id },
-           },
-           data: { isCurrent: false },
-         });
-         
-         return tx.productPrice.update({
-           where: { id: params.id },
-           data: body,
-         });
-       });
-    } else {
-       updatedPrice = await prisma.productPrice.update({
-        where: { id: params.id },
-        data: body,
-      });
-    }
-
-    return NextResponse.json(updatedPrice);
   } catch (error) {
-    console.error("[PRODUCT_PRICE_PATCH]", error);
+    logger.error("[PRODUCT_PRICE_PATCH]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
@@ -124,7 +94,7 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("[PRODUCT_PRICE_DELETE]", error);
+    logger.error("[PRODUCT_PRICE_DELETE]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }

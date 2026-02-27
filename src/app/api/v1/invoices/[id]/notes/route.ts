@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { invoiceNotesService } from '@/lib/services/invoices/notes';
 import { invoiceNoteCreateSchema } from '@/lib/validation/invoice-notes';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 const READ_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT];
 const WRITE_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING];
@@ -32,7 +33,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: notes });
   } catch (error) {
-    console.error('[INVOICE_NOTES_GET]', error);
+    logger.error('[INVOICE_NOTES_GET]', error);
     return NextResponse.json(
       {
         success: false,
@@ -91,7 +92,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, data: note }, { status: 201 });
   } catch (error) {
-    console.error('[INVOICE_NOTES_POST]', error);
+    logger.error('[INVOICE_NOTES_POST]', error);
 
     if (error instanceof Error && error.message.includes('Invoice not found')) {
       return NextResponse.json(

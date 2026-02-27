@@ -1,5 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -36,9 +37,16 @@ export class TelegramService {
         disable_notification: options?.disableNotification,
       });
 
+      logger.info('Telegram message sent', {
+        service: 'TelegramService',
+        method: 'sendMessage',
+        messageId: sentMessage.message_id,
+        chatId,
+      });
+
       return sentMessage.message_id;
     } catch (error) {
-      console.error('[TELEGRAM_SEND_ERROR]', error);
+      logger.error('[TELEGRAM_SEND_ERROR]', error);
       throw new Error('Error al enviar mensaje de Telegram');
     }
   }
@@ -69,6 +77,15 @@ export class TelegramService {
 
     const message = update.message;
     const from = message.from;
+
+    logger.info('Telegram message received', {
+      service: 'TelegramService',
+      method: 'parseWebhookUpdate',
+      updateId: update.update_id,
+      messageId: message.message_id,
+      chatId: message.chat.id,
+      fromId: from.id,
+    });
 
     return {
       updateId: update.update_id,
@@ -130,7 +147,7 @@ export class TelegramService {
         },
       });
     } catch (error) {
-      console.error('[MESSAGE_LOG_ERROR]', error);
+      logger.error('[MESSAGE_LOG_ERROR]', error);
       // No lanzar error para no interrumpir el flujo principal
     }
   }
@@ -153,7 +170,7 @@ export class TelegramService {
         },
       });
     } catch (error) {
-      console.error('[MESSAGE_UPDATE_ERROR]', error);
+      logger.error('[MESSAGE_UPDATE_ERROR]', error);
       // No lanzar error para no interrumpir el flujo principal
     }
   }
@@ -178,7 +195,7 @@ export class TelegramService {
         username: botInfo.username!,
       };
     } catch (error) {
-      console.error('[TELEGRAM_BOT_INFO_ERROR]', error);
+      logger.error('[TELEGRAM_BOT_INFO_ERROR]', error);
       throw new Error('Error al obtener información del bot');
     }
   }
@@ -242,7 +259,7 @@ export class TelegramService {
             + `• ${productCount} active products\n\n`
             + '✅ System operational';
         } catch (error) {
-          console.error('[STATUS_COMMAND_ERROR]', error);
+          logger.error('[STATUS_COMMAND_ERROR]', error);
           return language === 'es'
             ? '❌ Error al obtener estado del sistema'
             : '❌ Error getting system status';

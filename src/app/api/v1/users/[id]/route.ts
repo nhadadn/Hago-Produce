@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { userService } from '@/lib/services/users.service';
 import { updateUserSchema } from '@/lib/validation/users';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 // Helper for self or admin check
 function canModify(currentUser: any, targetUserId: string) {
@@ -73,7 +74,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json({ success: true, data: updatedUser });
   } catch (error) {
-     console.error('Update user error:', error);
+     logger.error('Update user error:', error);
      return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }
@@ -98,7 +99,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     return NextResponse.json({ success: true, message: 'Usuario desactivado correctamente' });
   } catch (error) {
-     console.error('Delete user error:', error);
+     logger.error('Delete user error:', error);
      return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }

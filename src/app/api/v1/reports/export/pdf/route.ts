@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[REPORTS_EXPORT_PDF]', error);
+    logger.error('[REPORTS_EXPORT_PDF]', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }

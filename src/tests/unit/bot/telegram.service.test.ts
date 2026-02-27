@@ -3,6 +3,15 @@ import prisma from '@/lib/db';
 import TelegramBot from 'node-telegram-bot-api';
 
 // Mock dependencies
+jest.mock('@/lib/logger/logger.service', () => ({
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
+
 jest.mock('@/lib/db', () => ({
   __esModule: true,
   default: {
@@ -29,6 +38,7 @@ describe('TelegramService', () => {
   let service: any;
   let prisma: any;
   let TelegramBotMock: any;
+  let logger: any;
 
   const mockToken = 'test-token-123';
   const mockBotInstance = {
@@ -46,6 +56,7 @@ describe('TelegramService', () => {
     // Re-require dependencies to get fresh mocks after resetModules
     prisma = require('@/lib/db').default;
     TelegramBotMock = require('node-telegram-bot-api');
+    logger = require('@/lib/logger/logger.service').logger;
     
     // Setup mock for TelegramBot constructor
     TelegramBotMock.mockImplementation(() => mockBotInstance);
@@ -201,13 +212,11 @@ describe('TelegramService', () => {
     });
 
     it('should handle database errors gracefully (no throw)', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (prisma.message.create as jest.Mock).mockRejectedValue(new Error('DB Error'));
       
       await expect(service.logMessage('user123', 'hello')).resolves.not.toThrow();
       
-      expect(consoleSpy).toHaveBeenCalledWith('[MESSAGE_LOG_ERROR]', expect.any(Error));
-      consoleSpy.mockRestore();
+      expect(logger.error).toHaveBeenCalledWith('[MESSAGE_LOG_ERROR]', expect.any(Error));
     });
   });
 
@@ -227,13 +236,11 @@ describe('TelegramService', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (prisma.message.update as jest.Mock).mockRejectedValue(new Error('DB Error'));
       
       await expect(service.updateMessageStatus('msg123', 'failed')).resolves.not.toThrow();
       
-      expect(consoleSpy).toHaveBeenCalledWith('[MESSAGE_UPDATE_ERROR]', expect.any(Error));
-      consoleSpy.mockRestore();
+      expect(logger.error).toHaveBeenCalledWith('[MESSAGE_UPDATE_ERROR]', expect.any(Error));
     });
   });
 

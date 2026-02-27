@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { Role } from '@prisma/client';
 import { invalidateCache, clearAllCache, ReportType } from '@/lib/utils/report-cache';
+import { logger } from '@/lib/logger/logger.service';
 
 const ALLOWED_ROLES: Role[] = [Role.ADMIN];
 
@@ -67,7 +68,7 @@ export async function DELETE(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[CACHE_INVALIDATION_ERROR]', error);
+    logger.error('[CACHE_INVALIDATION_ERROR]', error);
     return NextResponse.json(
       {
         success: false,
