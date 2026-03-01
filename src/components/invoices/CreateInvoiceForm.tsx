@@ -105,7 +105,7 @@ export default function CreateInvoiceForm() {
           fetchCustomers({ limit: 100, isActive: true }),
           fetchProducts({ limit: 100, isActive: true }),
         ]);
-        setCustomers(customersRes.data.data);
+        setCustomers(customersRes.data.customers);
         setProducts(productsRes.data);
       } catch {
         toast({

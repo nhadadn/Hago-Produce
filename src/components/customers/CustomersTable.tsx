@@ -7,16 +7,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Ban, CheckCircle } from "lucide-react";
+import { Edit, Ban, CheckCircle, KeyRound } from "lucide-react";
 import { Customer } from "@prisma/client";
 
 interface CustomersTableProps {
   customers: Customer[];
   onEdit: (customer: Customer) => void;
+  onResetPassword?: (customer: Customer) => void;
   isLoading?: boolean;
 }
 
-export function CustomersTable({ customers, onEdit, isLoading }: CustomersTableProps) {
+export function CustomersTable({ customers, onEdit, onResetPassword, isLoading }: CustomersTableProps) {
   if (isLoading) {
     return <div className="text-center p-8">Cargando clientes...</div>;
   }
@@ -56,7 +57,17 @@ export function CustomersTable({ customers, onEdit, isLoading }: CustomersTableP
                   </span>
                 )}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right space-x-2">
+                {onResetPassword && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onResetPassword(customer)}
+                    title="Generar / Resetear acceso al portal"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={() => onEdit(customer)}>
                   <Edit className="h-4 w-4" />
                 </Button>

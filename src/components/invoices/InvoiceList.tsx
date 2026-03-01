@@ -43,7 +43,7 @@ export default function InvoiceList() {
     async function loadCustomers() {
       try {
         const res = await fetchCustomers({ limit: 100, isActive: true });
-        setCustomers(res.data.data);
+        setCustomers(res.data.customers);
       } catch (error) {
         logger.error("Failed to load customers:", error);
       }
