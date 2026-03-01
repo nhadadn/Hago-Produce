@@ -1,4 +1,5 @@
 import { POST } from '@/app/webhooks/make/prices/route';
+jest.unmock('@/lib/db');
 import prisma from '../utils/db'; // Utilities for DB reset
 import { resetDb } from '../utils/db';
 import { NextRequest } from 'next/server';

@@ -13,6 +13,7 @@ import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier, Supplie
 import { Plus, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { clientLogger as logger } from '@/lib/logger/client-logger';
 
 export default function SuppliersPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -61,7 +62,7 @@ export default function SuppliersPage() {
       setSuppliers(response.data);
       setTotalPages(response.meta.totalPages);
     } catch (error) {
-      console.error('Error loading suppliers:', error);
+      logger.error('Error loading suppliers:', error);
     } finally {
       setLoading(false);
     }
@@ -103,7 +104,7 @@ export default function SuppliersPage() {
       setIsDeleteOpen(false);
       loadSuppliers();
     } catch (error) {
-      console.error('Error deleting supplier:', error);
+      logger.error('Error deleting supplier:', error);
     }
   };
 

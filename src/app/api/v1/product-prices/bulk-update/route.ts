@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { ProductPriceService } from '@/lib/services/product-prices/product-prices.service';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
       data: result,
     });
   } catch (error) {
-    console.error('Error in bulk update:', error);
+    logger.error('Error in bulk update:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }

@@ -2,6 +2,8 @@ import prisma from '@/lib/db';
 import { CreateInvoiceInput, InvoiceFilters, UpdateInvoiceInput } from '@/lib/validation/invoices';
 import { InvoiceStatus, Prisma } from '@prisma/client';
 import { logInvoiceCreate, logInvoiceStatusChange, logInvoiceUpdate } from '@/lib/audit/invoices';
+import { taxCalculationService, TransactionType, extractProvinceFromAddress } from '@/lib/services/finance/tax-calculation.service';
+import { logger } from '@/lib/logger/logger.service';
 
 export class InvoicesService {
   
@@ -46,9 +48,32 @@ export class InvoicesService {
       };
     });
 
-    const taxRate = invoiceData.taxRate || 0.13;
-    const taxAmount = subtotal * taxRate;
-    const total = subtotal + taxAmount;
+    let taxRate: number | undefined = invoiceData.taxRate;
+    let taxAmount: Prisma.Decimal | number;
+
+    if (taxRate === undefined) {
+      const customer = await prisma.customer.findUnique({
+        where: { id: invoiceData.customerId },
+        select: { address: true }
+      });
+      
+      const province = extractProvinceFromAddress(customer?.address);
+      
+      if (!province) {
+        logger.warn(`Invoice creation: Customer ${invoiceData.customerId} has no valid address/province. Delegating to TaxCalculationService fallback.`);
+      }
+
+      const taxResult = taxCalculationService.calculateTax(province, subtotal, TransactionType.SALE);
+      taxRate = taxResult.taxRate.toNumber();
+      taxAmount = taxResult.taxAmount;
+    } else {
+        // If taxRate is provided, ensure we validate it against the province if possible, or just use it.
+        // For now, if provided, we trust the input but log it.
+        // In a strict mode, we might want to recalculate and compare.
+        taxAmount = new Prisma.Decimal(subtotal).times(taxRate);
+    }
+
+    const total = new Prisma.Decimal(subtotal).plus(new Prisma.Decimal(taxAmount));
 
     const invoice = await prisma.$transaction(async (tx) => {
       const number = await this.generateInvoiceNumber(tx);
@@ -59,7 +84,7 @@ export class InvoicesService {
           number,
           subtotal,
           taxRate,
-          taxAmount,
+          taxAmount: new Prisma.Decimal(taxAmount),
           total,
           items: {
             create: calculatedItems

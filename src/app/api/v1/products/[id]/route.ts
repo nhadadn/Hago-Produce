@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { ProductService } from '@/lib/services/productService';
 import { productUpdateSchema } from '@/lib/validation/product';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(
   req: NextRequest,
@@ -30,7 +31,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: product });
   } catch (error) {
-    console.error('Error fetching product:', error);
+    logger.error('Error fetching product:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }
@@ -77,7 +78,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: updatedProduct });
   } catch (error) {
-    console.error('Error updating product:', error);
+    logger.error('Error updating product:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error al actualizar producto' } },
       { status: 500 }
@@ -114,7 +115,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Producto eliminado correctamente' });
   } catch (error) {
-    console.error('Error deleting product:', error);
+    logger.error('Error deleting product:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error al eliminar producto' } },
       { status: 500 }

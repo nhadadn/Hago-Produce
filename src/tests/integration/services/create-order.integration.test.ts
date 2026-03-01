@@ -1,4 +1,5 @@
 import prisma from '../utils/db';
+jest.unmock('@/lib/db');
 import { createOrderIntent, confirmOrderIntent } from '@/lib/services/chat/intents/create-order';
 import { resetDb } from '../utils/db';
 

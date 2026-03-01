@@ -1,5 +1,7 @@
 import prisma from '@/lib/db';
-import { ProductPriceInput, ProductPriceFilters } from '@/lib/validation/product-price';
+import { ProductPriceInput, ProductPriceFilters, ProductPriceUpdateInput } from '@/lib/validation/product-price';
+import { logger } from '@/lib/logger/logger.service';
+import { PriceVersioningService } from '@/lib/services/pricing/price-versioning.service';
 
 export class ProductPriceService {
   static async getAll(filters: ProductPriceFilters) {
@@ -13,7 +15,7 @@ export class ProductPriceService {
     
     // Comprobar explícitamente boolean true/false, o string 'true'/'false' si viene de query params
     if (isCurrent !== undefined) {
-      where.isCurrent = isCurrent === true || isCurrent === 'true';
+      where.isCurrent = isCurrent === true || (isCurrent as any) === 'true';
     }
 
     const [prices, total] = await Promise.all([
@@ -51,8 +53,89 @@ export class ProductPriceService {
     });
   }
 
+  static async update(id: string, data: ProductPriceUpdateInput) {
+    // 1. Get existing price
+    const existing = await prisma.productPrice.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new Error('Product price not found');
+    }
+
+    let result;
+
+    // 2. Handle isCurrent update with transaction if needed
+    if (data.isCurrent === true && !existing.isCurrent) {
+      result = await prisma.$transaction(async (tx) => {
+        // Mark others as not current
+        await tx.productPrice.updateMany({
+          where: {
+            productId: existing.productId,
+            supplierId: existing.supplierId,
+            isCurrent: true,
+            id: { not: id },
+          },
+          data: { isCurrent: false },
+        });
+
+        return tx.productPrice.update({
+          where: { id },
+          data,
+        });
+      });
+    } else {
+      // Simple update
+      result = await prisma.productPrice.update({
+        where: { id },
+        data,
+      });
+    }
+
+    // 3. Sync to PriceVersion (Dual Write)
+    // If price or date changed, we create a new version in the PriceList system
+    if (data.costPrice !== undefined || data.effectiveDate) {
+      try {
+        const priceVersioning = new PriceVersioningService();
+        
+        // Ensure active PriceList exists
+        let priceList = await prisma.priceList.findFirst({
+          where: { 
+            supplierId: existing.supplierId, 
+            isCurrent: true 
+          }
+        });
+
+        if (!priceList) {
+          priceList = await priceVersioning.createPriceList(
+            existing.supplierId,
+            `Lista General ${new Date().getFullYear()}`,
+            new Date()
+          );
+        }
+
+        // Create new version with updated values or fallback to existing
+        const newPrice = data.costPrice !== undefined ? data.costPrice : Number(existing.costPrice);
+        const newDate = data.effectiveDate || existing.effectiveDate;
+
+        await priceVersioning.createPriceVersion(
+          existing.supplierId,
+          existing.productId,
+          newPrice,
+          newDate
+        );
+        
+        logger.info(`[ProductPriceService] Synced update to PriceVersion for product ${existing.productId}`);
+      } catch (error) {
+        logger.error('[ProductPriceService] Failed to sync update to PriceVersion', error);
+      }
+    }
+
+    return result;
+  }
+
   static async create(data: ProductPriceInput) {
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       if (data.isCurrent) {
         // Marcar precios actuales anteriores para este producto-proveedor como no actuales
         await tx.productPrice.updateMany({
@@ -69,6 +152,38 @@ export class ProductPriceService {
         data,
       });
     });
+
+    // Sync to PriceVersion (Dual Write)
+    try {
+      const priceVersioning = new PriceVersioningService();
+      
+      // Ensure active PriceList exists
+      let priceList = await prisma.priceList.findFirst({
+        where: { supplierId: data.supplierId, isCurrent: true }
+      });
+
+      if (!priceList) {
+        priceList = await priceVersioning.createPriceList(
+          data.supplierId,
+          `Lista General ${new Date().getFullYear()}`,
+          new Date()
+        );
+      }
+
+      await priceVersioning.createPriceVersion(
+        data.supplierId,
+        data.productId,
+        data.costPrice,
+        data.effectiveDate || new Date()
+      );
+      
+      logger.info(`[ProductPriceService] Synced price to PriceVersion for product ${data.productId}`);
+    } catch (error) {
+      logger.error('[ProductPriceService] Failed to sync to PriceVersion', error);
+      // We don't throw here to avoid breaking legacy flow, but we log explicitly
+    }
+
+    return result;
   }
 
   static async bulkUpdateFromMake(payload: { source: string, prices: any[] }) {
@@ -140,6 +255,7 @@ export class ProductPriceService {
         });
 
       } catch (error: any) {
+        logger.error(`Error processing bulk update item for product: ${item.product_name}`, error);
         results.errors++;
         results.details.push({
           product: item.product_name,

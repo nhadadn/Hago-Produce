@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { clientLogger as logger } from '@/lib/logger/client-logger';
 
 export interface DashboardData {
   summary: {
@@ -57,7 +58,7 @@ export function useCustomerDashboardData(customerId?: string) {
         setData(mockData);
         setError(null);
       } catch (err) {
-        console.error('Error fetching dashboard data:', err);
+        logger.error('Error fetching dashboard data:', err);
         setError('No se pudieron cargar los datos del dashboard.');
       } finally {
         setLoading(false);

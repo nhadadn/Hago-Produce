@@ -1,6 +1,7 @@
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 
-export type NotificationChannel = 'EMAIL' | 'WHATSAPP' | 'TELEGRAM';
+export type NotificationChannel = 'EMAIL' | 'WHATSAPP' | 'TELEGRAM' | 'UNKNOWN';
 export type NotificationStatus = 'SENT' | 'FAILED' | 'PENDING';
 
 export interface CreateNotificationLogParams {
@@ -27,7 +28,7 @@ export async function createNotificationLog(params: CreateNotificationLogParams)
       },
     });
   } catch (error) {
-    console.error('Error creating notification log:', error);
+    logger.error('Error creating notification log:', error);
     // No lanzamos error para no interrumpir el flujo principal si el log falla,
     // pero lo registramos en consola para debugging.
     return null;

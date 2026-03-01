@@ -5,6 +5,7 @@ import { Role, InvoiceStatus } from '@prisma/client';
 import prisma from '@/lib/db';
 import { NotificationTriggers } from '@/lib/services/notifications/triggers';
 import { z } from 'zod';
+import { logger } from '@/lib/logger/logger.service';
 
 const ALLOWED_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING];
 
@@ -79,7 +80,7 @@ export async function PATCH(
           previousStatus,
           invoice.status as InvoiceStatus,
         ),
-      ).catch((e) => console.error('[NOTIFICATION_STATUS_CHANGE]', e));
+      ).catch((e) => logger.error('[NOTIFICATION_STATUS_CHANGE]', e));
 
       return NextResponse.json({ success: true, data: invoice });
     } catch (error: any) {
@@ -112,7 +113,7 @@ export async function PATCH(
       throw error;
     }
   } catch (error) {
-    console.error('[INVOICE_STATUS_PATCH]', error);
+    logger.error('[INVOICE_STATUS_PATCH]', error);
     return NextResponse.json(
       {
         success: false,

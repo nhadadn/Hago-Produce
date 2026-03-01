@@ -4,34 +4,42 @@ import prisma from '@/lib/db';
 import { InvoicesService } from '@/lib/services/invoices.service';
 
 // Mock DB
-jest.mock('@/lib/db', () => ({
-  webhookLog: {
-    create: jest.fn(),
-    findFirst: jest.fn(),
-  },
-  product: {
-    findFirst: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-  },
-  supplier: {
-    findFirst: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    findUnique: jest.fn(),
-  },
-  customer: {
-    findFirst: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-  },
-  productPrice: {
-    updateMany: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-  },
-  $transaction: jest.fn((callback) => callback(prisma)),
-}));
+jest.mock('@/lib/db', () => {
+  const mockPrisma = {
+    webhookLog: {
+      create: jest.fn(),
+      findFirst: jest.fn(),
+    },
+    product: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    supplier: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    customer: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    productPrice: {
+      updateMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    $transaction: jest.fn(),
+  };
+  mockPrisma.$transaction.mockImplementation((callback) => callback(mockPrisma));
+  
+  return {
+    __esModule: true,
+    default: mockPrisma,
+  };
+});
 
 // Mock InvoicesService
 jest.mock('@/lib/services/invoices.service');

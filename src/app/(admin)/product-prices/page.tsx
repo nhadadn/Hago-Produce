@@ -25,6 +25,7 @@ import {
 import { fetchProducts } from "@/lib/api/products";
 import { fetchSuppliers } from "@/lib/api/suppliers";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { clientLogger as logger } from "@/lib/logger/client-logger";
 
 export default function ProductPricesPage() {
   const { toast } = useToast();
@@ -52,7 +53,7 @@ export default function ProductPricesPage() {
         setProducts(p.data);
         setSuppliers(s.data);
       } catch (error) {
-        console.error("Error loading filters", error);
+        logger.error("Error loading filters", error);
       }
     };
     loadFilters();

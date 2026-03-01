@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('[CUSTOMERS_GET]', error);
+    logger.error('[CUSTOMERS_GET]', error);
     return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
   }
 }
@@ -47,11 +47,11 @@ export async function POST(req: NextRequest) {
       if (error.message.includes('already exists')) {
         return NextResponse.json({ success: false, error: { code: 'DUPLICATE_ENTRY', message: error.message } }, { status: 409 });
       }
-      console.error('[CUSTOMERS_POST] Create Error:', error);
+      logger.error('[CUSTOMERS_POST] Create Error:', error);
       return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
     }
   } catch (error) {
-    console.error('[CUSTOMERS_POST]', error);
+    logger.error('[CUSTOMERS_POST]', error);
     return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendWhatsAppMessage } from '@/lib/services/notifications/twilio';
 import { sendTelegramMessage } from '@/lib/services/notifications/telegram';
+import { logger } from '@/lib/logger/logger.service';
 
 type WebhookChannel = 'whatsapp' | 'telegram' | 'both';
 
@@ -244,7 +245,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(responseBody, { status });
   } catch (error) {
-    console.error('[WEBHOOK_NOTIFICATIONS_SEND]', error);
+    logger.error('[WEBHOOK_NOTIFICATIONS_SEND]', error);
     return NextResponse.json(
       {
         success: false,

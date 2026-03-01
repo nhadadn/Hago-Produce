@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { supplierService } from '@/lib/services/suppliers.service';
 import { createSupplierSchema } from '@/lib/validation/suppliers';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 const ALLOWED_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING];
 
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    console.error('Get suppliers error:', error);
+    logger.error('Get suppliers error:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: newSupplier }, { status: 201 });
   } catch (error) {
-    console.error('Create supplier error:', error);
+    logger.error('Create supplier error:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { ProductService } from '@/lib/services/productService';
 import { productFilterSchema, productSchema } from '@/lib/validation/product';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
       meta: result.meta,
     });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logger.error('Error fetching products:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating product:', error);
+    logger.error('Error creating product:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Error al crear producto' } },
       { status: 500 }

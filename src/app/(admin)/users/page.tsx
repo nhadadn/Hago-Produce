@@ -12,6 +12,7 @@ import { UserModal } from '@/components/users/UserModal';
 import { UserForm } from '@/components/users/UserForm';
 import { fetchUsers, createUser, updateUser, deleteUser, User, UserFilters } from '@/lib/api/users';
 import { Plus, Search } from 'lucide-react';
+import { clientLogger as logger } from '@/lib/logger/client-logger';
 
 export default function UsersPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -56,7 +57,7 @@ export default function UsersPage() {
       setUsers(response.data);
       setTotalPages(response.meta.totalPages);
     } catch (error) {
-      console.error('Error loading users:', error);
+      logger.error('Error loading users:', error);
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ export default function UsersPage() {
       setIsDeleteOpen(false);
       loadUsers();
     } catch (error) {
-      console.error('Error deleting user:', error);
+      logger.error('Error deleting user:', error);
     }
   };
 

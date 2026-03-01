@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { logger } from '@/lib/logger/logger.service';
 
 jest.mock('@sendgrid/mail', () => {
   const send = jest.fn();
@@ -229,19 +230,19 @@ describe('EmailService', () => {
     delete process.env.RESEND_API_KEY;
     delete process.env.SENDGRID_API_KEY;
 
-    // Forzamos un error en console.info para simular fallo en el bloque try del mock
-    const consoleSpy = jest.spyOn(console, 'info').mockImplementation(() => {
-      throw new Error('Mock Console Error');
+    // Forzamos un error en logger.info para simular fallo en el bloque try del mock
+    const loggerSpy = jest.spyOn(logger, 'info').mockImplementation(() => {
+      throw new Error('Mock Logger Error');
     });
 
     const { sendEmail } = await import('@/lib/services/email.service');
     const result = await sendEmail('mock-fail@example.com', 'Fail', 'Body');
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Mock Console Error');
+    expect(result.error).toBe('Mock Logger Error');
     expect(result.attempts).toBe(3);
 
-    consoleSpy.mockRestore();
+    loggerSpy.mockRestore();
   });
 });
 

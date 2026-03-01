@@ -1,6 +1,7 @@
 
 import prisma from '@/lib/db';
 import crypto from 'crypto';
+import { logger } from '@/lib/logger/logger.service';
 
 export type ReportType = 
   | 'REVENUE'
@@ -121,9 +122,9 @@ export async function getCachedReport<T>(
 
     return JSON.parse(cached.data) as T;
   } catch (error) {
-    console.error('[CACHE_GET_ERROR]', error);
-    return null;
-  }
+      logger.error('[CACHE_GET_ERROR]', error);
+      return null;
+    }
 }
 
 /**
@@ -173,7 +174,7 @@ export async function setCachedReport(
       },
     });
   } catch (error) {
-    console.error('[CACHE_SET_ERROR]', error);
+    logger.error('[CACHE_SET_ERROR]', error);
   }
 }
 
@@ -212,7 +213,7 @@ export async function invalidateCache(reportType?: ReportType): Promise<number> 
       return count;
     }
   } catch (error) {
-    console.error('[CACHE_INVALIDATE_ERROR]', error);
+    logger.error('[CACHE_INVALIDATE_ERROR]', error);
     return 0;
   }
 }
@@ -225,7 +226,7 @@ export async function clearAllCache(): Promise<number> {
         const { count } = await prisma.reportCache.deleteMany({});
         return count;
     } catch (error) {
-        console.error('[CACHE_CLEAR_ALL_ERROR]', error);
+        logger.error('[CACHE_CLEAR_ALL_ERROR]', error);
         return 0;
     }
 }

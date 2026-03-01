@@ -1,5 +1,6 @@
 import twilio from 'twilio';
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 
 // Inicializar cliente de Twilio con variables de entorno
 const twilioClient = twilio(
@@ -27,9 +28,20 @@ export class WhatsAppService {
         body: message,
       });
 
+      const maskedPhone = formattedTo.length > 5 
+        ? formattedTo.slice(0, 3) + '***' + formattedTo.slice(-2)
+        : '***';
+
+      logger.info('WhatsApp message sent', {
+        service: 'WhatsAppService',
+        method: 'sendMessage',
+        messageSid: sentMessage.sid,
+        to: maskedPhone,
+      });
+
       return sentMessage.sid;
     } catch (error) {
-      console.error('[WHATSAPP_SEND_ERROR]', error);
+      logger.error('[WHATSAPP_SEND_ERROR]', error);
       throw new Error('Error al enviar mensaje de WhatsApp');
     }
   }
@@ -50,7 +62,7 @@ export class WhatsAppService {
     try {
       return twilio.validateRequest(authToken, signature, url, body);
     } catch (error) {
-      console.error('[TWILIO_VALIDATION_ERROR]', error);
+      logger.error('[TWILIO_VALIDATION_ERROR]', error);
       return false;
     }
   }
@@ -84,12 +96,25 @@ export class WhatsAppService {
     numMedia: number;
   } {
     const params = new URLSearchParams(body);
+    const from = params.get('From')?.replace('whatsapp:', '') || '';
+    const messageSid = params.get('MessageSid') || '';
     
+    const maskedPhone = from.length > 5 
+      ? from.slice(0, 3) + '***' + from.slice(-2)
+      : '***';
+
+    logger.info('WhatsApp message received', {
+      service: 'WhatsAppService',
+      method: 'parseWebhookBody',
+      messageSid,
+      from: maskedPhone,
+    });
+
     return {
-      from: params.get('From')?.replace('whatsapp:', '') || '',
+      from,
       to: params.get('To')?.replace('whatsapp:', '') || '',
       message: params.get('Body') || '',
-      messageSid: params.get('MessageSid') || '',
+      messageSid,
       numMedia: parseInt(params.get('NumMedia') || '0'),
     };
   }
@@ -121,7 +146,7 @@ export class WhatsAppService {
         },
       });
     } catch (error) {
-      console.error('[MESSAGE_LOG_ERROR]', error);
+      logger.error('[MESSAGE_LOG_ERROR]', error);
       // No lanzar error para no interrumpir el flujo principal
     }
   }
@@ -144,7 +169,7 @@ export class WhatsAppService {
         },
       });
     } catch (error) {
-      console.error('[MESSAGE_UPDATE_ERROR]', error);
+      logger.error('[MESSAGE_UPDATE_ERROR]', error);
       // No lanzar error para no interrumpir el flujo principal
     }
   }

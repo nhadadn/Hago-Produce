@@ -31,6 +31,7 @@ import { ProductPrice } from "@/lib/api/product-prices";
 import { productPriceSchema } from "@/lib/validation/product-price";
 import { fetchProducts } from "@/lib/api/products";
 import { fetchSuppliers } from "@/lib/api/suppliers";
+import { clientLogger as logger } from "@/lib/logger/client-logger";
 
 interface ProductPriceModalProps {
   isOpen: boolean;
@@ -73,7 +74,7 @@ export function ProductPriceModal({
         setProducts(productsRes.data);
         setSuppliers(suppliersRes.data);
       } catch (error) {
-        console.error("Error loading products/suppliers", error);
+        logger.error("Error loading products/suppliers", error);
       }
     };
     if (isOpen) loadData();
@@ -111,7 +112,7 @@ export function ProductPriceModal({
       await onSubmit(values);
       onClose();
     } catch (error) {
-      console.error(error);
+      logger.error('Error submitting product price', error);
     } finally {
       setIsLoading(false);
     }

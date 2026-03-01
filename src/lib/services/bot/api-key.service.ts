@@ -1,6 +1,7 @@
 import prisma from '@/lib/db';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import { logger } from '@/lib/logger/logger.service';
 
 export interface CreateApiKeyData {
   name: string;
@@ -158,7 +159,7 @@ export async function validateApiKey(apiKey: string): Promise<ApiKeyInfo | null>
       prisma.botApiKey.update({
         where: { id: key.id },
         data: { lastUsedAt: new Date() },
-      }).catch(console.error);
+      }).catch(err => logger.error('[API_KEY_UPDATE_LAST_USED_ERROR]', err));
 
       const requestCount = await getRequestCount(key.id); // Usamos ID para buscar logs si están linkeados, o apiKey hash si no. 
       // NOTA: El sistema actual buscaba por apiKey string en webhookLog. 

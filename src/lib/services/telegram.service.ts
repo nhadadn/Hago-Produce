@@ -1,4 +1,5 @@
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 
 export type TelegramParseMode = 'Markdown' | 'HTML';
 
@@ -46,7 +47,7 @@ async function sendTelegramRequest(
   for (let i = 0; i < MAX_RETRIES; i += 1) {
     attempts += 1;
     try {
-      console.info('[TELEGRAM_SEND_ATTEMPT]', {
+      logger.info('[TELEGRAM_SEND_ATTEMPT]', {
         kind,
         chatId,
         attempt: attempts,
@@ -54,7 +55,7 @@ async function sendTelegramRequest(
 
       const messageId = await execute();
 
-      console.info('[TELEGRAM_SEND_SUCCESS]', {
+      logger.info('[TELEGRAM_SEND_SUCCESS]', {
         kind,
         chatId,
         attempt: attempts,
@@ -68,11 +69,10 @@ async function sendTelegramRequest(
       };
     } catch (error) {
       lastError = error;
-      console.error('[TELEGRAM_SEND_ERROR]', {
+      logger.error('[TELEGRAM_SEND_ERROR]', error, {
         kind,
         chatId,
         attempt: attempts,
-        error,
       });
 
       if (attempts >= MAX_RETRIES) {
@@ -153,7 +153,7 @@ export async function sendDocument(
   return sendTelegramRequest('document', chatId, async () => {
     const form = new FormData();
     form.append('chat_id', chatId);
-    const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+    const blob = new Blob([new Uint8Array(fileBuffer)], { type: 'application/pdf' });
     form.append('document', blob, filename);
     if (caption) {
       form.append('caption', caption);

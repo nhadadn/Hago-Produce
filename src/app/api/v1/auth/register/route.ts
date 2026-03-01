@@ -4,6 +4,7 @@ import { hashPassword } from '@/lib/auth/password';
 import { generateAccessToken, generateRefreshToken } from '@/lib/auth/jwt';
 import { registerSchema } from '@/lib/validation/auth';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error('Registration error:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }

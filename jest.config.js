@@ -20,6 +20,7 @@ const customJestConfig = {
     '!src/lib/services/**/*.d.ts',
     '!src/lib/services/**/__tests__/**',
   ],
+  coverageReporters: ['text', 'json-summary'],
   coverageThreshold: {
     global: {
       branches: 60,

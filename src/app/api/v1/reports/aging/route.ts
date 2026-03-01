@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { getAgingReport } from '@/lib/services/reports';
 import { agingReportSchema } from '@/lib/validation/reports';
 import { getUserRateLimitKey, isRateLimited } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger/logger.service';
 
 const MAX_REQUESTS_PER_MINUTE = 10;
 
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('[REPORTS_AGING_POST]', error);
+    logger.error('[REPORTS_AGING_POST]', error);
     return NextResponse.json(
       {
         success: false,

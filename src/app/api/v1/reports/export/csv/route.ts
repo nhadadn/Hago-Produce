@@ -11,6 +11,7 @@ import {
   getProductPriceTrends,
 } from '@/lib/services/reports';
 import { buildCSV, ReportType } from '@/lib/services/reports/export';
+import { logger } from '@/lib/logger/logger.service';
 
 const ALLOWED_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT];
 const MAX_REQUESTS_PER_MINUTE = 10;
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[REPORTS_EXPORT_CSV]', error);
+    logger.error('[REPORTS_EXPORT_CSV]', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } },
       { status: 500 }

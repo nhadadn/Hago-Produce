@@ -4,6 +4,7 @@ import { Role } from '@prisma/client';
 import { getTopCustomers } from '@/lib/services/reports';
 import { topCustomersReportSchema } from '@/lib/validation/reports';
 import { getUserRateLimitKey, isRateLimited } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger/logger.service';
 
 const ALLOWED_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT];
 const MAX_REQUESTS_PER_MINUTE = 10;
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('[REPORTS_TOP_CUSTOMERS_POST]', error);
+    logger.error('[REPORTS_TOP_CUSTOMERS_POST]', error);
     return NextResponse.json(
       {
         success: false,

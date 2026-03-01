@@ -1,5 +1,35 @@
 
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load .env.test explicitly
+dotenv.config({ path: path.resolve(__dirname, '../../.env.test') });
+
 import '@testing-library/jest-dom';
+
+// === MOCK: LoggerService ===
+const mockLogger = {
+  info: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
+
+jest.mock('@/lib/logger/logger.service', () => ({
+  __esModule: true,
+  LoggerService: {
+    getInstance: jest.fn().mockReturnValue(mockLogger),
+  },
+  logger: mockLogger,
+}));
+
+jest.mock('@/lib/infrastructure/logger.service', () => ({
+  __esModule: true,
+  LoggerService: {
+    getInstance: jest.fn().mockReturnValue(mockLogger),
+  },
+  logger: mockLogger,
+}));
 
 // === MOCK: OpenAI Client ===
 // No mockeamos formatResponse globalmente porque su firma es string, y el mock anterior devolvía objeto.
@@ -56,39 +86,44 @@ const mockPrismaModel = () => ({
   }),
 });
 
-jest.mock('@/lib/db', () => ({
-  __esModule: true,
-  default: {
-    invoice: mockPrismaModel(),
-    customer: mockPrismaModel(),
-    product: mockPrismaModel(),
-    productPrice: mockPrismaModel(),
-    chatSession: mockPrismaModel(),
-    message: mockPrismaModel(),
-    auditLog: mockPrismaModel(),
-    notification: mockPrismaModel(),
-    notificationLog: mockPrismaModel(),
-    webhookLog: mockPrismaModel(),
-    botApiKey: mockPrismaModel(),
-    supplier: mockPrismaModel(),
-    user: mockPrismaModel(),
-    reportCache: {
-      ...mockPrismaModel(),
-      create: jest.fn().mockImplementation((args) => {
-        const uniqueId = `mock-id-${Math.random().toString(36).substr(2, 9)}`;
-        const expiresAt = new Date();
-        expiresAt.setMinutes(expiresAt.getMinutes() + 30);
-        return Promise.resolve({ ...args.data, id: uniqueId, expiresAt });
-      }),
+jest.mock('@/lib/db', () => {
+  return {
+    __esModule: true,
+    default: {
+      invoice: mockPrismaModel(),
+      customer: mockPrismaModel(),
+      product: mockPrismaModel(),
+      productPrice: mockPrismaModel(),
+      chatSession: mockPrismaModel(),
+      message: mockPrismaModel(),
+      auditLog: mockPrismaModel(),
+      notification: mockPrismaModel(),
+      notificationLog: mockPrismaModel(),
+      webhookLog: mockPrismaModel(),
+      botApiKey: mockPrismaModel(),
+      botDecision: mockPrismaModel(),
+      preInvoice: mockPrismaModel(),
+      preInvoiceItem: mockPrismaModel(),
+      supplier: mockPrismaModel(),
+      user: mockPrismaModel(),
+      reportCache: {
+        ...mockPrismaModel(),
+        create: jest.fn().mockImplementation((args) => {
+          const uniqueId = `mock-id-${Math.random().toString(36).substr(2, 9)}`;
+          const expiresAt = new Date();
+          expiresAt.setMinutes(expiresAt.getMinutes() + 30);
+          return Promise.resolve({ ...args.data, id: uniqueId, expiresAt });
+        }),
+      },
+      purchaseOrder: mockPrismaModel(),
+      purchaseOrderItem: mockPrismaModel(),
+      invoiceItem: mockPrismaModel(),
+      $transaction: jest.fn().mockImplementation((callback) => callback(require('@/lib/db').default)),
+      $connect: jest.fn(),
+      $disconnect: jest.fn(),
     },
-    purchaseOrder: mockPrismaModel(),
-    purchaseOrderItem: mockPrismaModel(),
-    invoiceItem: mockPrismaModel(),
-    $transaction: jest.fn().mockImplementation((callback) => callback(require('@/lib/db').default)),
-    $connect: jest.fn(),
-    $disconnect: jest.fn(),
-  },
-}));
+  };
+});
 
 // === MOCK: fetch global ===
 global.fetch = jest.fn().mockResolvedValue({
@@ -104,4 +139,6 @@ process.env.TWILIO_ACCOUNT_SID = 'test-twilio-sid';
 process.env.TWILIO_AUTH_TOKEN = 'test-twilio-token';
 process.env.TELEGRAM_BOT_TOKEN = 'test-telegram-token';
 process.env.JWT_SECRET = 'test-jwt-secret-32-chars-minimum!!';
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+}

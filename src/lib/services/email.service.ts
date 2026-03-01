@@ -1,6 +1,7 @@
 
 import { Resend } from 'resend';
 import sgMail from '@sendgrid/mail';
+import { logger } from '@/lib/logger/logger.service';
 import { logAudit } from '@/lib/audit/logger';
 
 const resend = process.env.RESEND_API_KEY 
@@ -62,7 +63,7 @@ export async function sendEmail(
         }
 
         if (data?.id) {
-          console.info('[EMAIL_SEND_SUCCESS]', {
+          logger.info('[EMAIL_SEND_SUCCESS]', {
             provider,
             to,
             subject,
@@ -72,7 +73,7 @@ export async function sendEmail(
         }
       } catch (error) {
         lastError = error;
-        console.error('[EMAIL_SEND_ERROR]', {
+        logger.error('[EMAIL_SEND_ERROR]', {
           provider,
           to,
           error,
@@ -98,7 +99,7 @@ export async function sendEmail(
         const [response] = await sgMail.send(msg);
         const messageId = response.headers['x-message-id'] || `sg-${Date.now()}`;
 
-        console.info('[EMAIL_SEND_SUCCESS]', {
+        logger.info('[EMAIL_SEND_SUCCESS]', {
           provider,
           to,
           subject,
@@ -107,7 +108,7 @@ export async function sendEmail(
         return { success: true, messageId, attempts };
       } catch (error) {
         lastError = error;
-        console.error('[EMAIL_SEND_ERROR]', {
+        logger.error('[EMAIL_SEND_ERROR]', {
           provider,
           to,
           error,
@@ -117,7 +118,7 @@ export async function sendEmail(
     } else {
       // MOCK Implementation
       try {
-        console.info('[EMAIL_SEND_ATTEMPT]', {
+        logger.info('[EMAIL_SEND_ATTEMPT]', {
           provider: 'mock',
           to,
           subject,
@@ -127,7 +128,7 @@ export async function sendEmail(
         const messageId = `mock-email-${Date.now()}`;
         await sleep(500);
 
-        console.info('[EMAIL_SEND_SUCCESS]', {
+        logger.info('[EMAIL_SEND_SUCCESS]', {
           provider: 'mock',
           to,
           subject,

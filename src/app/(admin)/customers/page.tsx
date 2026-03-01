@@ -15,6 +15,7 @@ import { Customer } from '@prisma/client';
 import { Plus, Search, Copy, CheckCheck } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { clientLogger as logger } from '@/lib/logger/client-logger';
 
 export default function CustomersPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -61,7 +62,7 @@ export default function CustomersPage() {
       setCustomers(response.data.customers ?? []);
       setTotalPages(response.data.meta?.totalPages ?? 1);
     } catch (error) {
-      console.error('Error loading customers:', error);
+      logger.error('Error loading customers:', error);
     } finally {
       setLoading(false);
     }
@@ -104,7 +105,7 @@ export default function CustomersPage() {
       const result = await resetPortalPassword(customer.id);
       setCreatedCredentials({ taxId: result.taxId, password: result.portalPassword, isReset: true });
     } catch (error) {
-      console.error('Error resetting portal password:', error);
+      logger.error('Error resetting portal password:', error);
     }
   };
 

@@ -1,9 +1,16 @@
 import { createNotificationLog } from '@/lib/services/notifications/notification-log.service';
 import prisma from '@/lib/db';
+import { logger } from '@/lib/logger/logger.service';
 
 jest.mock('@/lib/db', () => ({
   notificationLog: {
     create: jest.fn(),
+  },
+}));
+
+jest.mock('@/lib/logger/logger.service', () => ({
+  logger: {
+    error: jest.fn(),
   },
 }));
 
@@ -35,7 +42,6 @@ describe('NotificationLogService', () => {
 
   it('handles error gracefully when log creation fails', async () => {
     (prisma.notificationLog.create as jest.Mock).mockRejectedValue(new Error('DB Error'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
     const result = await createNotificationLog({
       channel: 'EMAIL',
@@ -44,7 +50,6 @@ describe('NotificationLogService', () => {
     });
 
     expect(result).toBeNull();
-    expect(consoleSpy).toHaveBeenCalledWith('Error creating notification log:', expect.any(Error));
-    consoleSpy.mockRestore();
+    expect(logger.error).toHaveBeenCalledWith('Error creating notification log:', expect.any(Error));
   });
 });

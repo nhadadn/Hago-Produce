@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger/logger.service';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { analyzeIntent } from '@/lib/services/chat/intents';
 import { executeQuery } from '@/lib/services/chat/query-executor';
@@ -149,7 +150,7 @@ export async function POST(req: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    console.error('[CHAT_QUERY_POST]', error);
+    logger.error('[CHAT_QUERY_POST]', error);
     return NextResponse.json(
       {
         success: false,

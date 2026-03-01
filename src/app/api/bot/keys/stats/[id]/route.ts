@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { subDays, format } from 'date-fns';
+import { logger } from '@/lib/logger/logger.service';
 
 export async function GET(
   request: Request,
@@ -83,7 +84,7 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error('Error getting bot key stats:', error);
+    logger.error('Error getting bot key stats:', error);
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: error.message || 'Error al obtener estadísticas de la clave' } },
       { status: 500 }
