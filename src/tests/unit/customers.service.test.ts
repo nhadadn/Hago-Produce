@@ -36,7 +36,7 @@ describe('CustomerService', () => {
         orderBy: { createdAt: 'desc' },
       }));
       expect(result).toEqual({
-        customers: mockCustomers,
+        data: mockCustomers,
         meta: {
           page: 1,
           limit: 10,

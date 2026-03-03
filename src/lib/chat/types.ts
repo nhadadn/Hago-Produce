@@ -13,7 +13,9 @@ export type ChatIntent =
   | 'overdue_invoices'
   | 'create_purchase_order'
   | 'confirm_purchase_order'
-  | 'cancel_purchase_order';
+  | 'cancel_purchase_order'
+  | 'customer_info'
+  | 'create_invoice';
 
 export interface ChatRequestPayload {
   message: string;
@@ -40,6 +42,7 @@ export interface ChatServiceContext {
   userId?: string;
   customerId?: string | null;
   pendingOrder?: any;
+  pendingInvoice?: any;
   pendingPurchaseOrders?: any;
   message?: any;
 }

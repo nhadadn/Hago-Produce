@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>TESTING-GUIDE.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="hago-produce--gu%C3%ADa-de-testing-del-chatbot">HAGO PRODUCE — Guía de Testing del Chatbot</h1>
+<h2 id="sprint-7--intents-de-consulta">Sprint 7 — Intents de Consulta</h2>
+<h3 id="introducci%C3%B3n">INTRODUCCIÓN</h3>
+<p>Este documento guía el proceso de validación manual (QA) de los 8 intents de consulta del chatbot de Hago Produce. El objetivo es asegurar que el bot responda correctamente a preguntas de negocio en español e inglés, manejando adecuadamente errores y ambigüedades antes del despliegue en producción.</p>
+<hr>
+<h3 id="c%C3%B3mo-interpretar-los-resultados">CÓMO INTERPRETAR LOS RESULTADOS</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Símbolo</th>
+<th style="text-align:left">Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">✅</td>
+<td style="text-align:left">Respuesta correcta (Intent identificado y datos mostrados)</td>
+</tr>
+<tr>
+<td style="text-align:center">❌</td>
+<td style="text-align:left">Bug encontrado (Crash, respuesta vacía o intent incorrecto)</td>
+</tr>
+<tr>
+<td style="text-align:center">⚠️</td>
+<td style="text-align:left">Comportamiento inesperado (Pero no crítico)</td>
+</tr>
+<tr>
+<td style="text-align:center">📝</td>
+<td style="text-align:left">Anotar para revisión (Mejora de UX o texto)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="1-pricelookup">1. PRICE_LOOKUP</h2>
+<p><strong>Propósito:</strong> Consultar el precio de venta o costo actual de un producto específico.
+<strong>Cuándo se activa:</strong> Preguntas sobre &quot;precio&quot;, &quot;costo&quot;, &quot;cuánto cuesta&quot;.</p>
+<h3 id="mensajes-de-prueba">Mensajes de Prueba</h3>
+<h4 id="%E2%9C%85-mensajes-que-deben-funcionar">✅ Mensajes que DEBEN funcionar</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Qué esperar en la respuesta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Precio del tomate roma&quot;</td>
+<td style="text-align:left">Lista de precios actuales para Tomate Roma</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;How much is the avocado?&quot;</td>
+<td style="text-align:left">Precios del aguacate (Avocado) en inglés</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;Dame el costo de la lechuga&quot;</td>
+<td style="text-align:left">Costos de lechuga (si el usuario es admin/ventas)</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">&quot;Precio de limón persa de Don Limón&quot;</td>
+<td style="text-align:left">Precio específico filtrado por proveedor &quot;Don Limón&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">&quot;¿A cómo está el mango ataulfo?&quot;</td>
+<td style="text-align:left">Precio actual del Mango Ataulfo</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9D%8C-mensajes-que-no-deben-activar-este-intent">❌ Mensajes que NO deben activar este intent</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;¿Quién vende el tomate más barato?&quot;</td>
+<td style="text-align:left"><code>BEST_SUPPLIER</code></td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Información del tomate roma&quot;</td>
+<td style="text-align:left"><code>PRODUCT_INFO</code></td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;¿Qué tomates tienes en inventario?&quot;</td>
+<td style="text-align:left"><code>INVENTORY_SUMMARY</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9A%A0%EF%B8%8F-casos-especiales-a-verificar">⚠️ Casos especiales a verificar</h4>
+<ul>
+<li><input type="checkbox" id="checkbox0"><label for="checkbox0"></label><strong>Producto con typo</strong>
+Mensaje: &quot;Precio del tommate&quot;
+Esperar: Sugerencias de productos (&quot;Quizás quisiste decir: Tomate&quot;) o resultado corregido.</li>
+<li><input type="checkbox" id="checkbox1"><label for="checkbox1"></label><strong>Producto inexistente</strong>
+Mensaje: &quot;Precio de kryptonita&quot;
+Esperar: Mensaje amigable indicando que no se encontró el producto (sin crash).</li>
+<li><input type="checkbox" id="checkbox2"><label for="checkbox2"></label><strong>Búsqueda en inglés</strong>
+Mensaje: &quot;Price of strawberries&quot;
+Esperar: Respuesta en inglés con precios de fresas.</li>
+</ul>
+<hr>
+<h2 id="2-bestsupplier">2. BEST_SUPPLIER</h2>
+<p><strong>Propósito:</strong> Identificar qué proveedor ofrece el mejor precio para un producto.
+<strong>Cuándo se activa:</strong> Preguntas sobre &quot;mejor proveedor&quot;, &quot;más barato&quot;, &quot;quién vende&quot;.</p>
+<h3 id="mensajes-de-prueba">Mensajes de Prueba</h3>
+<h4 id="%E2%9C%85-mensajes-que-deben-funcionar">✅ Mensajes que DEBEN funcionar</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Qué esperar en la respuesta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;¿Quién tiene el mejor precio de tomate?&quot;</td>
+<td style="text-align:left">El proveedor con el costo más bajo</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Best supplier for limes&quot;</td>
+<td style="text-align:left">Proveedor más barato para limones (en inglés)</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;¿Quién me vende cebolla blanca?&quot;</td>
+<td style="text-align:left">Lista de proveedores de cebolla ordenados por precio</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">&quot;Proveedor más barato de aguacate hass&quot;</td>
+<td style="text-align:left">El proveedor top 1 del ranking</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">&quot;Dame los 3 mejores proveedores de papaya&quot;</td>
+<td style="text-align:left">Top 3 proveedores de papaya</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9D%8C-mensajes-que-no-deben-activar-este-intent">❌ Mensajes que NO deben activar este intent</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;¿Cuál es el precio del tomate?&quot;</td>
+<td style="text-align:left"><code>PRICE_LOOKUP</code></td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Datos del proveedor Walmart&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_INFO</code> (o supplier info si existiera)</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;Inventario de tomate&quot;</td>
+<td style="text-align:left"><code>INVENTORY_SUMMARY</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9A%A0%EF%B8%8F-casos-especiales-a-verificar">⚠️ Casos especiales a verificar</h4>
+<ul>
+<li><input type="checkbox" id="checkbox3"><label for="checkbox3"></label><strong>Múltiples proveedores</strong>
+Mensaje: &quot;Mejor proveedor de tomate saladette&quot;
+Esperar: Lista comparativa si hay varios, destacando el mejor.</li>
+<li><input type="checkbox" id="checkbox4"><label for="checkbox4"></label><strong>Proveedor único</strong>
+Mensaje: [Producto con 1 solo proveedor]
+Esperar: Respuesta directa sin comparativa innecesaria.</li>
+<li><input type="checkbox" id="checkbox5"><label for="checkbox5"></label><strong>Sin proveedores activos</strong>
+Mensaje: &quot;Mejor proveedor de [producto_nuevo]&quot;
+Esperar: Aviso de que no hay proveedores activos para ese producto.</li>
+</ul>
+<hr>
+<h2 id="3-invoicestatus">3. INVOICE_STATUS</h2>
+<p><strong>Propósito:</strong> Consultar el estado (pagada, vencida, pendiente) de una o varias facturas.
+<strong>Cuándo se activa:</strong> Preguntas sobre &quot;factura&quot;, &quot;status de factura&quot;, &quot;estado&quot;.</p>
+<h3 id="mensajes-de-prueba">Mensajes de Prueba</h3>
+<h4 id="%E2%9C%85-mensajes-que-deben-funcionar">✅ Mensajes que DEBEN funcionar</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Qué esperar en la respuesta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Estado de la factura 12345&quot;</td>
+<td style="text-align:left">Detalles de la factura #12345 (Status, Monto, Fecha)</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Invoice status for Walmart&quot;</td>
+<td style="text-align:left">Lista de facturas recientes de Walmart</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;¿Cómo va la última factura de Loblaws?&quot;</td>
+<td style="text-align:left">Estado de la factura más reciente de Loblaws</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">&quot;Check invoice INV-999&quot;</td>
+<td style="text-align:left">Búsqueda por formato alfanumérico si aplica</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">&quot;Estatus factura Costco&quot;</td>
+<td style="text-align:left">Resumen de facturas de Costco</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9D%8C-mensajes-que-no-deben-activar-este-intent">❌ Mensajes que NO deben activar este intent</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;¿Cuánto me debe Walmart?&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_BALANCE</code></td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Facturas vencidas de Walmart&quot;</td>
+<td style="text-align:left"><code>OVERDUE_INVOICES</code></td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;Contacto de facturación de Walmart&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_INFO</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9A%A0%EF%B8%8F-casos-especiales-a-verificar">⚠️ Casos especiales a verificar</h4>
+<ul>
+<li><input type="checkbox" id="checkbox6"><label for="checkbox6"></label><strong>Búsqueda por número exacto</strong>
+Mensaje: &quot;Factura 1001&quot;
+Esperar: Datos precisos de esa factura única.</li>
+<li><input type="checkbox" id="checkbox7"><label for="checkbox7"></label><strong>Última factura del cliente</strong>
+Mensaje: &quot;Última factura de Sobeys&quot;
+Esperar: La factura con fecha de emisión más reciente.</li>
+<li><input type="checkbox" id="checkbox8"><label for="checkbox8"></label><strong>Lista de facturas</strong>
+Mensaje: &quot;Facturas de Metro&quot;
+Esperar: Lista de las últimas 5-10 facturas con sus estados.</li>
+</ul>
+<hr>
+<h2 id="4-customerbalance">4. CUSTOMER_BALANCE</h2>
+<p><strong>Propósito:</strong> Conocer el saldo total (deuda) de un cliente.
+<strong>Cuándo se activa:</strong> Preguntas sobre &quot;saldo&quot;, &quot;cuánto debe&quot;, &quot;balance&quot;, &quot;cuenta&quot;.</p>
+<h3 id="mensajes-de-prueba">Mensajes de Prueba</h3>
+<h4 id="%E2%9C%85-mensajes-que-deben-funcionar">✅ Mensajes que DEBEN funcionar</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Qué esperar en la respuesta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Saldo de Walmart&quot;</td>
+<td style="text-align:left">Monto total adeudado por Walmart</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;What is the balance for Loblaws?&quot;</td>
+<td style="text-align:left">Saldo en inglés para Loblaws</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;¿Cuánto debe Costco?&quot;</td>
+<td style="text-align:left">Deuda total de Costco</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">&quot;Dime el saldo de Sobeys&quot;</td>
+<td style="text-align:left">Balance actual de Sobeys</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">&quot;Balance general de clientes&quot;</td>
+<td style="text-align:left">(Si admin) Resumen o Top deudores</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9D%8C-mensajes-que-no-deben-activar-este-intent">❌ Mensajes que NO deben activar este intent</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Estado de factura de Walmart&quot;</td>
+<td style="text-align:left"><code>INVOICE_STATUS</code></td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;¿Qué facturas debe Walmart?&quot;</td>
+<td style="text-align:left"><code>OVERDUE_INVOICES</code> (Sutil diferencia: saldo es monto total, overdue es lista)</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;Dirección de Walmart&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_INFO</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9A%A0%EF%B8%8F-casos-especiales-a-verificar">⚠️ Casos especiales a verificar</h4>
+<ul>
+<li><input type="checkbox" id="checkbox9"><label for="checkbox9"></label><strong>Cliente con solo OVERDUE</strong>
+Mensaje: &quot;Saldo de [Cliente_Moroso]&quot;
+Esperar: Alerta visual o énfasis en que el saldo está vencido.</li>
+<li><input type="checkbox" id="checkbox10"><label for="checkbox10"></label><strong>Consulta global</strong>
+Mensaje: &quot;Saldo total&quot;
+Esperar: Error pidiendo especificar cliente o resumen global de cartera (según permisos).</li>
+<li><input type="checkbox" id="checkbox12"><label for="checkbox12"></label><strong>Cliente al corriente</strong>
+Mensaje: &quot;Saldo de [Cliente_Nuevo]&quot;
+<input type="checkbox" id="checkbox11" checked="true"><label for="checkbox11">no tiene saldo pendiente&quot; (Saldo $0.00).</label></li>
+</ul>
+<hr>
+<h2 id="5-productinfo">5. PRODUCT_INFO</h2>
+<p><strong>Propósito:</strong> Obtener ficha técnica o información general de un producto.
+<strong>Cuándo se activa:</strong> Preguntas sobre &quot;información&quot;, &quot;qué es&quot;, &quot;datos&quot;, &quot;detalle&quot;.</p>
+<h3 id="mensajes-de-prueba">Mensajes de Prueba</h3>
+<h4 id="%E2%9C%85-mensajes-que-deben-funcionar">✅ Mensajes que DEBEN funcionar</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Qué esperar en la respuesta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Información del mango ataulfo&quot;</td>
+<td style="text-align:left">Ficha técnica (origen, calibres, etc.)</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Product info for avocado&quot;</td>
+<td style="text-align:left">Datos del aguacate en inglés</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;¿Qué es el tomate grape?&quot;</td>
+<td style="text-align:left">Descripción del producto</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">&quot;Datos técnicos de la papaya maradol&quot;</td>
+<td style="text-align:left">Especificaciones de la papaya</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">&quot;Info lechuga romana&quot;</td>
+<td style="text-align:left">Detalle del producto</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9D%8C-mensajes-que-no-deben-activar-este-intent">❌ Mensajes que NO deben activar este intent</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Precio del mango&quot;</td>
+<td style="text-align:left"><code>PRICE_LOOKUP</code></td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;¿Quién vende mango?&quot;</td>
+<td style="text-align:left"><code>BEST_SUPPLIER</code></td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;¿Hay mango?&quot;</td>
+<td style="text-align:left"><code>INVENTORY_SUMMARY</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9A%A0%EF%B8%8F-casos-especiales-a-verificar">⚠️ Casos especiales a verificar</h4>
+<ul>
+<li><input type="checkbox" id="checkbox13"><label for="checkbox13"></label><strong>Producto inactivo</strong>
+Mensaje: &quot;Info de [producto_descontinuado]&quot;
+Esperar: Datos históricos o aviso de que ya no se maneja.</li>
+<li><input type="checkbox" id="checkbox14"><label for="checkbox14"></label><strong>Producto con typo</strong>
+Mensaje: &quot;Información del aguacatte&quot;
+Esperar: Resolución correcta del nombre (fuzzy search).</li>
+<li><input type="checkbox" id="checkbox15"><label for="checkbox15"></label><strong>Búsqueda en inglés</strong>
+Mensaje: &quot;Info about strawberries&quot;
+Esperar: Respuesta coherente en inglés.</li>
+</ul>
+<hr>
+<h2 id="6-customerinfo">6. CUSTOMER_INFO</h2>
+<p><strong>Propósito:</strong> Obtener datos de contacto, dirección o fiscales de un cliente.
+<strong>Cuándo se activa:</strong> Preguntas sobre &quot;contacto&quot;, &quot;dirección&quot;, &quot;teléfono&quot;, &quot;email&quot;, &quot;RFC&quot;.</p>
+<h3 id="mensajes-de-prueba">Mensajes de Prueba</h3>
+<h4 id="%E2%9C%85-mensajes-que-deben-funcionar">✅ Mensajes que DEBEN funcionar</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Qué esperar en la respuesta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Dirección de Walmart&quot;</td>
+<td style="text-align:left">Dirección fiscal/entrega de Walmart</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Contact info for Costco&quot;</td>
+<td style="text-align:left">Teléfono/Email de contacto de Costco</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;RFC de Soriana&quot;</td>
+<td style="text-align:left">Dato fiscal (Tax ID)</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">&quot;¿Quién es el contacto de Loblaws?&quot;</td>
+<td style="text-align:left">Nombre del comprador o contacto registrado</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">&quot;Datos de cliente Sobeys&quot;</td>
+<td style="text-align:left">Ficha general del cliente</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9D%8C-mensajes-que-no-deben-activar-este-intent">❌ Mensajes que NO deben activar este intent</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Saldo de Walmart&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_BALANCE</code></td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Facturas de Walmart&quot;</td>
+<td style="text-align:left"><code>INVOICE_STATUS</code></td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;Ventas a Walmart&quot;</td>
+<td style="text-align:left">(Reporte de ventas - fuera de alcance o intent genérico)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9A%A0%EF%B8%8F-casos-especiales-a-verificar">⚠️ Casos especiales a verificar</h4>
+<ul>
+<li><input type="checkbox" id="checkbox16"><label for="checkbox16"></label><strong>Múltiples clientes similares</strong>
+Mensaje: &quot;Datos de Wal&quot;
+Esperar: &quot;¿Te refieres a Walmart Supercenter o Walmart Express?&quot; (Lista de opciones).</li>
+<li><input type="checkbox" id="checkbox17"><label for="checkbox17"></label><strong>Búsqueda por Tax ID</strong>
+Mensaje: &quot;Cliente con RFC XAXX010101000&quot;
+Esperar: Datos del cliente asociado a ese ID fiscal.</li>
+<li><input type="checkbox" id="checkbox18"><label for="checkbox18"></label><strong>Cliente inactivo</strong>
+Mensaje: &quot;Contacto de [Cliente_Baja]&quot;
+Esperar: Datos indicando su estatus inactivo.</li>
+</ul>
+<hr>
+<h2 id="7-overdueinvoices">7. OVERDUE_INVOICES</h2>
+<p><strong>Propósito:</strong> Listar facturas que ya pasaron su fecha de pago.
+<strong>Cuándo se activa:</strong> Preguntas sobre &quot;vencidas&quot;, &quot;atrasadas&quot;, &quot;morosos&quot;, &quot;cobranza&quot;.</p>
+<h3 id="mensajes-de-prueba">Mensajes de Prueba</h3>
+<h4 id="%E2%9C%85-mensajes-que-deben-funcionar">✅ Mensajes que DEBEN funcionar</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Qué esperar en la respuesta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Facturas vencidas de Walmart&quot;</td>
+<td style="text-align:left">Lista de facturas en status OVERDUE</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Overdue invoices for Loblaws&quot;</td>
+<td style="text-align:left">Lista en inglés de facturas vencidas</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;¿Qué me debe Costco atrasado?&quot;</td>
+<td style="text-align:left">Facturas pendientes con fecha pasada</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">&quot;Cobranza de Sobeys&quot;</td>
+<td style="text-align:left">Resumen de deuda vencida</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">&quot;Ver vencidos de Metro&quot;</td>
+<td style="text-align:left">Lista de documentos vencidos</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9D%8C-mensajes-que-no-deben-activar-este-intent">❌ Mensajes que NO deben activar este intent</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Saldo de Walmart&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_BALANCE</code> (Saldo total, no solo vencido)</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Estado de factura 123&quot;</td>
+<td style="text-align:left"><code>INVOICE_STATUS</code></td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;Facturas de Walmart&quot;</td>
+<td style="text-align:left"><code>INVOICE_STATUS</code> (Si no especifica &quot;vencidas&quot;)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9A%A0%EF%B8%8F-casos-especiales-a-verificar">⚠️ Casos especiales a verificar</h4>
+<ul>
+<li><input type="checkbox" id="checkbox19"><label for="checkbox19"></label><strong>Cliente sin facturas vencidas</strong>
+Mensaje: &quot;Vencidas de [Cliente_Cumplido]&quot;
+Esperar: &quot;¡Excelente! [Cliente] no tiene facturas vencidas.&quot;</li>
+<li><input type="checkbox" id="checkbox20"><label for="checkbox20"></label><strong>Reporte global</strong>
+Mensaje: &quot;Todas las facturas vencidas&quot;
+Esperar: Top 10 clientes con mayor deuda vencida (si es admin).</li>
+<li><input type="checkbox" id="checkbox21"><label for="checkbox21"></label><strong>Filtro por días</strong>
+Mensaje: &quot;Vencidas hace más de 30 días&quot;
+Esperar: (Si está implementado) Filtro por antigüedad de saldo.</li>
+</ul>
+<hr>
+<h2 id="8-inventorysummary">8. INVENTORY_SUMMARY</h2>
+<p><strong>Propósito:</strong> Consultar disponibilidad de productos (catálogo).
+<strong>Cuándo se activa:</strong> Preguntas sobre &quot;qué tienes&quot;, &quot;catálogo&quot;, &quot;inventario&quot;, &quot;disponible&quot;.</p>
+<h3 id="mensajes-de-prueba">Mensajes de Prueba</h3>
+<h4 id="%E2%9C%85-mensajes-que-deben-funcionar">✅ Mensajes que DEBEN funcionar</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Qué esperar en la respuesta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;¿Qué tienes en inventario?&quot;</td>
+<td style="text-align:left">Resumen general o lista de categorías</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Show me available fruits&quot;</td>
+<td style="text-align:left">Lista de frutas disponibles</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;Catálogo de verduras&quot;</td>
+<td style="text-align:left">Lista de verduras disponibles</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">&quot;¿Hay tomate?&quot;</td>
+<td style="text-align:left">Confirmación de existencia de tomate y variedades</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">&quot;Resumen de inventario&quot;</td>
+<td style="text-align:left">Reporte general de stock</td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9D%8C-mensajes-que-no-deben-activar-este-intent">❌ Mensajes que NO deben activar este intent</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">&quot;Precio del tomate&quot;</td>
+<td style="text-align:left"><code>PRICE_LOOKUP</code></td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">&quot;Info del tomate&quot;</td>
+<td style="text-align:left"><code>PRODUCT_INFO</code></td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&quot;Mejor proveedor de tomate&quot;</td>
+<td style="text-align:left"><code>BEST_SUPPLIER</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="%E2%9A%A0%EF%B8%8F-casos-especiales-a-verificar">⚠️ Casos especiales a verificar</h4>
+<ul>
+<li><input type="checkbox" id="checkbox22"><label for="checkbox22"></label><strong>Filtro por categoría</strong>
+Mensaje: &quot;Qué frutas tienes&quot;
+Esperar: Solo productos categorizados como FRUTA.</li>
+<li><input type="checkbox" id="checkbox23"><label for="checkbox23"></label><strong>Catálogo completo</strong>
+Mensaje: &quot;Catálogo&quot;
+Esperar: Lista paginada o agrupada por categorías.</li>
+<li><input type="checkbox" id="checkbox24"><label for="checkbox24"></label><strong>Categoría inexistente</strong>
+Mensaje: &quot;Inventario de electrodomésticos&quot;
+Esperar: &quot;No manejamos esa categoría. Prueba con Frutas o Verduras.&quot;</li>
+</ul>
+<hr>
+<h3 id="pruebas-de-desambiguaci%C3%B3n">PRUEBAS DE DESAMBIGUACIÓN</h3>
+<p>Prueba crítica para asegurar que el bot distingue la intención cuando la entidad (Producto/Cliente) es la misma.</p>
+<p><strong>Producto de prueba:</strong> TOMATE
+<strong>Cliente de prueba:</strong> WALMART</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Mensaje</th>
+<th style="text-align:left">Intent Esperado</th>
+<th style="text-align:left">Señal Clave</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">&quot;Precio del tomate&quot;</td>
+<td style="text-align:left"><code>PRICE_LOOKUP</code></td>
+<td style="text-align:left">&quot;Precio&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Costo de tomate&quot;</td>
+<td style="text-align:left"><code>PRICE_LOOKUP</code></td>
+<td style="text-align:left">&quot;Costo&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Info del tomate&quot;</td>
+<td style="text-align:left"><code>PRODUCT_INFO</code></td>
+<td style="text-align:left">&quot;Info&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Ficha técnica tomate&quot;</td>
+<td style="text-align:left"><code>PRODUCT_INFO</code></td>
+<td style="text-align:left">&quot;Ficha técnica&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;¿Quién vende tomate?&quot;</td>
+<td style="text-align:left"><code>BEST_SUPPLIER</code></td>
+<td style="text-align:left">&quot;Quién vende&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Mejor proveedor tomate&quot;</td>
+<td style="text-align:left"><code>BEST_SUPPLIER</code></td>
+<td style="text-align:left">&quot;Mejor proveedor&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;¿Hay tomate?&quot;</td>
+<td style="text-align:left"><code>INVENTORY_SUMMARY</code></td>
+<td style="text-align:left">&quot;Hay&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Inventario de tomate&quot;</td>
+<td style="text-align:left"><code>INVENTORY_SUMMARY</code></td>
+<td style="text-align:left">&quot;Inventario&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Datos de Walmart&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_INFO</code></td>
+<td style="text-align:left">&quot;Datos&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Contacto Walmart&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_INFO</code></td>
+<td style="text-align:left">&quot;Contacto&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Saldo de Walmart&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_BALANCE</code></td>
+<td style="text-align:left">&quot;Saldo&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;¿Cuánto debe Walmart?&quot;</td>
+<td style="text-align:left"><code>CUSTOMER_BALANCE</code></td>
+<td style="text-align:left">&quot;Cuánto debe&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Estado facturas Walmart&quot;</td>
+<td style="text-align:left"><code>INVOICE_STATUS</code></td>
+<td style="text-align:left">&quot;Estado facturas&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Factura reciente Walmart&quot;</td>
+<td style="text-align:left"><code>INVOICE_STATUS</code></td>
+<td style="text-align:left">&quot;Factura reciente&quot;</td>
+</tr>
+<tr>
+<td style="text-align:left">&quot;Vencidas de Walmart&quot;</td>
+<td style="text-align:left"><code>OVERDUE_INVOICES</code></td>
+<td style="text-align:left">&quot;Vencidas&quot;</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="reporte-de-bugs">REPORTE DE BUGS</h3>
+<p>Copia y pega este formato para reportar incidencias en el canal de Slack o Jira:</p>
+<pre class="hljs"><code><div><span class="hljs-strong">**Bug encontrado:**</span>
+<span class="hljs-bullet">- </span>Mensaje enviado: "[Escribe aquí el mensaje exacto]"
+<span class="hljs-bullet">- </span>Intent activado (incorrecto): [Nombre del intent que respondió]
+<span class="hljs-bullet">- </span>Intent esperado: [Nombre del intent correcto]
+<span class="hljs-bullet">- </span>Respuesta recibida: "[Resumen o captura de la respuesta]"
+<span class="hljs-bullet">- </span>Severidad: [CRÍTICO (Crash) / ALTO (Info errónea) / MEDIO (Intent incorrecto) / BAJO (Estilo)]
+</div></code></pre>
+<hr>
+<h3 id="criterios-de-%C3%A9xito">CRITERIOS DE ÉXITO</h3>
+<p>Para considerar el sprint aprobado y pasar a producción:</p>
+<ul>
+<li><input type="checkbox" id="checkbox25"><label for="checkbox25">Los 8 intents responden correctamente a sus 5 mensajes básicos (Total 40 pruebas exitosas).</label></li>
+<li><input type="checkbox" id="checkbox26"><label for="checkbox26">Ningún mensaje de la tabla de desambiguación activa el intent incorrecto (0 falsos positivos en casos críticos).</label></li>
+<li><input type="checkbox" id="checkbox27"><label for="checkbox27">Los mensajes en inglés funcionan igual que en español (Multilenguaje verificado).</label></li>
+<li><input type="checkbox" id="checkbox28"><label for="checkbox28">No hay crashes (error 500) ni timeouts en ningún caso de prueba.</label></li>
+</ul>
+
+</body>
+</html>

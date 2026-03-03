@@ -16,13 +16,14 @@ const customJestConfig = {
   ],
   testMatch: [
     '<rootDir>/src/**/*.test.ts',
+    '<rootDir>/src/**/*.test.tsx',
     '<rootDir>/src/**/*.spec.ts',
+    '<rootDir>/src/**/*.spec.tsx',
   ],
   coveragePathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/DocumentacionHagoProduce/',
     '<rootDir>/src/app/',           // Pages y API routes (integration tests)
-    '<rootDir>/src/components/',    // UI components (UI tests separados)
     '<rootDir>/src/tests/',         // Los tests mismos
     '<rootDir>/src/scripts/',       // Scripts CLI
     '<rootDir>/src/lib/validation/', // Schemas de validación (Zod/Yup)

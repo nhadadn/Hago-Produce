@@ -3,32 +3,32 @@ import { BarChart3, Globe2, FileCheck, Truck, ShieldCheck, Zap } from 'lucide-re
 const features = [
   {
     name: 'Control de Inventarios',
-    description: 'Gestión precisa de entradas y salidas. Cumplimiento con Anexo 24 y 31 para operaciones IMMEX.',
+    description: 'Gestión de lotes, empaque y producto terminado. Control de mermas y existencias en tiempo real.',
     icon: FileCheck,
   },
   {
     name: 'Facturación Electrónica',
-    description: 'Emisión de CFDI 4.0 y complementos de Carta Porte. Validación automática ante el SAT.',
+    description: 'Facturación integrada con complementos de comercio exterior. Agiliza tus cobros y cumple con el SAT.',
     icon: Zap,
   },
   {
     name: 'Logística y Embarques',
-    description: 'Trazabilidad completa de la cadena de suministro. Control de pedimentos y documentación aduanera.',
+    description: 'Planificación de cargas y seguimiento de pedidos. Documentación de exportación simplificada.',
     icon: Truck,
   },
   {
     name: 'Reportes Inteligentes',
-    description: 'Dashboards interactivos para toma de decisiones. KPIs financieros y operativos en tiempo real.',
+    description: 'Análisis de ventas, costos y márgenes por producto. Información clave para hacer crecer tu negocio.',
     icon: BarChart3,
   },
   {
     name: 'Multi-idioma y Divisas',
-    description: 'Soporte nativo para operaciones internacionales. Documentación en Español e Inglés.',
+    description: 'Soporte para múltiples monedas y tipos de cambio. Documentos en inglés y español para tus clientes.',
     icon: Globe2,
   },
   {
     name: 'Seguridad y Cumplimiento',
-    description: 'Roles de usuario granulares, auditoría de cambios y protección de datos empresariales.',
+    description: 'Control de acceso seguro y respaldo de información. Tu operación siempre disponible y protegida.',
     icon: ShieldCheck,
   },
 ];
