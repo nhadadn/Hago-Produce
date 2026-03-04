@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -85,7 +86,7 @@ export function LoginForm() {
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-col gap-3">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
@@ -96,6 +97,12 @@ export function LoginForm() {
               'Ingresar'
             )}
           </Button>
+          <Link href="/" className="w-full">
+            <Button type="button" variant="ghost" className="w-full" disabled={isLoading}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Regresar al inicio
+            </Button>
+          </Link>
         </CardFooter>
       </form>
     </Card>

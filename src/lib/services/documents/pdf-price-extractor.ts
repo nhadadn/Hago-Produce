@@ -99,6 +99,7 @@ export async function extractPricesFromPdf(
     })
 
     try {
+      logger.debug(`[PDF_EXTRACTOR] API Key length: ${apiKey.length}`)
       await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: 'Say OK' }],
@@ -109,6 +110,14 @@ export async function extractPricesFromPdf(
       if (apiError instanceof OpenAI.APIConnectionTimeoutError) {
         throw new Error('OPENAI_TIMEOUT (connectivity test)')
       }
+      logger.error('[PDF_EXTRACTOR] OpenAI API Error Details:', {
+        message: apiError.message,
+        type: apiError.type,
+        code: apiError.code,
+        param: apiError.param,
+        cause: apiError.cause,
+        stack: apiError.stack
+      })
       throw apiError
     }
   } catch (connError: any) {

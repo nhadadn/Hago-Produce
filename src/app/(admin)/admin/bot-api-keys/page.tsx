@@ -476,7 +476,7 @@ export default function BotApiKeysPage() {
                   <TableCell>{key.rateLimit}/min</TableCell>
                   <TableCell>
                     {key.isActive ? (
-                      <Badge className="bg-green-600 hover:bg-green-700">Activa</Badge>
+                      <Badge className="bg-hago-primary-700 hover:bg-hago-primary-800">Activa</Badge>
                     ) : (
                       <Badge variant="destructive">Revocada</Badge>
                     )}
@@ -702,7 +702,7 @@ export default function BotApiKeysPage() {
       <Dialog open={isNewKeyOpen} onOpenChange={setIsNewKeyOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-green-600">
+            <DialogTitle className="flex items-center gap-2 text-hago-primary-700">
               <Check className="h-5 w-5" />
               API Key Generada Exitosamente
             </DialogTitle>

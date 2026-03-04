@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Summary - Hago Produce Chatbot Strategy</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 25px;
+        }
+        .before {
+            background-color: #ffebee;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .after {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .metrics {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            margin: 10px;
+            min-width: 150px;
+        }
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .metric-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .arrow {
+            text-align: center;
+            font-size: 2em;
+            color: #3498db;
+            margin: 20px 0;
+        }
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Executive Summary: Hago Produce Chatbot Strategy</h1>
+        <p><strong>Sprint 7 | 28/02/2026</strong></p>
+
+        <h2>🔴 Estado Actual (ANTES del Sprint)</h2>
+        <div class="before">
+            <p>El chatbot presenta una <strong>discrepancia crítica</strong>: aunque el 100% de los intents están implementados a nivel de código, el sistema de enrutamiento (NLU) tiene fallos estructurales que bloquean el acceso a esta funcionalidad.</p>
+            <ul>
+                <li><strong>Percepción de funcionalidad:</strong> ~10% por parte de los usuarios</li>
+                <li><strong>Intent recognition rate:</strong> ~60% (debido a Regex agresivas)</li>
+                <li><strong>Brechas críticas:</strong> 7 identificadas</li>
+                <li><strong>Problema principal:</strong> Regex de facturas captura "crear factura nueva" como consulta de estatus</li>
+                <li><strong>Intents faltantes:</strong> create_invoice, confirm_invoice, cancel_invoice no existen</li>
+            </ul>
+        </div>
+
+        <div class="arrow">⬇️</div>
+
+        <h2>🟢 Estado Esperado (DESPUÉS de la Estrategia)</h2>
+        <div class="after">
+            <p>Implementación completa de estrategia de prompting que mitiga las brechas identificadas y optimiza la interacción del LLM con el contexto de HAGO PRODUCE.</p>
+            <ul>
+                <li><strong>Percepción de funcionalidad:</strong> ~85% (acceso a toda la funcionalidad implementada)</li>
+                <li><strong>Intent recognition rate:</strong> ≥90% (objetivo)</li>
+                <li><strong>Brechas resueltas:</strong> 7 críticas + 3 estructurales</li>
+                <li><strong>Intents completos:</strong> 17 intents implementados y funcionales</li>
+                <li><strong>OpenAI Tools:</strong> Implementadas para clasificación robusta</li>
+            </ul>
+        </div>
+
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-value">60% → 90%</div>
+                <div class="metric-label">Intent Recognition Rate</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">10% → 85%</div>
+                <div class="metric-label">Percepción de Funcionalidad</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">14 → 17</div>
+                <div class="metric-label">Intents Implementados</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">~2s → <1.2s</div>
+                <div class="metric-label">Latencia E2E</div>
+            </div>
+        </div>
+
+        <h2>📋 Entregables Generados</h2>
+        <ul>
+            <li><strong>CTO_action_plan.md:</strong> Documento ejecutivo con análisis de brechas y plan estratégico</li>
+            <li><strong>prompting_strategy.md:</strong> Estrategia completa de prompting (principios, arquitectura, tools, fallbacks)</li>
+            <li><strong>sequential_prompts.md:</strong> Prompts secuenciales para los 17 intents con casos de prueba</li>
+        </ul>
+
+        <h2>⚡ Impacto Esperado</h2>
+        <p>Esta estrategia desbloqueará la funcionalidad de facturación, mejorará significativamente la precisión de detección de intents, y proporcionará una base sólida para optimizaciones futuras. El chatbot pasará de ser percibido como "casi inútil" a ser una herramienta productiva integral del ERP de HAGO PRODUCE.</p>
+    </div>
+</body>
+</html>

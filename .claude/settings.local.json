@@ -4,7 +4,22 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(python:*)",
+      "Bash(npm test:*)",
+      "Bash(sort:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(/c/Python312/python:*)",
+      "Bash(printf '%s' \"import base64, os:*)",
+      "Bash(node -e:*)",
+      "Bash(# On:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\sephi\\Documents\\Compadres_repos\\Hago-Produce",
+      "\\tmp"
     ]
   }
 }

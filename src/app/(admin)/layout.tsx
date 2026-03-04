@@ -1,5 +1,6 @@
 import { AdminShell } from "@/components/layout/AdminShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FloatingChatAssistant } from "@/components/chat/FloatingChatAssistant";
 
 export default function AdminLayout({
   children,
@@ -9,6 +10,7 @@ export default function AdminLayout({
   return (
     <AdminShell>
       <ErrorBoundary>{children}</ErrorBoundary>
+      <FloatingChatAssistant />
     </AdminShell>
   );
 }
