@@ -17,7 +17,7 @@ export function Testimonials() {
       },
     },
     {
-      body: 'Cumplir con los requisitos del SAT y Anexo 24 nunca había sido tan sencillo. Altamente recomendado.',
+      body: 'Cumplir con los requisitos del SAT y las certificaciones de exportación nunca había sido tan sencillo. Altamente recomendado.',
       author: {
         name: 'AgroComercial del Norte',
         role: 'Sonora, MX',

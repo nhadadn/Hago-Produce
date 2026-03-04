@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,7 +10,7 @@ import {
 } from '@/lib/validation/invoices';
 import { fetchCustomers } from '@/lib/api/customers';
 import { fetchProducts } from '@/lib/api/products';
-import { createInvoice } from '@/lib/api/invoices';
+import { createInvoice, updateInvoice, InvoiceWithDetails } from '@/lib/api/invoices';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,41 +19,60 @@ import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { Customer, InvoiceStatus } from '@prisma/client';
 import type { Product } from '@/lib/api/products';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { InvoiceItemsTable } from './InvoiceItemsTable';
+import { CustomerSelect } from './CustomerSelect';
 
 const DRAFT_STORAGE_KEY = 'invoice-create-draft';
 
-export default function CreateInvoiceForm() {
+interface InvoiceFormProps {
+  initialData?: InvoiceWithDetails;
+  isEditing?: boolean;
+}
+
+export default function InvoiceForm({ initialData, isEditing = false }: InvoiceFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  const form = useForm<CreateInvoiceInput>({
-    resolver: zodResolver(createInvoiceSchema) as any,
-    defaultValues: {
+  const defaultValues = useMemo(() => {
+    if (initialData) {
+      return {
+        customerId: initialData.customerId,
+        issueDate: new Date(initialData.issueDate),
+        dueDate: new Date(initialData.dueDate),
+        taxRate: Number(initialData.taxRate),
+        status: initialData.status,
+        notes: initialData.notes || '',
+        items: initialData.items.map((item) => ({
+          productId: item.productId,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          description: item.description || '',
+        })),
+      };
+    }
+    return {
       issueDate: new Date(),
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       taxRate: 0.13,
       items: [{ productId: '', quantity: 1, unitPrice: 0 }],
       status: InvoiceStatus.DRAFT,
-    },
+    };
+  }, [initialData]);
+
+  const form = useForm<CreateInvoiceInput>({
+    resolver: zodResolver(createInvoiceSchema) as any,
+    defaultValues,
   });
+
+  // Reset form when initialData changes (important for edit mode fetching)
+  useEffect(() => {
+    if (initialData) {
+      form.reset(defaultValues);
+    }
+  }, [initialData, defaultValues, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -79,6 +98,8 @@ export default function CreateInvoiceForm() {
   const total = useMemo(() => subtotal + taxAmount, [subtotal, taxAmount]);
 
   useEffect(() => {
+    if (isEditing) return; // Don't load draft if editing an existing invoice
+
     const rawDraft = typeof window !== 'undefined'
       ? window.localStorage.getItem(DRAFT_STORAGE_KEY)
       : null;
@@ -96,7 +117,7 @@ export default function CreateInvoiceForm() {
         });
       } catch {}
     }
-  }, [form]);
+  }, [form, isEditing]);
 
   useEffect(() => {
     async function loadData() {
@@ -121,52 +142,83 @@ export default function CreateInvoiceForm() {
   }, [toast]);
 
   useEffect(() => {
+    if (isEditing) return; // Don't save draft if editing
+
     const interval = window.setInterval(() => {
       const values = form.getValues();
       window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(values));
     }, 30000);
 
     return () => window.clearInterval(interval);
-  }, [form]);
+  }, [form, isEditing]);
 
-  const handleSubmitDraft = async (data: CreateInvoiceInput) => {
+  const handleSubmitDraft = useCallback(async (data: CreateInvoiceInput) => {
     try {
-      await createInvoice({ ...data, status: InvoiceStatus.DRAFT });
-      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
-      toast({
-        title: 'Borrador guardado',
-        description: 'La factura en borrador se ha guardado correctamente.',
-      });
+      if (isEditing && initialData) {
+        await updateInvoice(initialData.id, { ...data, status: InvoiceStatus.DRAFT });
+        toast({
+          title: 'Factura actualizada',
+          description: 'La factura se ha actualizado correctamente.',
+        });
+      } else {
+        await createInvoice({ ...data, status: InvoiceStatus.DRAFT });
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+        toast({
+          title: 'Borrador guardado',
+          description: 'La factura en borrador se ha guardado correctamente.',
+        });
+      }
       router.push('/invoices');
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'No se pudo guardar el borrador.',
+        description: error.message || 'No se pudo guardar la factura.',
       });
     }
-  };
+  }, [isEditing, initialData, router, toast]);
 
-  const handleSubmitSend = async (data: CreateInvoiceInput) => {
+  const handleSubmitSend = useCallback(async (data: CreateInvoiceInput) => {
     try {
-      await createInvoice({ ...data, status: InvoiceStatus.SENT });
-      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
-      toast({
-        title: 'Factura enviada',
-        description: 'La factura se ha creado y enviado correctamente.',
-      });
+      if (isEditing && initialData) {
+        await updateInvoice(initialData.id, { ...data, status: InvoiceStatus.SENT });
+        toast({
+          title: 'Factura actualizada',
+          description: 'La factura se ha actualizado y enviado correctamente.',
+        });
+      } else {
+        await createInvoice({ ...data, status: InvoiceStatus.SENT });
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+        toast({
+          title: 'Factura enviada',
+          description: 'La factura se ha creado y enviado correctamente.',
+        });
+      }
       router.push('/invoices');
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'No se pudo crear la factura.',
+        description: error.message || 'No se pudo procesar la factura.',
       });
     }
-  };
+  }, [isEditing, initialData, router, toast]);
 
-  const onSubmitDraft = form.handleSubmit(handleSubmitDraft);
-  const onSubmitSend = form.handleSubmit(handleSubmitSend);
+  const onSubmitDraft = form.handleSubmit(handleSubmitDraft, (errors) => {
+    toast({
+      variant: 'destructive',
+      title: 'Error de validación',
+      description: 'Por favor complete todos los campos requeridos (Cliente y Productos).',
+    });
+  });
+
+  const onSubmitSend = form.handleSubmit(handleSubmitSend, (errors) => {
+    toast({
+      variant: 'destructive',
+      title: 'Error de validación',
+      description: 'Por favor complete todos los campos requeridos (Cliente y Productos).',
+    });
+  });
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -174,15 +226,19 @@ export default function CreateInvoiceForm() {
 
       if (event.key === 's') {
         event.preventDefault();
-        const values = form.getValues();
-        window.localStorage.setItem(
-          DRAFT_STORAGE_KEY,
-          JSON.stringify(values),
-        );
-        toast({
-          title: 'Borrador guardado',
-          description: 'Se guardó el borrador localmente.',
-        });
+        if (isEditing) {
+           onSubmitDraft();
+        } else {
+          const values = form.getValues();
+          window.localStorage.setItem(
+            DRAFT_STORAGE_KEY,
+            JSON.stringify(values),
+          );
+          toast({
+            title: 'Borrador guardado',
+            description: 'Se guardó el borrador localmente.',
+          });
+        }
       }
 
       if (event.key === 'Enter') {
@@ -193,7 +249,7 @@ export default function CreateInvoiceForm() {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [form, toast, onSubmitSend]);
+  }, [form, onSubmitSend, onSubmitDraft, isEditing, toast]);
 
   if (loadingData) return <div>Cargando datos...</div>;
 
@@ -289,8 +345,8 @@ export default function CreateInvoiceForm() {
                   disabled={form.formState.isSubmitting}
                 >
                   {form.formState.isSubmitting
-                    ? 'Guardando borrador...'
-                    : 'Guardar como borrador'}
+                    ? isEditing ? 'Guardando...' : 'Guardando borrador...'
+                    : isEditing ? 'Guardar cambios' : 'Guardar como borrador'}
                 </Button>
                 <Button
                   type="button"
@@ -298,8 +354,8 @@ export default function CreateInvoiceForm() {
                   disabled={form.formState.isSubmitting}
                 >
                   {form.formState.isSubmitting
-                    ? 'Enviando factura...'
-                    : 'Enviar ahora'}
+                    ? isEditing ? 'Enviando...' : 'Enviando factura...'
+                    : isEditing ? 'Actualizar y Enviar' : 'Enviar ahora'}
                 </Button>
                 <Button
                   type="button"
@@ -360,63 +416,4 @@ export default function CreateInvoiceForm() {
   );
 }
 
-interface CustomerSelectProps {
-  customers: Customer[];
-  value?: string;
-  onChange: (id: string) => void;
-}
 
-function CustomerSelect({ customers, value, onChange }: CustomerSelectProps) {
-  const [open, setOpen] = useState(false);
-
-  const selected = customers.find((c) => c.id === value) || null;
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          className={cn(
-            'w-full justify-between',
-            !selected && 'text-muted-foreground',
-          )}
-        >
-          {selected ? selected.name : 'Seleccionar cliente'}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0">
-        <Command>
-          <CommandInput placeholder="Buscar cliente..." />
-          <CommandEmpty>No se encontraron clientes.</CommandEmpty>
-          <CommandGroup>
-            {customers.map((customer) => (
-              <CommandItem
-                key={customer.id}
-                value={customer.name}
-                onSelect={() => {
-                  onChange(customer.id);
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={cn(
-                    'mr-2 h-4 w-4',
-                    customer.id === value ? 'opacity-100' : 'opacity-0',
-                  )}
-                />
-                <span className="font-medium">{customer.name}</span>
-                {customer.email && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {customer.email}
-                  </span>
-                )}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}

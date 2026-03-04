@@ -35,7 +35,7 @@ export class ProductService {
     ]);
 
     return {
-      products,
+      data: products,
       meta: {
         page,
         limit,

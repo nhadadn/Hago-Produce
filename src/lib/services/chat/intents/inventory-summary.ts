@@ -6,62 +6,109 @@ export async function inventorySummaryIntent(
   language: ChatLanguage,
   confidence: number,
 ): Promise<QueryExecutionResult> {
-  const products = await prisma.product.findMany({
-    where: {
-      isActive: true,
-      prices: {
-        some: {
-          isCurrent: true,
-        },
-      },
-    },
+  const category = params.category as string | null;
+  const searchTerm = params.searchTerm as string | null;
+
+  // Build filter conditions
+  const where: any = {
+    isActive: true,
+  };
+
+  if (category) {
+    where.category = {
+      contains: category,
+      mode: 'insensitive',
+    };
+  } else if (searchTerm) {
+    where.OR = [
+      { name: { contains: searchTerm, mode: 'insensitive' } },
+      { nameEs: { contains: searchTerm, mode: 'insensitive' } },
+    ];
+  }
+
+  // MUST 1: Dynamic Filters & Pagination
+  let products = await prisma.product.findMany({
+    where,
     include: {
       prices: {
         where: { isCurrent: true },
+        include: { supplier: true },
       },
     },
+    take: 20,
+    orderBy: [
+        { category: 'asc' },
+        { name: 'asc' }
+    ],
   });
 
-  const byCategory = new Map<
-    string,
-    {
-      category: string;
-      products: {
-        id: string;
-        name: string;
-        minPrice: number | null;
-        maxPrice: number | null;
-      }[];
-    }
-  >();
-
-  for (const p of products) {
-    const categoryKey = p.category || 'Uncategorized';
-    const existing =
-      byCategory.get(categoryKey) || ({ category: categoryKey, products: [] } as {
-        category: string;
-        products: { id: string; name: string; minPrice: number | null; maxPrice: number | null }[];
+  // SHOULD 1: Suggest categories if empty result with category filter
+  let suggestedCategories: string[] = [];
+  if (products.length === 0 && category) {
+      // Execute 2nd query (allowed max 2) to check available categories
+      const categories = await prisma.product.findMany({
+          where: { isActive: true, category: { not: null } },
+          select: { category: true },
+          distinct: ['category'],
+          take: 5,
       });
-
-    const prices = p.prices.map((pr) =>
-      pr.sellPrice != null ? Number(pr.sellPrice) : Number(pr.costPrice),
-    );
-    const minPrice = prices.length ? Math.min(...prices) : null;
-    const maxPrice = prices.length ? Math.max(...prices) : null;
-
-    existing.products.push({
-      id: p.id,
-      name: p.name,
-      minPrice,
-      maxPrice,
-    });
-
-    byCategory.set(categoryKey, existing);
+      suggestedCategories = categories.map(c => c.category!).filter(Boolean);
   }
 
-  const items = Array.from(byCategory.values());
+  // Process results in memory
+  const byCategory = new Map<string, number>();
+  
+  const items = products.map(p => {
+    // MUST 2: Response Fields
+    // TODO: Migrate from deprecated ProductPrice to PriceVersion/PriceList
+    const currentPrices = p.prices.map(pr => ({
+        supplierName: pr.supplier.name,
+        costPrice: Number(pr.costPrice),
+        sellPrice: pr.sellPrice ? Number(pr.sellPrice) : null,
+        currency: 'CAD', // Hardcoded per requirement
+    }));
 
-  const sources: ChatSource[] = products.slice(0, 20).map((p) => ({
+    // SHOULD 2: Lowest Price Calculation
+    let lowestPrice: number | null = null;
+    let lowestPriceSupplier: string | null = null;
+
+    if (currentPrices.length > 0) {
+        // Find min costPrice
+        const minPriceObj = currentPrices.reduce((prev, curr) => 
+            prev.costPrice < curr.costPrice ? prev : curr
+        );
+        lowestPrice = minPriceObj.costPrice;
+        lowestPriceSupplier = minPriceObj.supplierName;
+    }
+
+    // MUST 3: Category Summary counting
+    const cat = p.category || 'Uncategorized';
+    byCategory.set(cat, (byCategory.get(cat) || 0) + 1);
+
+    return {
+        id: p.id,
+        name: p.name,
+        nameEs: p.nameEs,
+        category: p.category,
+        unit: p.unit,
+        sku: p.sku,
+        currentPrices,
+        lowestPrice,
+        lowestPriceSupplier,
+    };
+  });
+
+  // Build Summary Object
+  const summary = {
+      totalProducts: items.length,
+      categories: Array.from(byCategory.entries()).map(([name, count]) => ({
+          name,
+          count
+      })),
+      suggestedCategories: suggestedCategories.length > 0 ? suggestedCategories : undefined
+  };
+
+  const sources: ChatSource[] = products.map((p) => ({
     type: 'product',
     id: p.id,
     label: p.name,
@@ -74,8 +121,12 @@ export async function inventorySummaryIntent(
     data: {
       type: 'inventory_summary',
       items,
+      summary,
+      filters: {
+          category: category || null,
+          searchTerm: searchTerm || null
+      }
     },
     sources,
   };
 }
-

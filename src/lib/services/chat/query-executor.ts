@@ -12,7 +12,9 @@ import { productInfoIntent } from '@/lib/services/chat/intents/product-info';
 import { inventorySummaryIntent } from '@/lib/services/chat/intents/inventory-summary';
 import { createOrderIntent, confirmOrderIntent, cancelOrderIntent } from '@/lib/services/chat/intents/create-order';
 import { createPurchaseOrderIntent, confirmPurchaseOrderIntent, cancelPurchaseOrderIntent } from '@/lib/services/chat/intents/create-purchase-order';
+import { createInvoiceIntent, confirmInvoiceIntent, cancelInvoiceIntent } from '@/lib/services/chat/intents/create-invoice';
 import { overdueInvoicesIntent } from '@/lib/services/chat/intents/overdue-invoices';
+import { customerInfoIntent } from '@/lib/services/chat/intents/customer-info';
 
 export async function executeQuery(
   detected: DetectedIntent,
@@ -68,8 +70,24 @@ export async function executeQuery(
     return cancelPurchaseOrderIntent(params, language, confidence, context);
   }
 
+  if (intent === 'create_invoice') {
+    return createInvoiceIntent(params, language, confidence, context);
+  }
+
+  if (intent === 'confirm_invoice') {
+    return confirmInvoiceIntent(params, language, confidence, context);
+  }
+
+  if (intent === 'cancel_invoice') {
+    return cancelInvoiceIntent(params, language, confidence, context);
+  }
+
   if (intent === 'overdue_invoices') {
     return overdueInvoicesIntent(params, language, confidence);
+  }
+
+  if (intent === 'customer_info') {
+    return customerInfoIntent(params, language, confidence);
   }
 
   return {

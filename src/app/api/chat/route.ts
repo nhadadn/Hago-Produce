@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { analyzeIntent } from '@/lib/services/chat/intents';
 import { executeQuery } from '@/lib/services/chat/query-executor';
-import { formatResponse } from '@/lib/services/chat/openai-client';
+import { formatResponse, buildSystemPrompt, buildUserPrompt } from '@/lib/services/chat/openai-client';
 import { ChatLanguage } from '@/lib/chat/types';
 import { isRateLimited, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import prisma from '@/lib/db';
 import { logAudit } from '@/lib/audit/logger';
 import { logger } from '@/lib/logger/logger.service';
+import { BotDecisionService } from '@/lib/services/bot-decision.service';
+
+const botDecisionService = new BotDecisionService();
 
 export async function POST(req: NextRequest) {
   try {
@@ -88,6 +91,7 @@ export async function POST(req: NextRequest) {
       customerId: user.customerId,
       pendingOrder: sessionContext.pendingOrder,
       pendingPurchaseOrders: sessionContext.pendingPurchaseOrders,
+      pendingInvoice: sessionContext.pendingInvoice,
     });
 
     // 5.1 Update Context
@@ -97,6 +101,9 @@ export async function POST(req: NextRequest) {
     }
     if (executionResult.data?.pendingOrders) {
       newContext.pendingPurchaseOrders = executionResult.data.pendingOrders;
+    }
+    if (executionResult.data?.pendingInvoice) {
+      newContext.pendingInvoice = executionResult.data.pendingInvoice;
     }
 
     if (
@@ -113,8 +120,26 @@ export async function POST(req: NextRequest) {
       delete newContext.pendingPurchaseOrders;
     }
 
+    if (
+      (detected.intent === 'confirm_invoice' || detected.intent === 'cancel_invoice') &&
+      executionResult.data?.success
+    ) {
+      delete newContext.pendingInvoice;
+      
+      try {
+        await botDecisionService.saveDecision(
+          session.id,
+          detected.intent,
+          detected.confidence,
+          executionResult.data
+        );
+      } catch (error) {
+        logger.error('[BotDecision] Failed to save decision', error);
+      }
+    }
+
     // 6. Format Response with OpenAI, including short history for context
-    const existingMessages = (session.messages as any[]) || [];
+    const existingMessages = Array.isArray(session.messages) ? (session.messages as any[]) : [];
     const lastMessages = existingMessages.slice(-20);
 
     const historyMessages = lastMessages.map((m: any) => ({
@@ -123,9 +148,10 @@ export async function POST(req: NextRequest) {
     }));
 
     const reply = await formatResponse(detected.intent, chatLanguage, executionResult, [
+      { role: 'system', content: buildSystemPrompt(chatLanguage) },
       { role: 'system', content: `Historial reciente del chat en ${chatLanguage}:` },
       ...historyMessages,
-      { role: 'user', content: message },
+      { role: 'user', content: buildUserPrompt(detected.intent, chatLanguage, executionResult) },
     ]);
 
     // 7. Update Session History

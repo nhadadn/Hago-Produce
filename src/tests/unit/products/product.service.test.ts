@@ -25,7 +25,7 @@ describe('ProductService', () => {
 
       const result = await ProductService.getAll({ page: 1, limit: 10 });
 
-      expect(result.products).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
       expect(prisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
         skip: 0,

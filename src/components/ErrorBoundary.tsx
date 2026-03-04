@@ -2,6 +2,7 @@
 import { Component, ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { clientLogger } from "@/lib/logger/client-logger";
 
 interface Props {
   children: ReactNode;
@@ -23,7 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: any) {
-    logger.error("[ErrorBoundary]", error, { info });
+    clientLogger.error("[ErrorBoundary]", error, { info });
     // TODO: enviar a servicio de logging (Sentry, etc.)
   }
 

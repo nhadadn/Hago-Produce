@@ -42,7 +42,7 @@ export class CustomerService {
     ]);
 
     return {
-      customers,
+      data: customers,
       meta: {
         page,
         limit,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { ProductPriceService } from '@/lib/services/product-prices/product-prices.service';
+import { PriceVersionReaderService } from '@/lib/services/pricing/price-version-reader.service';
 import { productPriceFilterSchema, productPriceSchema } from '@/lib/validation/product-price';
 import { logger } from '@/lib/logger/logger.service';
 
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
         );
       }
       // Usar el resultado del reintento si fue exitoso
-      const result = await ProductPriceService.getAll(retryValidation.data);
+      const result = await PriceVersionReaderService.getAll(retryValidation.data);
       return NextResponse.json({
         success: true,
         data: result.prices,
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const result = await ProductPriceService.getAll(validationResult.data);
+    const result = await PriceVersionReaderService.getAll(validationResult.data);
 
     return NextResponse.json({
       success: true,

@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const filters = {
       search: searchParams.get('search') || undefined,
       category: searchParams.get('category') || undefined,
-      isActive: searchParams.get('isActive') as any, // validado por zod luego
+      isActive: searchParams.get('isActive') || undefined, // validado por zod luego
       page: searchParams.get('page') || '1',
       limit: searchParams.get('limit') || '20',
     };
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: result.products,
+      data: result.data,
       meta: result.meta,
     });
   } catch (error) {

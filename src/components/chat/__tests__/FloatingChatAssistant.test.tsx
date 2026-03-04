@@ -20,6 +20,7 @@ describe('FloatingChatAssistant', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
+    localStorage.setItem('accessToken', 'fake-token');
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -65,6 +66,9 @@ describe('FloatingChatAssistant', () => {
     expect(global.fetch).toHaveBeenCalledWith('/api/chat', expect.objectContaining({
       method: 'POST',
       body: expect.stringContaining('"message":"Hola mundo"'),
+      headers: expect.objectContaining({
+        'Authorization': 'Bearer fake-token'
+      })
     }));
 
     // Wait for response

@@ -3,6 +3,11 @@ import type { NextRequest } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
 export function middleware(request: NextRequest) {
+  // Debug log for imports/upload path
+  if (request.nextUrl.pathname.includes('/api/v1/imports/upload')) {
+    console.log(`[MIDDLEWARE] Handling ${request.method} request to ${request.nextUrl.pathname}`);
+  }
+
   // Generate correlation ID
   const correlationId = request.headers.get('x-correlation-id') || uuidv4();
 
@@ -34,6 +39,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api/v1/auth|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api/v1/auth|api/v1/imports/upload|_next/static|_next/image|favicon.ico).*)',
   ],
 };

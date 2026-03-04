@@ -52,6 +52,7 @@ model Supplier {
   purchaseOrders PurchaseOrder[]
   purchaseOrderItems PurchaseOrderItem[]
   priceLists  PriceList[]
+  priceImports PriceImport[]
 
   @@map("suppliers")
 }
@@ -424,9 +425,36 @@ model PriceVersion {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  currency    String   @default("CAD")
+  source      String   @default("manual")
+  importId    String?  @map("import_id")
+  priceImport PriceImport? @relation(fields: [importId], references: [id])
+
   @@map("price_versions")
   @@index([priceListId])
   @@index([productId])
+  @@index([importId])
+}
+
+model PriceImport {
+  id           String       @id @default(uuid())
+  supplierId   String       @map("supplier_id")
+  fileName     String       @map("file_name")
+  fileSize     Int          @map("file_size")
+  status       ImportStatus @default(PENDING)
+  processedAt  DateTime?    @map("processed_at")
+  errorLog     String?      @map("error_log") @db.Text
+  itemCount    Int          @default(0) @map("item_count")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  supplier      Supplier       @relation(fields: [supplierId], references: [id])
+  priceVersions PriceVersion[]
+
+  @@map("price_imports")
+  @@index([supplierId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 enum PreInvoiceStatus {
@@ -440,6 +468,13 @@ enum PreInvoiceSource {
   SYSTEM
   AI
   MANUAL
+}
+
+enum ImportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 model PreInvoice {
