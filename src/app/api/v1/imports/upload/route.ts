@@ -114,6 +114,18 @@ export async function POST(req: NextRequest) {
         dedupedByName.set(key, item)
       }
 
+      // Pre-fetch existing products OUTSIDE the transaction to avoid timeout
+      const normalizedNames = Array.from(dedupedByName.values())
+        .map(item => String(item.name || '').trim())
+        .filter(Boolean)
+
+      const existingProducts = await prisma.product.findMany({
+        where: { name: { in: normalizedNames, mode: 'insensitive' } },
+      })
+      const existingProductMap = new Map(
+        existingProducts.map(p => [p.name.toLowerCase(), p])
+      )
+
       await prisma.$transaction(async (tx) => {
         await tx.priceVersion.updateMany({
           where: {
@@ -142,27 +154,17 @@ export async function POST(req: NextRequest) {
           const normalizedName = String(item.name || '').trim()
           if (!normalizedName) continue
 
-          const existingProduct = await tx.product.findFirst({
-            where: {
-              name: {
-                equals: normalizedName,
-                mode: 'insensitive',
-              },
-            },
-          })
+          const existingProduct = existingProductMap.get(normalizedName.toLowerCase())
 
           const product = existingProduct
             ? existingProduct
-            : productMap.get(normalizedName) ||
+            : productMap.get(normalizedName.toLowerCase()) ||
               (await tx.product.create({
-                data: {
-                  name: normalizedName,
-                  isActive: true,
-                },
+                data: { name: normalizedName, isActive: true },
               }))
 
           if (!existingProduct) {
-            productMap.set(normalizedName, product)
+            productMap.set(normalizedName.toLowerCase(), product)
             matchingStats.noMatches++
           } else {
             matchingStats.exactMatches++
@@ -198,7 +200,7 @@ export async function POST(req: NextRequest) {
             processedAt: now,
           },
         })
-      })
+      }, { timeout: 30000 })
 
       // 11. Return success response
       return NextResponse.json({

@@ -37,11 +37,14 @@ export class PdfIngestionService implements IPdfIngestor {
       const extractPromise = (async () => {
         try {
           // Lazy load pdf-parse to avoid top-level require issues in Next.js
-          const pdfParse = require('pdf-parse');
-          const data = await pdfParse(buffer);
-          
-          const rawText = data.text;
-          const pageCount = data.numpages;
+          // v2.x: PDFParse is a class, use { data: buffer } constructor + getText()
+          const { PDFParse } = require('pdf-parse');
+          const parser = new PDFParse({ data: buffer });
+          const textResult = await parser.getText();
+          await parser.destroy();
+
+          const rawText = textResult.text;
+          const pageCount = textResult.total;
 
           if (!rawText || rawText.trim().length < 50) {
             throw new Error('PDF_EMPTY_OR_UNREADABLE');
@@ -50,13 +53,7 @@ export class PdfIngestionService implements IPdfIngestor {
           return {
             text: rawText,
             pageCount: pageCount,
-            metadata: {
-              title: data.info?.Title,
-              author: data.info?.Author,
-              creationDate: data.info?.CreationDate ? new Date(data.info.CreationDate) : undefined,
-              info: data.info,
-              metadata: data.metadata
-            },
+            metadata: {},
             supplierId: supplierId,
             extractedAt: new Date(),
             fileSizeBytes: buffer.length
