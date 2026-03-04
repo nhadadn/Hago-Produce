@@ -20,8 +20,8 @@ DocumentacionHagoProduce/
 | `DocumentacionHagoProduce/docs/03_api_contracts.md` | Antes de crear o modificar endpoints API |
 | `DocumentacionHagoProduce/docs/04_roadmap.md` | Para entender prioridades y fases |
 | `DocumentacionHagoProduce/FaseTres/SISTEMA_COLORES_HAGO_PRODUCE.md` | Para cualquier cambio de UI/CSS |
-| `DocumentacionHagoProduce/FaseCuatro/PLAN_ESTRATEGICO_SPRINT4.md` | Sprint actual — tareas y prioridades |
-| `DocumentacionHagoProduce/FaseCuatro/PROMPT_MAESTRO_RECALIBRACION_SPRINT4.md` | Instrucciones del sprint 4 |
+| `DocumentacionHagoProduce/FaseCinco/GROUND_TRUTH_VERIFICATION_REPORT_CORREGIDO.md` | Estado real verificado del sistema (fuente de verdad) |
+| `DocumentacionHagoProduce/FaseSeis/CTO_STRATEGIC_DESIGN_SPRINT6.md` | Decisiones arquitectónicas Sprint 6 |
 | `DocumentacionHagoProduce/todo.md` | Tareas pendientes actuales |
 
 ### Estructura de fases:
@@ -31,7 +31,9 @@ DocumentacionHagoProduce/
 ├── FaseZero/          # Fundación del proyecto
 ├── FaseDos/           # Sprints 1-2 (auth, catálogo, facturación base)
 ├── FaseTres/          # Sprint 3 (reportes, integraciones, UX)
-├── FaseCuatro/        # Sprint 4 — SPRINT ACTUAL
+├── FaseCuatro/        # Sprint 4 (productización y UX) — ✅ completado
+├── FaseCinco/         # Sprint 5 (cobertura, ground truth audit) — ✅ completado
+├── FaseSeis/          # Sprint 6 (mejoras de cobertura y CI/CD) — ✅ completado
 └── todo.md            # Pendientes globales
 ```
 
@@ -200,15 +202,41 @@ import { useRouter } from 'next/navigation'; // ✅
 
 ---
 
-## Sprint 4 — Estado actual (Feb 2026)
+## Estado actual — Sprint 6 completado (Mar 2026)
 
-El backend está completo (~95%). El Sprint 4 se enfoca en productización y UX. Prioridades críticas bloqueantes para Staging:
+**🎯 META CRÍTICA: Dejar QuickBooks antes del 01/04/2026 — quedan ~4 semanas.**
 
-1. **Design Tokens** — `globals.css` y `tailwind.config.ts` deben usar los colores de marca Hago Produce (ver `DocumentacionHagoProduce/FaseTres/SISTEMA_COLORES_HAGO_PRODUCE.md`)
-2. **Tests** — Coverage >80%, mocks de OpenAI para `analyzeIntent`, 0 tests fallando en CI
-3. **Landing Page** — SPA pública profesional (LCP <2.5s, Lighthouse >90)
-4. **Portal cliente** — Gráficos interactivos de facturación del cliente
-5. **CI/CD** — GitHub Actions + Vercel Preview por PR
+### Sprints completados ✅
+- Sprint 1-3: Backend + Auth + Productos + Facturación + Chat + Portal Cliente
+- Sprint 4: Productización y UX
+- Sprint 5: Auditoría Ground Truth, cobertura de tests
+- Sprint 6: Mejoras de cobertura y CI/CD
+
+### Estado real del sistema (verificado en código — 26/Feb/2026)
+- **Tests:** 51 suites, 471 tests — todos pasando ✅
+- **Cobertura:** Statements 94.78% | Branches 80.64% | Functions 94.83% | Lines 95.76%
+- **CI/CD:** Sin pipeline de GitHub Actions verificado ❌
+
+### Deudas técnicas pendientes (priorizadas)
+1. **`taxRate` hardcodeado a 0.13** — Solo Ontario (HST). No soporta otras provincias canadienses. Crítico para clientes fuera de Ontario.
+2. **Sin logging estructurado** — Solo `console.log/error` en producción. Falta Sentry/Winston/Pino.
+3. **Sin CI/CD pipeline** — Falta GitHub Actions workflow verificado.
+4. **Branches bajas en intents críticos:**
+   - `best-supplier.ts` — 40% branches
+   - `price-lookup.ts` — 40% branches
+   - `product-info.ts` — 33% branches
+
+### Servicios que NO existen (mencionados en docs pero ausentes en código)
+> ⚠️ No implementar basándose en checkpoints anteriores — verificar siempre contra el código real.
+- `bot-decision.service.ts` — NO EXISTE
+- `document-mapper.service.ts` — NO EXISTE
+- `pdf-ingestion-orchestrator.service.ts` — NO EXISTE
+- `tax-calculation.service.ts` — NO EXISTE
+- `intent-resolver.ts` — NO EXISTE
+- `price-versioning.service.ts` — NO EXISTE
+
+### Entidades Prisma que NO existen en schema
+- `PriceList`, `PreInvoice`, `BotDecision` — NO EXISTEN
 
 ---
 
