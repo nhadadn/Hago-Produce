@@ -72,9 +72,12 @@ export async function inventorySummaryIntent(
     let lowestPrice: number | null = null;
     let lowestPriceSupplier: string | null = null;
 
-    if (currentPrices.length > 0) {
+    if (currentPrices.length === 0) {
+        lowestPrice = null;
+        lowestPriceSupplier = null;
+    } else {
         // Find min costPrice
-        const minPriceObj = currentPrices.reduce((prev, curr) => 
+        const minPriceObj = currentPrices.reduce((prev, curr) =>
             prev.costPrice < curr.costPrice ? prev : curr
         );
         lowestPrice = minPriceObj.costPrice;

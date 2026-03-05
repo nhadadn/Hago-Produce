@@ -114,9 +114,7 @@ export async function productInfoIntent(
     // usando una versión truncada del término
     // ------------------------------------------------------------------
     const firstToken = searchTerm.split(' ')[0];
-    const fuzzyTerm = firstToken.length >= 4 
-      ? firstToken.substring(0, 4) 
-      : firstToken;
+    const fuzzyTerm = firstToken.substring(0, Math.min(4, firstToken.length));
 
     let suggestionsList: string[] = [];
 
@@ -158,11 +156,26 @@ export async function productInfoIntent(
 // Helper para mapear productos a estructura de respuesta
 function mapProductsToItems(products: any[]) {
   return products.map((p: any) => {
+    // Guard: if no prices at all, return product with empty prices and null lowestPrice
+    if (!p.prices || p.prices.length === 0) {
+      return {
+        productId: p.id,
+        name: p.name,
+        nameEs: p.nameEs,
+        description: p.description || null,
+        category: p.category,
+        unit: p.unit,
+        sku: p.sku,
+        prices: [],
+        lowestPrice: null,
+      };
+    }
+
     // SHOULD 2 & 3: Estandarizar y ordenar precios
     const processedPrices = p.prices.map((pr: any) => {
       const costPrice = Number(pr.costPrice);
       const sellPrice = pr.sellPrice != null ? Number(pr.sellPrice) : null;
-      
+
       // Lógica displayPrice (igual a price-lookup)
       let displayPrice = costPrice;
       let displayPriceType: 'sell' | 'cost' = 'cost';

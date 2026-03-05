@@ -8,6 +8,9 @@ jest.mock('@/lib/db', () => ({
   productPrice: {
     findMany: jest.fn(),
   },
+  product: {
+    findMany: jest.fn(),
+  },
 }));
 
 // Mock Logger
@@ -22,6 +25,8 @@ jest.mock('@/lib/logger/logger.service', () => ({
 describe('priceLookupIntent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: product.findMany returns empty array for suggestion fallback
+    (prisma.product.findMany as jest.Mock).mockResolvedValue([]);
   });
 
   // A) Validation Branches
@@ -77,7 +82,7 @@ describe('priceLookupIntent', () => {
     
     expect(prisma.productPrice.findMany).toHaveBeenCalledWith(expect.objectContaining({
       orderBy: { effectiveDate: 'desc' },
-      take: 20
+      take: 50
     }));
   });
 

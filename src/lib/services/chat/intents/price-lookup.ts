@@ -107,29 +107,43 @@ export async function priceLookupIntent(
     
     Object.values(groupedByProduct).forEach(group => {
       // Ordenar proveedores dentro del producto: SellPrice ASC, luego CostPrice ASC
+      // Treat undefined/null displayPrice as Infinity so it sorts last
       group.sort((a, b) => {
-        const priceA = a.sellPrice ? Number(a.sellPrice) : (Number(a.costPrice) || Infinity);
-        const priceB = b.sellPrice ? Number(b.sellPrice) : (Number(b.costPrice) || Infinity);
+        const sellA = a.sellPrice != null ? Number(a.sellPrice) : null;
+        const costA = a.costPrice != null ? Number(a.costPrice) : null;
+        const priceA = sellA !== null ? sellA : (costA !== null ? costA : Infinity);
+
+        const sellB = b.sellPrice != null ? Number(b.sellPrice) : null;
+        const costB = b.costPrice != null ? Number(b.costPrice) : null;
+        const priceB = sellB !== null ? sellB : (costB !== null ? costB : Infinity);
+
         return priceA - priceB;
       });
       sortedPrices.push(...group);
     });
 
     // 5. Mapeo final con priceType explícito (MUST 3 / AJUSTE 1)
-    const items = sortedPrices.map((p) => {
+    const items = sortedPrices.flatMap((p) => {
       const sellPrice = p.sellPrice != null ? Number(p.sellPrice) : null;
-      const costPrice = Number(p.costPrice);
-      
+      const costPrice = p.costPrice != null ? Number(p.costPrice) : null;
+
+      // Skip records where both prices are null
+      if (sellPrice === null && costPrice === null) {
+        return [];
+      }
+
       // Lógica de displayPrice
-      let displayPrice = costPrice;
+      let displayPrice: number | undefined;
       let displayPriceType: 'sell' | 'cost' = 'cost';
 
       if (sellPrice !== null) {
         displayPrice = sellPrice;
         displayPriceType = 'sell';
+      } else if (costPrice !== null) {
+        displayPrice = costPrice;
       }
 
-      return {
+      return [{
         productId: p.productId,
         productName: p.product.name,
         productNameEs: p.product.nameEs, // Útil para respuestas en español
@@ -140,8 +154,8 @@ export async function priceLookupIntent(
         displayPrice: displayPrice,
         displayPriceType: displayPriceType,
         currency: p.currency,
-        effectiveDate: p.effectiveDate.toISOString(),
-      };
+        effectiveDate: p.effectiveDate != null ? p.effectiveDate.toISOString() : undefined,
+      }];
     });
 
     const sources: ChatSource[] = sortedPrices.map((p) => ({

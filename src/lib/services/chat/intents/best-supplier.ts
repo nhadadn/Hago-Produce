@@ -89,14 +89,17 @@ export async function bestSupplierIntent(
     }
 
     // Ordenamiento en memoria y desempate (SHOULD 2)
+    // Filter out records where costPrice converts to NaN (e.g. bad Decimal)
+    const validPrices = prices.filter(p => !isNaN(Number(p.costPrice)));
+
     // Se ordena el array de resultados de Prisma antes de mapear
-    const sorted = [...prices].sort((a, b) => {
+    const sorted = [...validPrices].sort((a, b) => {
       const priceA = Number(a.costPrice);
       const priceB = Number(b.costPrice);
       const priceDiff = priceA - priceB;
-      
+
       if (priceDiff !== 0) return priceDiff;
-      
+
       // Desempate secundario por nombre de proveedor
       // Usamos supplier.name directamente del objeto Prisma
       return a.supplier.name.localeCompare(b.supplier.name);
@@ -108,7 +111,8 @@ export async function bestSupplierIntent(
     // Mapeo final estandarizado (MUST 3)
     const items = top.map((p, index) => {
       const costPrice = Number(p.costPrice);
-      
+      const rawSellPrice = p.sellPrice != null ? Number(p.sellPrice) : null;
+
       return {
         productId: p.productId,
         productName: p.product.name,
@@ -116,7 +120,7 @@ export async function bestSupplierIntent(
         supplierId: p.supplierId,
         supplierName: p.supplier.name,
         costPrice: costPrice,
-        sellPrice: p.sellPrice != null ? Number(p.sellPrice) : null,
+        sellPrice: rawSellPrice,
         currency: p.currency,
         effectiveDate: p.effectiveDate.toISOString(),
         // Nuevos campos estandarizados

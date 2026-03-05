@@ -42,7 +42,12 @@ function isRateLimited(key: RateLimitKey): boolean {
   const recent = state.timestamps.filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS);
   recent.push(now);
   state.timestamps = recent;
-  rateLimitStore.set(key, state);
+  // Clean up: if no timestamps remain within the window for this key, remove the entry entirely
+  if (recent.length === 0) {
+    rateLimitStore.delete(key);
+  } else {
+    rateLimitStore.set(key, state);
+  }
   return recent.length > RATE_LIMIT_MAX_REQUESTS;
 }
 
@@ -70,9 +75,16 @@ function getFromCache(key: string): ChatResponseData | null {
 }
 
 function saveToCache(key: string, result: ChatResponseData): void {
+  // Sweep expired entries before inserting to prevent unbounded growth
+  const now = Date.now();
+  cache.forEach((entry, k) => {
+    if (now > entry.expiresAt) {
+      cache.delete(k);
+    }
+  });
   cache.set(key, {
     result,
-    expiresAt: Date.now() + CACHE_TTL_MS,
+    expiresAt: now + CACHE_TTL_MS,
   });
 }
 
