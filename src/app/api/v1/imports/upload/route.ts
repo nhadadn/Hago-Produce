@@ -98,8 +98,8 @@ export async function POST(req: NextRequest) {
       const now = new Date()
       let itemsProcessed = 0
       let itemsSkipped = 0
-      const processedProducts = []
-      const skippedProducts = []
+      const processedProducts: any[] = []
+      const skippedProducts: any[] = []
       const matchingStats = {
         exactMatches: 0,
         level1Matches: 0,
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
           },
         })
 
-        for (const item of dedupedByName.values()) {
+        for (const item of Array.from(dedupedByName.values())) {
           const normalizedName = String(item.name || '').trim()
           if (!normalizedName) continue
 

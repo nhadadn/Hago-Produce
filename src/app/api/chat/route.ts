@@ -12,6 +12,19 @@ import { BotDecisionService } from '@/lib/services/bot-decision.service';
 
 const botDecisionService = new BotDecisionService();
 
+function detectLanguage(message: string): ChatLanguage {
+  const text = String(message || '').toLowerCase();
+  const hasSpanishPunctuation = /[¿¡]/.test(text);
+  const hasCionEnding = /\b\w*ción\b/.test(text);
+  const spanishWords = [
+    'qué', 'cual', 'cuál', 'cómo', 'cuanto', 'cuánto', 'dónde',
+    'precio', 'proveedor', 'factura', 'cliente',
+    'quiero', 'necesito', 'tengo', 'comprar', 'mejor'
+  ];
+  const hasSpanishWord = spanishWords.some(w => text.includes(w));
+  return (hasSpanishPunctuation || hasCionEnding || hasSpanishWord) ? 'es' : 'en';
+}
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Authentication
@@ -26,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     // 1.1 Rate Limiting
     const rateLimit = parseInt(process.env.CHAT_RATE_LIMIT || '20', 10);
-    const language: ChatLanguage = 'es'; // Default, will be updated from body later
+    const language: ChatLanguage = 'en'; // Default, used for rate limit response
 
     if (isRateLimited('chat_api', user.userId, rateLimit)) {
       await logAudit({
@@ -63,7 +76,7 @@ export async function POST(req: NextRequest) {
     // 3. Session Management
     // If no sessionId provided, generate one (using web crypto API if available, else random string)
     const currentSessionId = sessionId || crypto.randomUUID();
-    const chatLanguage: ChatLanguage = (context?.language as ChatLanguage) || 'es'; 
+    const chatLanguage: ChatLanguage = detectLanguage(message); 
 
     // Find or create session
     let session = await prisma.chatSession.findUnique({

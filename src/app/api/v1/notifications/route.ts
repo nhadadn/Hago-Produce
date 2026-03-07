@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { Role } from '@prisma/client';
 import { NotificationTriggers } from '@/lib/services/notifications/triggers';
+import { logger } from '@/lib/infrastructure/logger.service';
 
 export async function POST(req: NextRequest) {
   try {

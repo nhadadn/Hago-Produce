@@ -15,7 +15,10 @@ export type ChatIntent =
   | 'confirm_purchase_order'
   | 'cancel_purchase_order'
   | 'customer_info'
-  | 'create_invoice';
+  | 'create_invoice'
+  | 'confirm_invoice'
+  | 'cancel_invoice'
+  | 'clarification_needed';
 
 export interface ChatRequestPayload {
   message: string;
@@ -25,7 +28,7 @@ export interface ChatRequestPayload {
 }
 
 export interface ChatSource {
-  type: 'product_price' | 'supplier' | 'invoice' | 'customer' | 'purchase_order' | 'product';
+  type: 'product_price' | 'supplier' | 'invoice' | 'customer' | 'purchase_order' | 'product' | 'price_version';
   id: string;
   label: string;
 }
@@ -58,6 +61,6 @@ export interface QueryExecutionResult {
   confidence: number;
   language: ChatLanguage;
   data: any;
-  sources: ChatSource[];
+  sources?: ChatSource[];
 }
 

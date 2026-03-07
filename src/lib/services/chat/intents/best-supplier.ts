@@ -34,38 +34,53 @@ export async function bestSupplierIntent(
   const limit = (!isNaN(requestedLimit) && requestedLimit > 0 && requestedLimit <= 10) ? requestedLimit : 5;
 
   try {
-    const prices = await prisma.productPrice.findMany({
-      where: {
-        isCurrent: true,
-        // MUST 1: Filtro de datos sucios (costPrice > 0)
-        // Prisma Decimal se maneja mejor comparando con string o number
-        // Asumiendo que costPrice es Decimal en schema
-        costPrice: {
-          gt: 0,
+    const rawTerms = Array.isArray(params.searchTerms)
+      ? (params.searchTerms as string[])
+      : [params.searchTerm as string];
+
+    const terms = rawTerms
+      .map(t => cleanSearchTerm(String(t || '')))
+      .filter(t => t.length > 0);
+
+    // Fallback if cleaning removed everything but we had a searchTerm
+    if (terms.length === 0 && searchTerm) {
+      terms.push(searchTerm);
+    }
+
+    // Handle multiple terms
+    if (terms.length > 1) {
+      const multiResults = await Promise.all(
+        terms.map(async term => ({
+          query: term,
+          items: await runSingleBestSupplier(term, limit, prisma),
+        }))
+      );
+      
+      return {
+        intent: 'best_supplier',
+        confidence,
+        language,
+        data: {
+          type: 'best_supplier_multi',
+          queries: terms,
+          results: multiResults,
         },
-        product: {
-          OR: [
-            { name: { contains: searchTerm, mode: 'insensitive' } },
-            { nameEs: { contains: searchTerm, mode: 'insensitive' } },
-          ],
-        },
-      },
-      include: {
-        product: true,
-        supplier: true,
-      },
-      // SHOULD 3: Query con límite explícito para proteger memoria
-      take: 100, 
-    });
+        sources: [],
+      };
+    }
+
+    // Handle single term (backward compatible)
+    const singleTerm = terms[0] || searchTerm;
+    const items = await runSingleBestSupplier(singleTerm, limit, prisma);
 
     // Manejo de resultados vacíos: Búsqueda de sugerencias (MUST 1 fallback)
-    if (prices.length === 0) {
+    if (items.length === 0) {
       const suggestions = await prisma.product.findMany({
         where: {
           isActive: true,
           OR: [
-            { name: { contains: searchTerm, mode: 'insensitive' } },
-            { nameEs: { contains: searchTerm, mode: 'insensitive' } },
+            { name: { contains: singleTerm, mode: 'insensitive' } },
+            { nameEs: { contains: singleTerm, mode: 'insensitive' } },
           ],
         },
         select: { name: true, nameEs: true },
@@ -80,7 +95,7 @@ export async function bestSupplierIntent(
         language,
         data: {
           type: 'best_supplier',
-          query: searchTerm,
+          query: singleTerm,
           items: [],
           suggestions: suggestionList
         },
@@ -88,48 +103,10 @@ export async function bestSupplierIntent(
       };
     }
 
-    // Ordenamiento en memoria y desempate (SHOULD 2)
-    // Se ordena el array de resultados de Prisma antes de mapear
-    const sorted = [...prices].sort((a, b) => {
-      const priceA = Number(a.costPrice);
-      const priceB = Number(b.costPrice);
-      const priceDiff = priceA - priceB;
-      
-      if (priceDiff !== 0) return priceDiff;
-      
-      // Desempate secundario por nombre de proveedor
-      // Usamos supplier.name directamente del objeto Prisma
-      return a.supplier.name.localeCompare(b.supplier.name);
-    });
-
-    // Aplicar límite solicitado (MUST 2)
-    const top = sorted.slice(0, limit);
-
-    // Mapeo final estandarizado (MUST 3)
-    const items = top.map((p, index) => {
-      const costPrice = Number(p.costPrice);
-      
-      return {
-        productId: p.productId,
-        productName: p.product.name,
-        productNameEs: p.product.nameEs, // Agregado para paridad
-        supplierId: p.supplierId,
-        supplierName: p.supplier.name,
-        costPrice: costPrice,
-        sellPrice: p.sellPrice != null ? Number(p.sellPrice) : null,
-        currency: p.currency,
-        effectiveDate: p.effectiveDate.toISOString(),
-        // Nuevos campos estandarizados
-        displayPrice: costPrice,
-        displayPriceType: 'cost',
-        rank: index + 1,
-      };
-    });
-
-    const sources: ChatSource[] = top.map((p) => ({
-      type: 'product_price',
-      id: p.id,
-      label: `${p.product.name} - ${p.supplier.name}`,
+    const sources: ChatSource[] = items.map((p, idx) => ({
+      type: 'price_version',
+      id: `best-${idx}`,
+      label: `${p.productName} - ${p.supplierName}`,
     }));
 
     return {
@@ -138,7 +115,7 @@ export async function bestSupplierIntent(
       language,
       data: {
         type: 'best_supplier',
-        query: searchTerm,
+        query: singleTerm,
         items,
       },
       sources,
@@ -147,4 +124,67 @@ export async function bestSupplierIntent(
     logger.error(`[BestSupplier] Error fetching best suppliers: ${error}`);
     throw error;
   }
+}
+
+async function runSingleBestSupplier(
+  term: string,
+  limit: number,
+  prismaClient: typeof prisma
+): Promise<Array<{
+  rank: number;
+  productName: string;
+  productNameEs: string | null;
+  supplierName: string;
+  costPrice: number;
+  currency: string;
+  effectiveDate: string;
+}>> {
+  const words = term.split(/\s+/).map(w => w.trim()).filter(w => w.length > 1);
+  const buildWordFilter = (word: string) => ({
+    OR: [
+      { name: { equals: word, mode: 'insensitive' as const } },
+      { name: { startsWith: word + ' ', mode: 'insensitive' as const } },
+      { name: { contains: ' ' + word + ' ', mode: 'insensitive' as const } },
+      { name: { endsWith: ' ' + word, mode: 'insensitive' as const } },
+      { nameEs: { equals: word, mode: 'insensitive' as const } },
+      { nameEs: { startsWith: word + ' ', mode: 'insensitive' as const } },
+      { nameEs: { contains: ' ' + word + ' ', mode: 'insensitive' as const } },
+      { nameEs: { endsWith: ' ' + word, mode: 'insensitive' as const } },
+    ],
+  });
+  const productFilter = words.length <= 1
+    ? buildWordFilter(words[0] ?? term)
+    : { AND: words.map(buildWordFilter) };
+
+  const prices = await prismaClient.priceVersion.findMany({
+    where: {
+      priceList: {
+        isCurrent: true,
+      },
+      price: {
+        gt: 0,
+      },
+      product: productFilter,
+    },
+    include: {
+      priceList: {
+        include: { supplier: true },
+      },
+      product: true,
+    },
+    orderBy: { price: 'asc' },
+    take: limit,
+  });
+
+  const sorted = [...prices].sort((a, b) => Number(a.price) - Number(b.price));
+
+  return sorted.map((p, index) => ({
+    rank: index + 1,
+    productName: p.product.name,
+    productNameEs: p.product.nameEs,
+    supplierName: p.priceList.supplier.name,
+    costPrice: Number(p.price),
+    currency: p.currency,
+    effectiveDate: p.validFrom.toISOString(),
+  }));
 }

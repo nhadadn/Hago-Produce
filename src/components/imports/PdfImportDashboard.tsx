@@ -12,7 +12,7 @@ function postFormData(
   url: string,
   formData: FormData,
   token: string
-): Promise<{ status: number; data: unknown }> {
+): Promise<{ status: number; data: any }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', url, true)
@@ -29,7 +29,7 @@ function postFormData(
       
       if (contentType.includes('application/json')) {
         try {
-          const data = JSON.parse(xhr.responseText)
+          const data = JSON.parse(xhr.responseText) as any
           resolve({ status: xhr.status, data })
         } catch {
           reject(new Error(
@@ -41,7 +41,7 @@ function postFormData(
         // El servidor retornó HTML (página de error)
         // Extraer el mensaje de error si es posible
         const errorMatch = xhr.responseText
-          .match(/<pre>(.*?)<\/pre>/s)
+          .match(/<pre>([\s\S]*?)<\/pre>/)
         const errorMsg = errorMatch
           ? errorMatch[1]
           : `Server returned HTML (status: ${xhr.status})`

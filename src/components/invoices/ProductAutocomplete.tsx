@@ -1,6 +1,5 @@
 import * as React from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
-import { Product } from "@prisma/client" // Adjust import if needed, earlier it was from @prisma/client or lib/api/products
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -18,8 +17,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+interface AutocompleteProduct {
+  id: string
+  name: string
+  sku?: string | null
+}
+
 interface ProductAutocompleteProps {
-  products: Product[]
+  products: AutocompleteProduct[]
   value?: string
   onChange: (productId: string) => void
   placeholder?: string

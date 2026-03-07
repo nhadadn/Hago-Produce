@@ -1,122 +1,84 @@
-# Estado de Implementación del Chatbot (Gap Analysis)
+# Estado de Implementación del Chatbot – HAGO PRODUCE
 
-**Fecha:** 28 de Febrero de 2026
-**Versión del Análisis:** 1.0
-**Documento Base:** `chatbot_ground_truth.md` vs `src/`
-
-Este documento detalla la auditoría técnica realizada al código fuente del chatbot de HAGO PRODUCE para identificar la discrepancia entre la documentación ideal (Ground Truth) y la realidad operativa.
-
----
+## Resumen
+- Este documento compara el Ground Truth con la implementación actual en código.
+- Incluye auditoría de intenciones, conectividad entre módulos, estimaciones de avance y bloqueadores críticos, con referencias a código.
 
 ## 1. Auditoría de Intenciones
 
-Se ha revisado el directorio `src/lib/services/chat/intents/` para verificar la existencia y lógica de cada intención documentada.
-
-| Intención | Estado | Archivo Fuente | Observaciones |
-| :--- | :---: | :--- | :--- |
-| `create_order` | ✅ **IMPLEMENTADA** | `create-order.ts` | Lógica completa con búsqueda de cliente/producto y cálculo de totales. |
-| `confirm_order` | ✅ **IMPLEMENTADA** | `create-order.ts` | Llama a `OrdersService` correctamente. |
-| `cancel_order` | ✅ **IMPLEMENTADA** | `create-order.ts` | Limpia el contexto. |
-| `create_purchase_order` | ✅ **IMPLEMENTADA** | `create-purchase-order.ts` | Similar a pedidos de venta, funcional. |
-| `confirm_purchase_order` | ✅ **IMPLEMENTADA** | `create-purchase-order.ts` | Llama a servicio de compras. |
-| `cancel_purchase_order` | ✅ **IMPLEMENTADA** | `create-purchase-order.ts` | Funcional. |
-| `create_invoice` | ✅ **IMPLEMENTADA** | `create-invoice.ts` | Usa `extractInvoiceParams` con OpenAI Tools internamente. Compleja y funcional. |
-| `confirm_invoice` | ✅ **IMPLEMENTADA** | `create-invoice.ts` | Crea factura en estado SENT. |
-| `cancel_invoice` | ✅ **IMPLEMENTADA** | `create-invoice.ts` | Funcional. |
-| `invoice_status` | ✅ **IMPLEMENTADA** | `invoice-status.ts` | Consulta por número o término de búsqueda. |
-| `overdue_invoices` | ✅ **IMPLEMENTADA** | `overdue-invoices.ts` | Filtra por fecha y estado PENDING/OVERDUE. |
-| `customer_balance` | ✅ **IMPLEMENTADA** | `customer-balance.ts` | Calcula saldo total y cuenta facturas pendientes. |
-| `product_info` | ✅ **IMPLEMENTADA** | `product-info.ts` | Devuelve precios y proveedores del producto. |
-| `price_lookup` | ✅ **IMPLEMENTADA** | `price-lookup.ts` | Consulta precios vigentes (`isCurrent: true`). |
-| `inventory_summary` | ✅ **IMPLEMENTADA** | `inventory-summary.ts` | Agrupa productos por categoría. |
-| `best_supplier` | ✅ **IMPLEMENTADA** | `best-supplier.ts` | Ordena proveedores por precio de costo. |
-| `customer_info` | ✅ **IMPLEMENTADA** | `customer-info.ts` | Busca clientes por nombre/email. |
-
-**Conclusión de Intenciones:**
-Sorprendentemente, **el 100% de las intenciones están implementadas a nivel de código**. No hay "esqueletos" vacíos; todas realizan consultas reales a la base de datos (Prisma) o llaman a servicios. La percepción de "baja funcionalidad" del usuario no proviene de falta de código, sino de problemas en el **enrutamiento (NLU)** y la **conectividad**.
-
----
+| Intent | Archivo | Estado | Observación breve |
+| :--- | :--- | :--- | :--- |
+| price_lookup | [price-lookup.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/price-lookup.ts) | IMPLEMENTADA | Búsqueda y agrupación por producto, sugerencias si vacío |
+| best_supplier | [best-supplier.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/best-supplier.ts) | IMPLEMENTADA | Ordena por costo, límite dinámico, sugerencias |
+| invoice_status | [invoice-status.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/invoice-status.ts) | IMPLEMENTADA | Soporta número, última y lista, con resumen |
+| customer_balance | [customer-balance.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/customer-balance.ts) | IMPLEMENTADA | Modo cliente único y resumen global, desgloses |
+| product_info | [product-info.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/product-info.ts) | IMPLEMENTADA | Devuelve ficha con precios normalizados y sugerencias |
+| inventory_summary | [inventory-summary.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/inventory-summary.ts) | IMPLEMENTADA | Lista productos con resumen por categoría |
+| overdue_invoices | [overdue-invoices.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/overdue-invoices.ts) | IMPLEMENTADA | Reporte por cliente y global, urgencia y días |
+| customer_info | [customer-info.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/customer-info.ts) | IMPLEMENTADA | Busca por nombre/email/RFC, con actividad |
+| create_order | [create-order.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-order.ts) | IMPLEMENTADA | Extracción con OpenAI/regex, cálculo de impuestos y pendingOrder |
+| confirm_order | [create-order.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-order.ts#L502-L741) | IMPLEMENTADA | Crea factura, genera PDF, notifica y audita |
+| cancel_order | [create-order.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-order.ts#L743-L759) | IMPLEMENTADA | Devuelve éxito y route limpia contexto |
+| create_purchase_order | [create-purchase-order.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-purchase-order.ts) | IMPLEMENTADA | Extracción con Function Calling, mejor proveedor, pendingOrders |
+| confirm_purchase_order | [create-purchase-order.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-purchase-order.ts#L382-L492) | IMPLEMENTADA | Crea órdenes, notifica proveedor, audita |
+| cancel_purchase_order | [create-purchase-order.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-purchase-order.ts#L494-L510) | IMPLEMENTADA | Devuelve éxito y route limpia contexto |
+| create_invoice | [create-invoice.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-invoice.ts) | IMPLEMENTADA | Extracción con Function Calling, pendingInvoice |
+| confirm_invoice | [create-invoice.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-invoice.ts#L341-L411) | IMPLEMENTADA | Crea factura via service, retorna datos |
+| cancel_invoice | [create-invoice.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-invoice.ts#L413-L429) | IMPLEMENTADA | Devuelve éxito y route limpia contexto |
 
 ## 2. Auditoría de Conectividad
 
-### A. OpenAI Client (`openai-client.ts`)
-*¿Están definidas las Tools/Functions de OpenAI para el enrutamiento?*
-🔴 **NO**.
-- La función principal `classifyChatIntentWithOpenAI` **NO utiliza `function_calling` (Tools)**.
-- Depende exclusivamente de un **System Prompt** que instruye al modelo a responder con un JSON.
-- **Riesgo:** Esto es frágil. Si el usuario escribe algo ambiguo, el modelo puede devolver texto libre o un JSON malformado, haciendo que el sistema falle o use el fallback (`price_lookup`).
-- *Nota:* Las intenciones individuales como `create_invoice` SÍ usan tools internamente para extraer parámetros, pero el "cerebro" principal (el router) no.
-
-### B. Query Executor (`query-executor.ts`)
-*¿El dispatcher invoca realmente a los handlers?*
-✅ **SÍ**.
-- Existe un `switch` (bloques `if`) completo que cubre las 17 intenciones y delega la ejecución a las funciones importadas correctamente.
-
-### C. API Route (`route.ts`)
-*¿Se mantiene la sesión y el contexto?*
-✅ **SÍ**.
-- El código recupera `prisma.chatSession` usando el `sessionId`.
-- El campo `context` (JSONB) se pasa correctamente a `analyzeIntent` y `executeQuery`.
-- Se actualiza la base de datos con el nuevo contexto al finalizar la ejecución.
-
----
+- OpenAI Tools/Functions
+  - Definidas para extracción en intenciones transaccionales: create_order, create_purchase_order y create_invoice.
+  - La clasificación de intención se hace por prompt (sin Tools), lo que puede degradar precisión. Inconsistencia en `tool_choice` detectada en varias extracciones.
+- Dispatcher de intents
+  - [query-executor.ts](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/query-executor.ts) mapea todas las intenciones con condicionales explícitos. Cobertura completa de los 17 intents.
+- Orquestación y Contexto de sesión
+  - [route.ts](file:///c:/Users/nadir/Hago%20Produce/src/app/api/chat/route.ts) recupera `ChatSession` por `sessionId`. Si no existe, crea nueva. Actualiza `context` y `messages` en cada turno y limpia `pending*` en confirm/cancel.
+  - Dependencia de que el cliente conserve y envíe `sessionId` entre turnos; sin eso, el multi-turno se pierde pese a que el backend está listo.
 
 ## 3. Porcentaje de Progreso Real
 
-Basado en la auditoría de código:
+| Módulo | Estimación | Justificación |
+| :--- | :--- | :--- |
+| NLU / Detección de Intenciones | 55% | Clasificador por prompt con definiciones extensas; fallback simple a `price_lookup` sin API Key; sin Function Calling para la clasificación; algunas detecciones por keywords deshabilitadas |
+| Flujos Multi-turno | 70% | `pendingOrder`, `pendingPurchaseOrders`, `pendingInvoice` persisten en `ChatSession.context` y se limpian en confirm/cancel; depende del `sessionId` del cliente |
+| Integración con ERP Services | 60% | Uso de `InvoicesService`, `purchaseOrdersService`, cálculo de impuestos, envío por canales y logging de notificaciones |
+| Persistencia y Auditoría | 60% | Guardado de sesiones y contexto; auditoría en confirmaciones y rate limit; `BotDecisionService` en confirmación de factura; faltan más puntos de auditoría y pruebas |
 
-| Módulo | Progreso | Justificación |
-| :--- | :---: | :--- |
-| **Lógica de Negocio (Handlers)** | **95%** | Los handlers (`create-order.ts`, etc.) son robustos y conectan con la DB. Faltan quizás validaciones de negocio más finas (ej. crédito insuficiente). |
-| **Persistencia (DB/Contexto)** | **100%** | La tabla `ChatSession` y el manejo de JSONB funcionan correctamente. |
-| **NLU / Detección (Routing)** | **40%** | **Aquí está el cuello de botella.** El sistema híbrido (Regex + Prompt JSON) es inestable. Las Regex son demasiado agresivas y el Prompt JSON es menos fiable que las Tools. |
-| **Integración ERP** | **90%** | Conecta con `InvoicesService`, `OrdersService`, etc. |
-| **Front-end / Respuesta** | **80%** | Formatea respuestas con OpenAI correctamente, pero el fallback a texto plano es básico. |
+## 4. Bloqueadores Críticos
 
-**Promedio General de Código Funcional:** ~80%
-**Percepción de Usuario:** ~10% (Debido a que el 40% del NLU bloquea el acceso al resto del código).
+1) `tool_choice` mal estructurado en Function Calling
+   - Causa: El campo `function` se pasa como string en algunas extracciones, lo que impide invocar la tool con modelos recientes.
+   - Referencias:
+     - [create-order.ts:L206-L210](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-order.ts#L206-L210)
+     - [create-invoice.ts:L121-L127](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents/create-invoice.ts#L121-L127)
+   - Estado: Crítico para extracción robusta; debe ser `{ type: 'function', function: { name: '...' } }`.
 
----
+2) Fallback agresivo a `price_lookup` cuando no hay `OPENAI_API_KEY`
+   - Causa: Se asigna la intención `price_lookup` usando el mensaje completo como `searchTerm`, lo que rompe la búsqueda para consultas no relacionadas con productos.
+   - Referencia: [intents.ts:L230-L238](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents.ts#L230-L238)
+   - Impacto: El bot interpreta consultas de saldo, estatus o catálogo como precio.
 
-## 4. Bloqueadores Críticos Identificados
+3) Regex de número de factura demasiado permisivo
+   - Causa: El patrón puede capturar números no deseados en frases generales y confundir la detección de `invoice_status`.
+   - Referencia: [intents.ts:L178-L186](file:///c:/Users/nadir/Hago%20Produce/src/lib/services/chat/intents.ts#L178-L186)
+   - Acción: Endurecer regex con anclajes y contexto, y preferir extracción semántica cuando haya API Key.
 
-Estos son los 3 errores exactos de código que están "rompiendo" la experiencia:
+## 5. Backlog Prioritario (para alcanzar el Ground Truth)
 
-### 🔴 1. El "Agujero Negro" de la Regex de Facturas
-**Archivo:** `src/lib/services/chat/intents.ts` (Línea ~189)
-**Código:**
-```typescript
-const invoiceNumberMatch = lower.match(/(factura\s*#?\s*|invoice\s*#?\s*)([a-z0-9-]+)/i);
-```
-**El Problema:** Esta expresión regular es demasiado "hambrienta".
-- Si el usuario dice: *"Quiero crear una factura nueva"*
-- La regex captura: "factura " (Grupo 1) y "nueva" (Grupo 2).
-- **Resultado:** El bot piensa que la intención es `invoice_status` buscando la factura número "nueva".
-- **Impacto:** Bloquea casi cualquier intento de hablar de facturas que no sea consultar un estatus.
+1. Corregir `tool_choice` en todas las extracciones para usar objeto `{ name }`.
+2. Remover el fallback por defecto a `price_lookup`; usar router determinista mínimo o respuestas de error claras.
+3. Endurecer regex de `invoice_number` y añadir validación de prefijos conocidos.
+4. Añadir Function Calling para clasificación de intents con esquema estricto.
+5. Rehabilitar/ajustar detección determinista de `customer_balance` y `inventory_summary`.
+6. Forzar persistencia de `sessionId` en el cliente (middleware/UI) y documentar su ciclo de vida.
+7. Añadir auditorías en confirmaciones de compra y balance; centralizar logs en `AuditLog`.
+8. Tests integrales de multi-turno para `create_*` con confirm/cancel y verificación de limpieza de contexto.
+9. Validaciones adicionales de negocio (existencia de precios, estados, límites) y mensajes de error en español.
+10. Monitoreo de fallos de OpenAI y reintentos con backoff; registrar en `WebhookLog`/`AuditLog`.
 
-### 🔴 2. Ausencia de "Tools" en el Router Principal
-**Archivo:** `src/lib/services/chat/openai-client.ts`
-**El Problema:** La función `classifyChatIntentWithOpenAI` confía en que GPT-4o-mini obedezca un prompt de texto para devolver JSON.
-- **Código Actual:** `Respond with a strict JSON object...`
-- **Código Ideal:** Usar `tools: [{ type: "function", name: "route_intent", ... }]`.
-- **Impacto:** Aumenta la latencia y la tasa de error. Si el modelo "alucina" o añade texto antes del JSON, el `JSON.parse` falla y el bot responde con el fallback (usualmente "No prices found" o similar).
+## 6. Observaciones Finales
+- La lógica de intents y los handlers están implementados y conectados; los principales defectos están en la capa NLU (clasificación y extracción) y en la robustez de los fallbacks.
+- Con las correcciones anteriores, el avance efectivo puede subir rápidamente por encima del 80% en escenarios típicos del ERP.
 
-### 🔴 3. Orden de Evaluación en `analyzeIntent`
-**Archivo:** `src/lib/services/chat/intents.ts`
-**El Problema:** Aunque se intenta priorizar `create_invoice` sobre `invoice_status`, la lógica de detección mixta (Regex vs OpenAI) es confusa.
-- Si una Regex coincide (incluso erróneamente como en el punto 1), el código retorna INMEDIATAMENTE esa intención, sin consultar nunca a OpenAI.
-- **Código:**
-  ```typescript
-  if (isInvoiceStatus) { return { intent: 'invoice_status', ... }; }
-  // ...
-  const aiDetected = await classifyChatIntentWithOpenAI(...);
-  ```
-- **Impacto:** La IA (que es más inteligente) nunca tiene la oportunidad de corregir el error de la Regex. El sistema prioriza reglas tontas (Regex) sobre inteligencia (LLM).
-
----
-
-## Recomendaciones Inmediatas (Quick Wins)
-
-1.  **Corregir la Regex de Facturas:** Hacerla más estricta (ej. exigir dígitos o longitud mínima) o eliminarla y dejar que OpenAI decida.
-2.  **Invertir la Lógica de Detección:** Llamar a OpenAI *primero* para clasificación general, y usar Regex solo para extraer datos específicos (como números de serie) *dentro* del handler, o como fallback si OpenAI falla.
-3.  **Implementar OpenAI Tools:** Refactorizar `classifyChatIntentWithOpenAI` para usar `tools` definidos formalmente.

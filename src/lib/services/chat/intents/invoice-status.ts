@@ -1,5 +1,5 @@
 import prisma from '@/lib/db';
-import { ChatLanguage, QueryExecutionResult } from '@/lib/chat/types';
+import { ChatLanguage, ChatServiceContext, QueryExecutionResult, ChatSource } from '@/lib/chat/types';
 import { Invoice, InvoiceStatus } from '@prisma/client';
 
 // Helper: Traducción de estados
@@ -227,8 +227,8 @@ export async function invoiceStatusIntent(
       currency: 'CAD',
     };
 
-    const sources = formattedInvoices.map(inv => ({
-      type: 'invoice' as const,
+    const sources: ChatSource[] = formattedInvoices.map(inv => ({
+      type: 'invoice',
       id: inv.id,
       label: inv.invoiceNumber,
     }));

@@ -106,7 +106,7 @@ export default function BotStatsDashboard() {
             }
           }
         } catch (e) {
-          logger.error("Background refresh failed", e);
+          console.error("Background refresh failed", e);
         }
       };
       silentRefresh();

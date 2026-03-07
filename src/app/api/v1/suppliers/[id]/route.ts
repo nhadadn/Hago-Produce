@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { supplierService } from '@/lib/services/suppliers.service';
 import { updateSupplierSchema } from '@/lib/validation/suppliers';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/infrastructure/logger.service';
 
 const ALLOWED_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING];
 

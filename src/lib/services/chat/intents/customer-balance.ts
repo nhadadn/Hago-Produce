@@ -32,8 +32,9 @@ export async function customerBalanceIntent(
       intent: 'customer_balance',
       confidence,
       language,
+      sources: [],
       data: {
-        type: 'customer_balance_error',
+        type: 'text',
         message: language === 'en'
           ? 'Please specify a customer name or ask for a global summary.'
           : 'Por favor especifica un nombre de cliente o pide un resumen global.',
@@ -70,6 +71,7 @@ export async function customerBalanceIntent(
         intent: 'customer_balance',
         confidence,
         language,
+        sources: [],
         data: {
           type: 'customer_suggestions',
           suggestions: suggestions.map(s => s.name),
@@ -145,12 +147,12 @@ export async function customerBalanceIntent(
     const item: BalanceItem = {
       customerId: customer.id,
       customerName: customer.name,
-      total: totalOutstanding,
-      count: totalCount,
+      total: Number(totalOutstanding || 0),
+      count: Number(totalCount || 0),
       currency: 'CAD',
       breakdown: {
-        overdueAmount,
-        pendingAmount,
+        overdueAmount: Number(overdueAmount || 0),
+        pendingAmount: Number(pendingAmount || 0),
         oldestUnpaidDate
       },
       statusMessage
@@ -162,8 +164,8 @@ export async function customerBalanceIntent(
       language,
       data: {
         type: 'customer_balance',
-        totalOutstanding, // Mantener para compatibilidad
-        invoicesCount: totalCount, // Mantener para compatibilidad
+        totalOutstanding: Number(totalOutstanding || 0), // Mantener para compatibilidad
+        invoicesCount: Number(totalCount || 0), // Mantener para compatibilidad
         items: [item],
         mode: 'single_customer'
       }
@@ -215,12 +217,12 @@ export async function customerBalanceIntent(
     customerId: g.customerId,
     customerName: customerMap.get(g.customerId) || 'Unknown Customer',
     total: Number(g._sum.total || 0),
-    count: g._count._all,
+    count: Number(g._count._all || 0),
     currency: 'CAD',
   }));
 
-  const globalTotal = items.reduce((acc, item) => acc + item.total, 0);
-  const globalCount = items.reduce((acc, item) => acc + item.count, 0);
+  const globalTotal = items.reduce((acc, item) => acc + Number(item.total || 0), 0);
+  const globalCount = items.reduce((acc, item) => acc + Number(item.count || 0), 0);
 
   return {
     intent: 'customer_balance',
@@ -228,8 +230,8 @@ export async function customerBalanceIntent(
     language,
     data: {
       type: 'customer_balance',
-      totalOutstanding: globalTotal,
-      invoicesCount: globalCount,
+      totalOutstanding: Number(globalTotal || 0),
+      invoicesCount: Number(globalCount || 0),
       items,
       mode: 'global_summary'
     }

@@ -11,6 +11,7 @@ import {
   getProductPriceTrends,
 } from '@/lib/services/reports';
 import { buildPDF, ReportType } from '@/lib/services/reports/export';
+import { logger } from '@/lib/infrastructure/logger.service';
 
 const ALLOWED_ROLES: Role[] = [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT];
 const MAX_REQUESTS_PER_MINUTE = 10;

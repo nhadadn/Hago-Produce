@@ -8,27 +8,25 @@ export const STOPWORDS = [
 ];
 
 /**
- * Limpia el término de búsqueda eliminando stopwords si la frase es larga.
- * Si el resultado de la limpieza es vacío, devuelve el término original.
+ * Limpia el término de búsqueda eliminando caracteres especiales peligrosos
+ * y normalizando espacios, pero manteniendo la frase completa.
  * 
  * @param searchTerm Término de búsqueda original
- * @returns Término limpio o original
+ * @returns Término limpio
  */
 export function cleanSearchTerm(searchTerm: string): string {
   if (!searchTerm) return '';
-  
-  // Guardia defensiva: limpieza de searchTerm si contiene muchas palabras
-  if (searchTerm.split(/\s+/).length > 2) {
-    const words = searchTerm.split(/\s+/);
-    const validWords = words.filter(w => w.length > 2 && !STOPWORDS.includes(w.toLowerCase()));
-    
-    if (validWords.length > 0) {
-      const original = searchTerm;
-      const refined = validWords[0];
-      logger.info(`[SearchTerm] Refined searchTerm from "${original}" to "${refined}"`);
-      return refined;
-    }
+
+  const original = searchTerm;
+  const refined = searchTerm
+    .trim()
+    .replace(/[;'"\\/<>{}[\]()]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (original !== refined) {
+    logger.info(`[SearchTerm] Refined searchTerm from "${original}" to "${refined}"`);
   }
   
-  return searchTerm;
+  return refined;
 }

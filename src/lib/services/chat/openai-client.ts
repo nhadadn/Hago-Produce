@@ -1,5 +1,7 @@
 import { ChatIntent, ChatLanguage, DetectedIntent, QueryExecutionResult } from '@/lib/chat/types';
 import { logger } from '@/lib/logger/logger.service';
+import { formatCustomerBalance } from './formatters/customer-balance.formatter';
+import { formatOverdueInvoices } from './formatters/overdue-invoices.formatter';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
@@ -39,216 +41,320 @@ export function buildSystemPrompt(language: ChatLanguage): string {
 }
 
 export function buildUserPrompt(intent: ChatIntent, language: ChatLanguage, executionResult: QueryExecutionResult): string {
-  const base = {
-    intent,
-    data: executionResult.data,
-  };
+  const data = executionResult.data as any;
+  const lang = language === 'es' ? 'Spanish' : 'English';
+  const langEs = language === 'es';
+
+  // ── product_info ──────────────────────────────────────
+  if (intent === 'product_info') {
+
+    if (!data?.items || data.items.length === 0) {
+      if (data?.message) return data.message;
+      if (data?.suggestions?.length > 0) {
+        const list = (data.suggestions as string[]).join(', ');
+        return langEs
+          ? 'No encontré el producto "' + String(data.query || '') + '". ¿Quisiste decir: ' + list + '?'
+          : 'No product found for "' + String(data.query || '') + '". Did you mean: ' + list + '?';
+      }
+      return langEs
+        ? 'No encontré información para "' + String(data.query || '') + '".'
+        : 'No product information found for "' + String(data.query || '') + '".';
+    }
+
+    const items = data.items as Array<{
+      name: string;
+      nameEs?: string | null;
+      category?: string | null;
+      unit?: string | null;
+      sku?: string | null;
+      description?: string | null;
+    }>;
+
+    const productList = items.map((p) => {
+      const displayName = langEs && p.nameEs ? p.nameEs : p.name;
+      const parts: string[] = ['Name: ' + displayName];
+      if (p.category) parts.push('Category: ' + p.category);
+      if (p.unit) parts.push('Unit: ' + p.unit);
+      if (p.sku) parts.push('SKU: ' + p.sku);
+      if (p.description) parts.push('Description: ' + p.description);
+      return parts.join(', ');
+    }).join('\n');
+
+    return (langEs
+      ? 'Eres un asistente de HAGO PRODUCE, distribuidor de frutas y verduras en Toronto, Canada. '
+        + 'Con la siguiente informacion de productos, escribe una respuesta clara y profesional en Español. '
+        + 'Menciona nombre, categoria y unidad. Si hay varios productos, listalos brevemente. '
+        + 'No menciones IDs internos.\n\n'
+      : 'You are an assistant for HAGO PRODUCE, a fresh produce distributor in Toronto, Canada. '
+        + 'Using the following product information, write a clear and professional response in English. '
+        + 'Mention name, category, and unit. If multiple products, list them briefly. '
+        + 'Do not mention internal IDs.\n\n'
+    ) + productList;
+  }
+
+  // ── inventory_summary ─────────────────────────────────
+  if (intent === 'inventory_summary') {
+
+    const items = Array.isArray(data?.items) ? data.items as Array<{
+      name: string;
+      nameEs?: string | null;
+      category?: string | null;
+      unit?: string | null;
+      isActive?: boolean;
+    }> : [];
+
+    const summary = data?.summary as {
+      totalProducts?: number;
+      categories?: string[];
+    } | undefined;
+
+    const totalProducts = summary?.totalProducts ?? items.length;
+    const categories = Array.isArray(summary?.categories)
+      ? (summary!.categories as string[]).join(', ')
+      : '';
+
+    const sampleNames = items.slice(0, 8).map((p) =>
+      (langEs && p.nameEs ? p.nameEs : p.name)
+    ).join(', ');
+
+    const filters = data?.filters as {
+      category?: string | null;
+      searchTerm?: string | null;
+    } | undefined;
+
+    const filterNote = filters?.category
+      ? (langEs ? 'Categoria filtrada: ' : 'Filtered category: ') + filters.category
+      : filters?.searchTerm
+        ? (langEs ? 'Busqueda: ' : 'Search term: ') + filters.searchTerm
+        : '';
+
+    const context = [
+      'Total active products: ' + totalProducts,
+      categories ? 'Categories: ' + categories : '',
+      sampleNames ? 'Sample products: ' + sampleNames : '',
+      filterNote,
+    ].filter(Boolean).join('\n');
+
+    return (langEs
+      ? 'Eres un asistente de HAGO PRODUCE, distribuidor de frutas y verduras en Toronto, Canada. '
+        + 'Con el siguiente resumen de inventario, escribe una respuesta concisa en Español. '
+        + 'Menciona el total de productos, categorias disponibles y algunos ejemplos. '
+        + 'Tono profesional y directo.\n\n'
+      : 'You are an assistant for HAGO PRODUCE, a fresh produce distributor in Toronto, Canada. '
+        + 'Using the following inventory summary, write a concise response in English. '
+        + 'Mention total products, available categories, and a few examples. '
+        + 'Professional and direct tone.\n\n'
+    ) + context;
+  }
+
+  // ── generic fallback for all other intents ────────────
+  const base = { intent, data: executionResult.data };
   const json = JSON.stringify(base, (key, value) =>
     typeof value === 'bigint' ? value.toString() : value
   );
-
-  if (language === 'en') {
-    return `Given the following JSON data, write a short, clear answer for the user in English.\n\n${json}`;
-  }
-
-  return `Con los siguientes datos en JSON, escribe una respuesta corta y clara para el usuario en Español.\n\n${json}`;
+  return langEs
+    ? 'Con los siguientes datos en JSON, escribe una respuesta corta y clara para el usuario en Español.\n\n' + json
+    : 'Given the following JSON data, write a short, clear answer for the user in English.\n\n' + json;
 }
 
 function buildIntentClassificationSystemPrompt(language: ChatLanguage): string {
   if (language === 'en') {
-    return [
-      'You are an AI assistant for the HAGO PRODUCE ERP system.',
-      'Your task is to classify the user intent and extract structured parameters.',
-      'Respond with a strict JSON object: { "intent": string, "params": object }.',
-      '',
-      'INTENT DEFINITIONS:',
-      '1. price_lookup: User asks for the price/cost of a product.',
-      '   - CRITICAL: Extract ONLY the product name into params.searchTerm.',
-      '   - Remove "price of", "how much is", articles (the, a).',
-      '   - Example: "price of apple" -> searchTerm: "apple"',
-      '',
-      '2. best_supplier: User asks for the best/cheapest supplier.',
-      '   - Extract product name into params.searchTerm.',
-      '',
-      '3. invoice_status: User asks for specific invoices, lists, or the last invoice.',
-      '   - Distinct from customer_balance (TOTAL debt / AGGREGATE).',
-      '   - PARAMS:',
-      '     * customerName (string | null): Customer name.',
-      '     * invoiceNumber (string | null): Specific invoice number if provided.',
-      '     * isLast (boolean): Set to true if user asks for "last", "latest", "newest" invoice.',
-      '   - MODES:',
-      '     1. Specific Invoice: "status of invoice 1024" -> { "intent": "invoice_status", "params": { "invoiceNumber": "1024" } }',
-      '     2. Last Invoice: "latest invoice for Walmart" -> { "intent": "invoice_status", "params": { "customerName": "Walmart", "isLast": true } }',
-      '     3. List Invoices: "show me invoices for Walmart" -> { "intent": "invoice_status", "params": { "customerName": "Walmart" } }',
-      '',
-      '4. customer_balance: User asks for balance, total debt, or "how much they owe" (AGGREGATE).',
-      '   - CRITICAL: Distinguish from invoice_status (LIST of invoices) and overdue_invoices (LIST of overdue).',
-      '   - If asking for "invoices of X" -> invoice_status. If asking for "balance of X" -> customer_balance.',
-      '   - PARAMS:',
-      '     * customerName (string | null): Customer name. If asking for "all" or "general" -> null.',
-      '     * queryType (string): "single_customer" (if customerName exists) or "global_summary" (if customerName is null).',
-      '   - EXAMPLES:',
-      '     * "how much does Walmart owe?" -> { "intent": "customer_balance", "params": { "customerName": "Walmart", "queryType": "single_customer" } }',
-      '     * "total customer balance" -> { "intent": "customer_balance", "params": { "customerName": null, "queryType": "global_summary" } }',
-      '     * "invoices for Walmart" -> { "intent": "invoice_status", "params": { "customerName": "Walmart" } }',
-      '     * "how much does Walmart owe in overdue invoices?" -> { "intent": "overdue_invoices" }',
-      '',
-      '5. product_info: User wants general information, specs, or "what is" a product.',
-      '   - Distinct from price_lookup (price) and best_supplier (who sells).',
-      '   - PARAMS:',
-      '     * productName (string): ONLY the product name. Clean "info about", "details of".',
-      '     * NOT SUPPORTED: Category searches (e.g. "vegetables"). Return null for productName.',
-      '   - DISAMBIGUATION RULES (Example: "tomato"):',
-      '     * "info about tomato" -> { "intent": "product_info", "params": { "productName": "tomato" } }',
-      '     * "price of tomato" -> { "intent": "price_lookup", "params": { "searchTerm": "tomato" } } (PRICE wins)',
-      '     * "who sells tomato" -> { "intent": "best_supplier", "params": { "searchTerm": "tomato" } } (SUPPLIER wins)',
-      '     * "what is broccoli?" -> { "intent": "product_info", "params": { "productName": "broccoli" } }',
-      '',
-      '6. customer_info: User asks for contact details, address, email, or tax ID of a customer.',
-      '   - Distinct from customer_balance (financials) and invoice_status (documents).',
-      '   - PARAMS:',
-      '     * customerName (string | null): Customer name. Preserve original spelling.',
-      '     * customerEmail (string | null): Extract ONLY if email is explicitly mentioned.',
-      '     * customerTaxId (string | null): Extract ONLY if tax ID/RFC is explicitly mentioned.',
-      '     * searchType (string): "by_name" (default), "by_email", "by_taxid", or "unknown".',
-      '   - EXAMPLES:',
-      '     * "info for Walmart" -> { "intent": "customer_info", "params": { "customerName": "Walmart", "searchType": "by_name" } }',
-      '     * "email of Walmart" -> { "intent": "customer_info", "params": { "customerName": "Walmart", "searchType": "by_name" } }',
-      '     * "customer with RFC ABC1234" -> { "intent": "customer_info", "params": { "customerTaxId": "ABC1234", "searchType": "by_taxid" } }',
-      '     * "balance of Walmart" -> { "intent": "customer_balance", "params": { "customerName": "Walmart" } } (FINANCIAL signal wins)',
-      '',
-      '7. overdue_invoices: User asks for OVERDUE, past due, or unpaid invoices (URGENCY/COLLECTION).',
-      '   - Distinct from invoice_status (documents) and customer_balance (total balance).',
-      '   - KEY SIGNAL: "overdue", "late", "past due", "unpaid". Urgency trumps "invoice" or "balance".',
-      '   - PARAMS:',
-      '     * customerName (string | null): Customer name. If global report -> null.',
-      '     * queryType (string): "single_customer" (if customerName exists) or "global_report" (if null).',
-      '     * daysOverdue (number | null): Days overdue if mentioned (e.g. "more than 30 days"). Default null.',
-      '   - EXAMPLES:',
-      '     * "overdue invoices for Walmart" -> { "intent": "overdue_invoices", "params": { "customerName": "Walmart", "queryType": "single_customer" } }',
-      '     * "collection report" -> { "intent": "overdue_invoices", "params": { "customerName": null, "queryType": "global_report" } }',
-      '     * "how much does Walmart owe?" -> { "intent": "customer_balance", "params": { "customerName": "Walmart" } } (NO urgency)',
-      '     * "show invoices for Walmart" -> { "intent": "invoice_status", "params": { "customerName": "Walmart" } } (NO urgency)',
-      '',
-      '8. inventory_summary: User asks for a LIST of products, CATALOG, or what is available in a category.',
-      '   - Distinct from product_info (details of ONE product) and price_lookup (specific PRICE).',
-      '   - KEY SIGNAL: "what do you have", "show me products", "list of [category]", "catalog".',
-      '   - PARAMS:',
-      '     * category (string | null): If user mentions a category (e.g. "fruits", "vegetables"). Else null.',
-      '     * searchTerm (string | null): If user mentions a specific product/term to list. Else null.',
-      '   - EXAMPLES:',
-      '     * "what fruits do you have?" -> { "intent": "inventory_summary", "params": { "category": "fruits" } }',
-      '     * "show me catalog" -> { "intent": "inventory_summary", "params": { "category": null } }',
-      '     * "list of tomatoes" -> { "intent": "inventory_summary", "params": { "searchTerm": "tomato" } }',
-      '     * "info about tomato" -> { "intent": "product_info", "params": { "productName": "tomato" } } (DETAIL wins)',
-      '',
-      '9. create_order: User wants to buy, order, or purchase items.',
-      '   - Distinct from price_lookup. "I want to buy apples" is create_order.',
-      '',
-      '10. Other intents: create_purchase_order, create_invoice.',
-      '',
-      'RULES:',
-      '- If params.searchTerm is required, ensure it is clean and contains only the entity name.',
-      '- If the user intention is ambiguous between price and order, prefer price_lookup unless "buy/order" is explicit.'
-    ].join('\n');
+    return `SECTION 1 — ROLE
+You are the intent classifier for HAGO PRODUCE, a fresh produce distribution company in Canada. Your only job is to analyze the user message and return a single JSON object. Nothing else.
+
+SECTION 2 — STRICT OUTPUT RULE
+Return ONLY a raw JSON object. No markdown. No explanation. No code blocks. The JSON must be parseable by JSON.parse() with zero modifications.
+
+SECTION 3 — INPUT STRUCTURE
+You will receive:
+- message: the user's current text
+- context: optional object with lastProduct, lastCustomer, lastIntent, language
+Use context.lastProduct and context.lastCustomer to resolve pronouns like "it", "that", "them", "the same one".
+
+SECTION 4 — THE 7 QUERY INTENTS
+Define each intent with:
+- When to use it (semantic trigger, not just keywords)
+- Exact param names (these are non-negotiable, handlers depend on them):
+  * price_lookup     → searchTerm (string), supplierName (string|null)
+  * best_supplier    → searchTerm (string), maxResults (number, default 5)
+  * product_info     → productName (string)
+  * invoice_status   → invoiceNumber (string|null), customerName (string|null), isLast (boolean)
+  * customer_balance → customerName (string|null), queryType ("single_customer"|"global_summary")
+  * inventory_summary → category (string|null), searchTerm (string|null)
+  * overdue_invoices → customerName (string|null), queryType ("single_customer"|"global_report"), daysOverdue (number|null)
+- When NOT to use it (disambiguation rules)
+
+SECTION 5 — DISAMBIGUATION RULES
+Include these 4 explicit rules:
+1. "how much" / "price" / "cost" = price_lookup
+   "who sells" / "best supplier" / "cheapest" = best_supplier
+2. List of invoices = invoice_status
+   Total debt/balance = customer_balance
+3. "overdue"/"past due"/"unpaid"/"late"/"collection" = overdue_invoices
+   (these urgency words override invoice_status and customer_balance)
+4. Single specific product detail = product_info
+   Category or list request = inventory_summary
+5. Single product name fallback: 
+If the message contains only a product name or short 
+product phrase with no action verb (price, cost, show, 
+find, list, etc.), classify as price_lookup with that 
+term as searchTerm. Do not ask for clarification. 
+Examples: 
+  "manzana" → price_lookup, searchTerm: "apple" 
+  "celery" → price_lookup, searchTerm: "celery" 
+  "tomate cherry" → price_lookup, searchTerm: "cherry tomato" 
+6. Multiple products in one message: 
+If the message contains multiple product names separated 
+by "and", "y", commas, or "también"/"also", extract ALL 
+products and return intent price_lookup with: 
+  searchTerm: first product name in English (string) 
+  searchTerms: all product names in English (string[]) 
+If only one product is found, searchTerms must still be 
+an array with one element: [searchTerm]
+
+SECTION 6 — LANGUAGE RULES
+- Default language: English (Canadian client, all DB data is in English)
+- If user writes in Spanish: detect and respond in Spanish
+- Product names in params MUST always be in English regardless of input
+  Example: "precio del tomate" → searchTerm must be "tomato" not "tomate"
+- Never translate product names before searching the database
+
+SECTION 7 — CLARIFICATION INTENT
+Use intent "clarification_needed" when:
+- Required parameter cannot be inferred from message or context
+- Confidence would be below 0.65
+- Two intents have nearly equal confidence
+Params for clarification_needed must include:
+- "question": exact question to ask user (in their detected language)
+- "candidates": array of 1-2 most likely intent names
+
+SECTION 8 — CONCRETE OUTPUT EXAMPLES
+Include exactly these 5 examples:
+
+Example 1 (price_lookup, English):
+Input: "What's the price of tomato?"
+Output: {"intent":"price_lookup","params":{"searchTerm":"tomato","supplierName":null},"confidence":0.97}
+
+Example 2 (price_lookup, context resolution):
+Input: "And how much does it cost?"
+Context: { "lastProduct": "avocado" }
+Output: {"intent":"price_lookup","params":{"searchTerm":"avocado","supplierName":null},"confidence":0.91}
+
+Example 3 (best_supplier, Spanish input → English param):
+Input: "¿Quién vende tomate más barato?"
+Output: {"intent":"best_supplier","params":{"searchTerm":"tomato","maxResults":5},"confidence":0.95}
+
+Example 4 (invoice_status, isLast):
+Input: "Show me the latest invoice for Walmart"
+Output: {"intent":"invoice_status","params":{"invoiceNumber":null,"customerName":"Walmart","isLast":true},"confidence":0.96}
+
+Example 5 (clarification_needed):
+Input: "Show me the balance"
+Output: {"intent":"clarification_needed","params":{"question":"Which customer's balance would you like to see, or would you like a summary of all customers?","candidates":["customer_balance","overdue_invoices"]},"confidence":0.45}
+
+Example 6 (single product name, no verb): 
+Input: "manzana" 
+Output: {"intent":"price_lookup","params":{"searchTerm":"apple","searchTerms":["apple"],"supplierName":null},"confidence":0.85} 
+
+Example 7 (multiple products): 
+Input: "celery ocean mist and apples price" 
+Output: {"intent":"price_lookup","params":{"searchTerm":"celery ocean mist","searchTerms":["celery ocean mist","apple"],"supplierName":null},"confidence":0.92}`;
   }
 
-  return [
-    'Eres un asistente de IA para el sistema ERP de HAGO PRODUCE.',
-    'Tu tarea es clasificar la intención del usuario y extraer parámetros estructurados.',
-    'Responde con un objeto JSON estricto: { "intent": string, "params": object }.',
-    '',
-    'DEFINICIÓN DE INTENCIONES:',
-    '1. price_lookup: El usuario pregunta por el precio o costo de un producto.',
-    '   - CRÍTICO: Extrae SOLO el nombre del producto en params.searchTerm.',
-    '   - Elimina palabras como "precio de", "cuánto cuesta", "a cómo está", artículos (el, la, los).',
-    '   - Ejemplo: "¿A cómo está el aguacate?" -> { "intent": "price_lookup", "params": { "searchTerm": "aguacate" } }',
-    '   - Ejemplo: "precio de la manzana" -> { "intent": "price_lookup", "params": { "searchTerm": "manzana" } }',
-    '',
-    '2. best_supplier: El usuario busca el proveedor más barato o mejor.',
-    '   - Extrae el producto en params.searchTerm.',
-    '',
-    '3. invoice_status: El usuario busca una factura específica, una lista o la última factura.',
-    '   - Distinto de customer_balance (deuda TOTAL / AGREGADO).',
-    '   - PARÁMETROS:',
-    '     * customerName (string | null): Nombre del cliente.',
-    '     * invoiceNumber (string | null): Número de factura específico.',
-    '     * isLast (boolean): true si el usuario pide la "última", "más reciente" o "nueva".',
-    '   - MODOS:',
-    '     1. Factura Específica: "estado de la factura 1024" -> { "intent": "invoice_status", "params": { "invoiceNumber": "1024" } }',
-    '     2. Última Factura: "última factura de Walmart" -> { "intent": "invoice_status", "params": { "customerName": "Walmart", "isLast": true } }',
-    '     3. Lista de Facturas: "muéstrame las facturas de Walmart" -> { "intent": "invoice_status", "params": { "customerName": "Walmart" } }',
-    '',
-    '4. customer_balance: El usuario pregunta por saldo, deuda total o "cuánto debe" (AGREGADO).',
-    '   - CRÍTICO: Distinguir de invoice_status (LISTA de facturas) y overdue_invoices (LISTA de vencidas).',
-    '   - Si pide "facturas de X" -> invoice_status. Si pide "saldo de X" -> customer_balance.',
-    '   - PARÁMETROS:',
-    '     * customerName (string | null): Nombre del cliente. Si pregunta por "todos" o "general" -> null.',
-    '     * queryType (string): "single_customer" (si hay customerName) o "global_summary" (si customerName es null).',
-    '   - EJEMPLOS:',
-    '     * "¿cuánto debe Walmart?" -> { "intent": "customer_balance", "params": { "customerName": "Walmart", "queryType": "single_customer" } }',
-    '     * "saldo total de clientes" -> { "intent": "customer_balance", "params": { "customerName": null, "queryType": "global_summary" } }',
-    '     * "facturas de Walmart" -> { "intent": "invoice_status", "params": { "customerName": "Walmart" } }',
-    '     * "¿cuánto debe Walmart en facturas vencidas?" -> { "intent": "overdue_invoices" }',
-    '',
-    '5. product_info: El usuario quiere información general, ficha técnica o "qué es" un producto.',
-    '   - Distinto de price_lookup (precio) y best_supplier (quién vende).',
-    '   - PARÁMETROS:',
-    '     * productName (string): SOLO el nombre del producto. Limpia "info de", "detalles sobre".',
-    '     * NO SOPORTADO: Búsquedas por categoría (ej. "verduras"). Retorna null en productName.',
-    '   - REGLAS DE DESAMBIGUACIÓN (Ejemplo: "tomate"):',
-    '     * "info del tomate" -> { "intent": "product_info", "params": { "productName": "tomate" } }',
-    '     * "precio del tomate" -> { "intent": "price_lookup", "params": { "searchTerm": "tomate" } } (Gana PRECIO)',
-    '     * "quién vende tomate" -> { "intent": "best_supplier", "params": { "searchTerm": "tomate" } } (Gana PROVEEDOR)',
-    '     * "¿qué es el brócoli?" -> { "intent": "product_info", "params": { "productName": "brócoli" } }',
-    '',
-    '6. customer_info: El usuario pide datos de contacto, dirección, email o RFC de un cliente.',
-    '   - Distinto de customer_balance (financiero) y invoice_status (documentos).',
-    '   - PARÁMETROS:',
-    '     * customerName (string | null): Nombre del cliente. Preserva la escritura original.',
-    '     * customerEmail (string | null): Extraer SOLO si se menciona explícitamente el email.',
-    '     * customerTaxId (string | null): Extraer SOLO si se menciona explícitamente RFC/Tax ID.',
-    '     * searchType (string): "by_name" (defecto), "by_email", "by_taxid", o "unknown".',
-    '   - EJEMPLOS:',
-    '     * "info de Walmart" -> { "intent": "customer_info", "params": { "customerName": "Walmart", "searchType": "by_name" } }',
-    '     * "email de Walmart" -> { "intent": "customer_info", "params": { "customerName": "Walmart", "searchType": "by_name" } }',
-    '     * "cliente con RFC ABC1234" -> { "intent": "customer_info", "params": { "customerTaxId": "ABC1234", "searchType": "by_taxid" } }',
-    '     * "saldo de Walmart" -> { "intent": "customer_balance", "params": { "customerName": "Walmart" } } (Gana FINANCIERO)',
-    '',
-    '7. overdue_invoices: El usuario busca facturas VENCIDAS, atrasadas o necesita COBRANZA (URGENCIA).',
-    '   - Distinto de invoice_status (documentos) y customer_balance (saldo total).',
-    '   - SEÑAL CLAVE: "vencido", "atrasado", "cobrar", "sin pagar". La urgencia domina sobre "factura" o "saldo".',
-    '   - PARÁMETROS:',
-    '     * customerName (string | null): Nombre del cliente. Si es reporte global -> null.',
-    '     * queryType (string): "single_customer" (si hay customerName) o "global_report" (si es null).',
-    '     * daysOverdue (number | null): Días de antigüedad si se menciona (ej. "más de 30 días"). Default null.',
-    '   - EJEMPLOS:',
-    '     * "facturas vencidas de Walmart" -> { "intent": "overdue_invoices", "params": { "customerName": "Walmart", "queryType": "single_customer" } }',
-    '     * "reporte de cobranza" -> { "intent": "overdue_invoices", "params": { "customerName": null, "queryType": "global_report" } }',
-    '     * "¿cuánto debe Walmart?" -> { "intent": "customer_balance", "params": { "customerName": "Walmart" } } (SIN urgencia)',
-    '     * "ver facturas de Walmart" -> { "intent": "invoice_status", "params": { "customerName": "Walmart" } } (SIN urgencia)',
-    '',
-    '8. inventory_summary: El usuario pide una LISTA de productos, CATÁLOGO o qué hay en una categoría.',
-    '   - Distinto de product_info (detalle de UN producto) y price_lookup (PRECIO específico).',
-    '   - SEÑAL CLAVE: "qué tienes", "muéstrame productos", "lista de [categoría]", "catálogo".',
-    '   - PARÁMETROS:',
-    '     * category (string | null): Si menciona categoría (ej. "frutas", "verduras"). Si no -> null.',
-    '     * searchTerm (string | null): Si menciona un producto/término específico para listar. Si no -> null.',
-    '   - EJEMPLOS:',
-    '     * "¿qué frutas tienes?" -> { "intent": "inventory_summary", "params": { "category": "frutas" } }',
-    '     * "ver catálogo completo" -> { "intent": "inventory_summary", "params": { "category": null } }',
-    '     * "lista de tomates" -> { "intent": "inventory_summary", "params": { "searchTerm": "tomate" } }',
-    '     * "info del tomate" -> { "intent": "product_info", "params": { "productName": "tomate" } } (Gana DETALLE)',
-    '',
-    '9. create_order: El usuario quiere comprar, pedir o hacer un pedido.',
-    '   - Distinto a price_lookup. "Quiero comprar tomate" es create_order.',
-    '',
-    '10. Otras intenciones: create_purchase_order, create_invoice.',
-    '',
-    'REGLAS:',
-    '- Si se requiere params.searchTerm, asegúrate de que esté limpio y contenga solo el nombre de la entidad.',
-    '- Prioriza la extracción precisa de entidades sobre la coincidencia exacta de palabras clave.'
-  ].join('\n');
+  return `SECTION 1 — ROLE
+You are the intent classifier for HAGO PRODUCE, a fresh produce distribution company in Canada. Your only job is to analyze the user message and return a single JSON object. Nothing else.
+
+SECTION 2 — STRICT OUTPUT RULE
+Return ONLY a raw JSON object. No markdown. No explanation. No code blocks. The JSON must be parseable by JSON.parse() with zero modifications.
+
+SECTION 3 — INPUT STRUCTURE
+You will receive:
+- message: the user's current text
+- context: optional object with lastProduct, lastCustomer, lastIntent, language
+Use context.lastProduct and context.lastCustomer to resolve pronouns like "it", "that", "them", "the same one".
+
+SECTION 4 — THE 7 QUERY INTENTS
+Define each intent with:
+- When to use it (semantic trigger, not just keywords)
+- Exact param names (these are non-negotiable, handlers depend on them):
+  * price_lookup     → searchTerm (string), supplierName (string|null)
+  * best_supplier    → searchTerm (string), maxResults (number, default 5)
+  * product_info     → productName (string)
+  * invoice_status   → invoiceNumber (string|null), customerName (string|null), isLast (boolean)
+  * customer_balance → customerName (string|null), queryType ("single_customer"|"global_summary")
+  * inventory_summary → category (string|null), searchTerm (string|null)
+  * overdue_invoices → customerName (string|null), queryType ("single_customer"|"global_report"), daysOverdue (number|null)
+- When NOT to use it (disambiguation rules)
+
+SECTION 5 — DISAMBIGUATION RULES
+Include these 4 explicit rules:
+5. Fallback de nombre de producto único:
+Si el mensaje contiene solo un nombre de producto o una frase corta de producto sin verbo de acción (precio, costo, mostrar, encontrar, listar, etc.), clasifícalo como price_lookup con ese término como searchTerm. No pidas aclaración.
+Ejemplos:
+  "manzana" → price_lookup, searchTerm: "apple"
+  "celery" → price_lookup, searchTerm: "celery"
+  "tomate cherry" → price_lookup, searchTerm: "cherry tomato"
+6. Múltiples productos en un mensaje:
+Si el mensaje contiene múltiples nombres de productos separados por "y", "and", comas o "también"/"also", extrae TODOS los productos y devuelve el intent price_lookup con:
+  searchTerm: primer nombre de producto en inglés (string)
+  searchTerms: todos los nombres de productos en inglés (string[])
+Si solo se encuentra un producto, searchTerms debe ser un array con un elemento: [searchTerm]
+1. "how much" / "price" / "cost" = price_lookup
+   "who sells" / "best supplier" / "cheapest" = best_supplier
+2. List of invoices = invoice_status
+   Total debt/balance = customer_balance
+3. "overdue"/"past due"/"unpaid"/"late"/"collection" = overdue_invoices
+   (these urgency words override invoice_status and customer_balance)
+4. Single specific product detail = product_info
+   Category or list request = inventory_summary
+
+SECTION 6 — LANGUAGE RULES
+- Default language: English (Canadian client, all DB data is in English)
+- If user writes in Spanish: detect and respond in Spanish
+- Product names in params MUST always be in English regardless of input
+  Example: "precio del tomate" → searchTerm must be "tomato" not "tomate"
+- Never translate product names before searching the database
+
+SECTION 7 — CLARIFICATION INTENT
+Use intent "clarification_needed" when:
+- Required parameter cannot be inferred from message or context
+- Confidence would be below 0.65
+- Two intents have nearly equal confidence
+Params for clarification_needed must include:
+- "question": exact question to ask user (in their detected language)
+- "candidates": array of 1-2 most likely intent names
+
+SECTION 8 — CONCRETE OUTPUT EXAMPLES
+Include exactly these 5 examples:
+
+Example 1 (price_lookup, English):
+
+Example 6 (nombre de producto único, sin verbo): 
+Input: "manzana" 
+Output: {"intent":"price_lookup","params":{"searchTerm":"apple","searchTerms":["apple"],"supplierName":null},"confidence":0.85} 
+
+Example 7 (múltiples productos): 
+Input: "precio de apio y manzana" 
+Output: {"intent":"price_lookup","params":{"searchTerm":"celery","searchTerms":["celery","apple"],"supplierName":null},"confidence":0.92}
+Input: "What's the price of tomato?"
+Output: {"intent":"price_lookup","params":{"searchTerm":"tomato","supplierName":null},"confidence":0.97}
+
+Example 2 (price_lookup, context resolution):
+Input: "And how much does it cost?"
+Context: { "lastProduct": "avocado" }
+Output: {"intent":"price_lookup","params":{"searchTerm":"avocado","supplierName":null},"confidence":0.91}
+
+Example 3 (best_supplier, Spanish input → English param):
+Input: "¿Quién vende tomate más barato?"
+Output: {"intent":"best_supplier","params":{"searchTerm":"tomato","maxResults":5},"confidence":0.95}
+
+Example 4 (invoice_status, isLast):
+Input: "Show me the latest invoice for Walmart"
+Output: {"intent":"invoice_status","params":{"invoiceNumber":null,"customerName":"Walmart","isLast":true},"confidence":0.96}
+
+Example 5 (clarification_needed):
+Input: "Show me the balance"
+Output: {"intent":"clarification_needed","params":{"question":"Which customer's balance would you like to see, or would you like a summary of all customers?","candidates":["customer_balance","overdue_invoices"]},"confidence":0.45}`;
 }
 
 export async function classifyChatIntentWithOpenAI(
@@ -260,12 +366,14 @@ export async function classifyChatIntentWithOpenAI(
 
   if (!apiKey) {
     return {
-      intent: 'price_lookup',
-      confidence: 0.5,
+      intent: 'clarification_needed',
+      confidence: 0.0,
       params: {
-        searchTerm: message,
-        language,
-      },
+        question: language === 'es'
+          ? '¿Podrías reformular tu pregunta? Estoy teniendo dificultades técnicas.'
+          : 'Could you please rephrase? I am experiencing technical difficulties.',
+        candidates: []
+      }
     };
   }
 
@@ -296,12 +404,14 @@ export async function classifyChatIntentWithOpenAI(
 
     if (!response.ok) {
       return {
-        intent: 'price_lookup',
-        confidence: 0.5,
+        intent: 'clarification_needed',
+        confidence: 0.0,
         params: {
-          searchTerm: message,
-          language,
-        },
+          question: language === 'es'
+            ? '¿Podrías reformular tu pregunta? Estoy teniendo dificultades técnicas.'
+            : 'Could you please rephrase? I am experiencing technical difficulties.',
+          candidates: []
+        }
       };
     }
 
@@ -309,12 +419,14 @@ export async function classifyChatIntentWithOpenAI(
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
       return {
-        intent: 'price_lookup',
-        confidence: 0.5,
+        intent: 'clarification_needed',
+        confidence: 0.0,
         params: {
-          searchTerm: message,
-          language,
-        },
+          question: language === 'es'
+            ? '¿Podrías reformular tu pregunta? Estoy teniendo dificultades técnicas.'
+            : 'Could you please rephrase? I am experiencing technical difficulties.',
+          candidates: []
+        }
       };
     }
 
@@ -436,6 +548,362 @@ export async function formatResponse(
   executionResult: QueryExecutionResult,
   messages?: { role: 'system' | 'user' | 'assistant'; content: string }[],
 ): Promise<string> {
+  if (intent === 'best_supplier') {
+    const data = executionResult.data || {};
+    
+    // Handle multi-result response
+    if (data.type === 'best_supplier_multi') {
+      const results = data.results as Array<{
+        query: string;
+        items: Array<{
+          rank: number;
+          productName: string;
+          productNameEs: string | null;
+          supplierName: string;
+          costPrice: number;
+          currency: string;
+          effectiveDate: string;
+        }>;
+      }>;
+
+      const sections: string[] = [];
+
+      for (const result of results) {
+        if (result.items.length === 0) {
+          const noResult = language === 'es'
+            ? '🏆 Sin resultados para ' + result.query
+            : '🏆 No results for ' + result.query;
+          sections.push(noResult);
+          continue;
+        }
+
+        const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthsEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const d = new Date(result.items[0].effectiveDate);
+        const dateStr = language === 'en'
+          ? `${monthsEn[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}, ${d.getFullYear()}`
+          : `${String(d.getDate()).padStart(2, '0')} ${monthsEs[d.getMonth()]} ${d.getFullYear()}`;
+
+        const count = result.items.length;
+        const header = language === 'es'
+          ? '🏆 Mejores precios para ' + result.query + ' — ' + count + ' resultado(s)'
+          : '🏆 Best prices for ' + result.query + ' — ' + count + ' result(s)';
+
+        const lines = result.items.map((item) => {
+          const displayName = language === 'en'
+            ? item.productName
+            : (item.productNameEs && item.productNameEs.trim() ? item.productNameEs : item.productName);
+          const price = Number(item.costPrice).toFixed(2);
+          return `#${item.rank}  ${displayName}  ·  ${item.supplierName}  ·  $${price} ${item.currency}`;
+        });
+
+        const footer = language === 'es'
+          ? `Precios al ${dateStr} · Ordenado del más barato al más caro`
+          : `Prices as of ${dateStr} · Sorted cheapest first`;
+
+        sections.push([header, '', ...lines, '', footer].join('\n'));
+      }
+
+      return sections.join('\n\n---\n\n');
+    }
+
+    const query = String(data.query || '').trim();
+    const items: Array<{
+      rank: number;
+      productName: string;
+      productNameEs?: string | null;
+      supplierName: string;
+      costPrice: number;
+      currency: string;
+      effectiveDate: string;
+    }> = Array.isArray(data.items) ? data.items : [];
+    const suggestions: string[] = Array.isArray(data.suggestions) ? data.suggestions : [];
+
+    if (items.length === 0 && suggestions.length > 0) {
+      const alt = suggestions.slice(0, 2).join(', ');
+      return language === 'en'
+        ? `No prices found for '${query}'. Did you mean: ${alt}?`
+        : `No encontré precios para '${query}'. ¿Quisiste decir: ${alt}?`;
+    }
+
+    if (items.length === 0) {
+      return language === 'en'
+        ? `No suppliers found for '${query}' in our current price list.`
+        : `No encontré proveedores para '${query}' en nuestra lista de precios actual.`;
+    }
+
+    const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthsEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const first = items[0];
+    const d = new Date(first.effectiveDate);
+    const dateStr =
+      language === 'en'
+        ? `${monthsEn[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}, ${d.getFullYear()}`
+        : `${String(d.getDate()).padStart(2, '0')} ${monthsEs[d.getMonth()]} ${d.getFullYear()}`;
+
+    const headerProduct =
+      language === 'en'
+        ? first.productName
+        : (first.productNameEs && first.productNameEs.trim() ? first.productNameEs : first.productName);
+    const count = items.length;
+    const header =
+      language === 'en'
+        ? `🏆 Best prices for ${headerProduct} — ${count} supplier(s) found`
+        : `🏆 Mejores precios para ${headerProduct} — ${count} proveedor(es)`;
+
+    const lines = items.map((item) => {
+      const displayName =
+        language === 'en'
+          ? item.productName
+          : (item.productNameEs && item.productNameEs.trim() ? item.productNameEs : item.productName);
+      const price = Number(item.costPrice).toFixed(2);
+      return `#${item.rank}  ${displayName}  ·  ${item.supplierName}  ·  $${price} ${item.currency}`;
+    });
+
+    const footer =
+      language === 'en'
+        ? `Prices as of ${dateStr} · Sorted cheapest first`
+        : `Precios al ${dateStr} · Ordenado del más barato al más caro`;
+
+    return [header, '', ...lines, footer].join('\n');
+  }
+
+  if (intent === 'price_lookup') {
+    const data = executionResult.data || {};
+
+    // Handle multi-result response
+    if (data.type === 'price_lookup_multi') {
+      const results = data.results as Array<{
+        query: string;
+        items: Array<{
+          productName: string;
+          nameEs?: string | null;
+          supplierName: string;
+          costPrice: number;
+          currency: string;
+          effectiveDate: string;
+        }>;
+      }>;
+
+      const sections: string[] = [];
+
+      for (const result of results) {
+        if (result.items.length === 0) {
+          const noResult = language === 'es'
+            ? '🔍 Sin resultados para ' + result.query
+            : '🔍 No results for ' + result.query;
+          sections.push(noResult);
+          continue;
+        }
+
+        const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthsEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const d = new Date(result.items[0].effectiveDate);
+        const dateStr = language === 'en'
+          ? `${monthsEn[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}, ${d.getFullYear()}`
+          : `${String(d.getDate()).padStart(2, '0')} ${monthsEs[d.getMonth()]} ${d.getFullYear()}`;
+
+        const count = result.items.length;
+        const header = language === 'es'
+          ? '🔍 Precios para ' + result.query + ' — ' + count + ' resultado(s)'
+          : '🔍 Prices for ' + result.query + ' — ' + count + ' result(s)';
+
+        const lines = result.items.map((item, idx) => {
+          const displayName = language === 'en'
+            ? item.productName
+            : (item.nameEs && item.nameEs.trim() ? item.nameEs : item.productName);
+          const price = Number(item.costPrice).toFixed(2);
+          return `#${idx + 1}  ${displayName}  ·  ${item.supplierName}  ·  $${price} ${item.currency}`;
+        });
+
+        const footer = language === 'es'
+          ? `Precios al ${dateStr} · Ordenado del más barato al más caro`
+          : `Prices as of ${dateStr} · Sorted cheapest first`;
+
+        sections.push([header, '', ...lines, '', footer].join('\n'));
+      }
+
+      return sections.join('\n\n---\n\n');
+    }
+
+    const query = String(data.query || '').trim();
+    const items: Array<{
+      productName: string;
+      nameEs?: string | null;
+      supplierName: string;
+      costPrice: number;
+      sellPrice?: number | null;
+      currency: string;
+      effectiveDate: string;
+    }> = Array.isArray(data.items) ? data.items : [];
+    const suggestions: string[] = Array.isArray(data.suggestions) ? data.suggestions : [];
+
+    if (items.length === 0 && suggestions.length > 0) {
+      const alt = suggestions.slice(0, 2).join(', ');
+      return language === 'en'
+        ? `No prices found for '${query}'. Did you mean: ${alt}?`
+        : `No encontré precios para '${query}'. ¿Quisiste decir: ${alt}?`;
+    }
+
+    if (items.length === 0) {
+      return language === 'en'
+        ? `No prices found for '${query}' in our current price list.`
+        : `No encontré precios para '${query}' en nuestra lista de precios actual.`;
+    }
+
+    const sorted = [...items].sort((a, b) => Number(a.costPrice) - Number(b.costPrice));
+    const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthsEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const first = sorted[0];
+    const d = new Date(first.effectiveDate);
+    const dateStr =
+      language === 'en'
+        ? `${monthsEn[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}, ${d.getFullYear()}`
+        : `${String(d.getDate()).padStart(2, '0')} ${monthsEs[d.getMonth()]} ${d.getFullYear()}`;
+
+    const header =
+      language === 'en'
+        ? `🔍 Prices for ${query} — ${sorted.length} result(s) found`
+        : `🔍 Precios para ${query} — ${sorted.length} resultado(s)`;
+
+    const lines = sorted.map((item, idx) => {
+      const rank = idx + 1;
+      const displayName =
+        language === 'en'
+          ? item.productName
+          : (item.nameEs && item.nameEs.trim() ? item.nameEs : item.productName);
+      const price = Number(item.costPrice).toFixed(2);
+      return `#${rank}  ${displayName}  ·  ${item.supplierName}  ·  $${price} ${item.currency}`;
+    });
+
+    const footer =
+      language === 'en'
+        ? `Prices as of ${dateStr} · Sorted cheapest first`
+        : `Precios al ${dateStr} · Ordenado del más barato al más caro`;
+
+    return [header, '', ...lines, '', footer].join('\n');
+  }
+
+  if (intent === 'invoice_status') {
+    const data = executionResult.data as any;
+    if (data && typeof data === 'object' && data.type) {
+      const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthsEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      const fmtDate = (iso: string | null, lang: ChatLanguage) => {
+        if (!iso) return 'N/A';
+        const d = new Date(iso);
+        const day = String(d.getDate()).padStart(2, '0');
+        const year = d.getFullYear();
+        return lang === 'en'
+          ? `${monthsEn[d.getMonth()]} ${day}, ${year}`
+          : `${day} ${monthsEs[d.getMonth()]} ${year}`;
+      };
+      if (data.type === 'invoice_status_error') {
+        const msg = String(data.message || '').trim();
+        return msg
+          ? msg
+          : language === 'en'
+          ? 'Please provide an invoice number or customer name.'
+          : 'Por favor proporciona un número de factura o nombre de cliente.';
+      }
+      if (data.type === 'invoice_status_not_found') {
+        const term = String(data.searchTerm || '').trim();
+        const sugg = Array.isArray(data.suggestions) ? data.suggestions : [];
+        const base =
+          language === 'en'
+            ? `Invoice not found for '${term}'.`
+            : `No encontré facturas para '${term}'.`;
+        if (sugg.length > 0) {
+          const s = sugg.slice(0, 2).join(', ');
+          const tail = language === 'en' ? ` Did you mean: ${s}?` : ` ¿Quisiste decir: ${s}?`;
+          return base + tail;
+        }
+        return base;
+      }
+      if (data.type === 'invoice_detail') {
+        const inv = data.invoice;
+        const overdueFlag = inv?.isOverdue ? ' ⚠️' : '';
+        const totalStr = inv ? Number(inv.total).toFixed(2) : '0.00';
+        const issueStr = fmtDate(inv?.issueDate || null, language);
+        const dueStr = fmtDate(inv?.dueDate || null, language);
+        const header =
+          data.isLast && inv?.customerName
+            ? language === 'en'
+              ? `📋 Latest invoice for ${inv.customerName}:`
+              : `📋 Última factura de ${inv.customerName}:`
+            : null;
+        const card =
+          language === 'en'
+            ? [
+                `Invoice #${inv.invoiceNumber}`,
+                `Customer:  ${inv.customerName}`,
+                `Status:    ${inv.statusLabel}${overdueFlag}`,
+                `Total:     $${totalStr} ${inv.currency}`,
+                `Issued:    ${issueStr}`,
+                `Due:       ${dueStr}`,
+              ].join('\n')
+            : [
+                `Factura #${inv.invoiceNumber}`,
+                `Cliente:   ${inv.customerName}`,
+                `Estado:    ${inv.statusLabel}${overdueFlag}`,
+                `Total:     $${totalStr} ${inv.currency}`,
+                `Emisión:   ${issueStr}`,
+                `Vence:     ${dueStr}`,
+              ].join('\n');
+        return header ? [header, card].join('\n') : card;
+      }
+      if (data.type === 'invoice_list') {
+        const cust = String(data.customerName || '').trim();
+        const invs: Array<any> = Array.isArray(data.invoices) ? data.invoices : [];
+        const summary = data.summary || {};
+        const header =
+          language === 'en'
+            ? `📋 Invoices for ${cust} — ${Number(summary.totalInvoices || invs.length)} found`
+            : `📋 Facturas de ${cust} — ${Number(summary.totalInvoices || invs.length)} encontradas`;
+        const lines = invs.map((inv) => {
+          const overdueFlag = inv.isOverdue ? ' ⚠️' : '';
+          const totalStr = Number(inv.total).toFixed(2);
+          const dueDateStr = inv.dueDate
+            ? (() => {
+                const d = new Date(inv.dueDate);
+                return language === 'en'
+                  ? `${monthsEn[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}, ${d.getFullYear()}`
+                  : `${String(d.getDate()).padStart(2, '0')} ${monthsEs[d.getMonth()]} ${d.getFullYear()}`;
+              })()
+            : 'N/A';
+          const dueLabel = language === 'en' ? 'Due:' : 'Vence:';
+          return `${inv.invoiceNumber}  ·  ${inv.statusLabel}${overdueFlag}  ·  $${totalStr} ${inv.currency}  ·  ${dueLabel} ${dueDateStr}`;
+        });
+        const totalAmountStr = Number(summary.totalAmount || 0).toFixed(2);
+        const footer =
+          language === 'en'
+            ? [`Total: $${totalAmountStr} ${summary.currency || 'CAD'}  ·`, `${Number(summary.overdueCount || 0)} overdue invoice(s)`].join(
+                '\n',
+              )
+            : [`Total: $${totalAmountStr} ${summary.currency || 'CAD'}  ·`, `${Number(summary.overdueCount || 0)} factura(s) vencida(s)`].join(
+                '\n',
+              );
+        return [header, '', ...lines, '', footer].join('\n');
+      }
+    }
+  }
+
+  if (intent === 'customer_balance') {
+    const formatted = formatCustomerBalance(
+      executionResult.data,
+      language
+    );
+    if (formatted !== null) return formatted;
+  }
+
+  if (intent === 'overdue_invoices') {
+    const formatted = formatOverdueInvoices(
+      executionResult.data,
+      language
+    );
+    if (formatted !== null) return formatted;
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {

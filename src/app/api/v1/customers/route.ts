@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middlewar
 import { CustomerService } from '@/lib/services/customers.service';
 import { createCustomerSchema } from '@/lib/validation/customers';
 import { Role } from '@prisma/client';
+import { logger } from '@/lib/infrastructure/logger.service';
 
 export async function GET(req: NextRequest) {
   try {

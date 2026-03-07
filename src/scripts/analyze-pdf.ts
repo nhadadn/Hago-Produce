@@ -39,15 +39,23 @@ async function analyzePdf() {
     console.log(`🏷️  Título del PDF: ${result.metadata.title || 'No disponible'}`)
     console.log(`👤 Autor: ${result.metadata.author || 'No disponible'}`)
     
-    console.log('\n' + '-'.repeat(60))
-    console.log('📝 PRIMEROS 3000 CARACTERES DEL TEXTO:')
-    console.log('-'.repeat(60))
-    
-    const previewText = result.text.substring(0, 3000)
-    console.log(previewText)
-    
-    if (result.text.length > 3000) {
-      console.log(`\n... (y ${result.text.length - 3000} caracteres más)`)
+    const chunkSize = 1500
+    const chunks: string[] = []
+    for (let i = 0; i < result.text.length; i += chunkSize) {
+      chunks.push(result.text.substring(i, Math.min(i + chunkSize, result.text.length)))
+    }
+    console.log(`\nTotal de chunks (1500 chars): ${chunks.length}`)
+    for (let idx = 0; idx < chunks.length; idx++) {
+      const c = chunks[idx]
+      const start = c.substring(0, Math.min(100, c.length))
+      const end = c.substring(Math.max(0, c.length - Math.min(100, c.length)))
+      const header = `── CHUNK ${idx + 1}/${chunks.length} ──────────────────────────────────`
+      const sep = '────────────────────────────────────────────────────────'
+      console.log(`\n${header}`)
+      console.log(`INICIO: ${start}`)
+      console.log(`FIN:    ${end}`)
+      console.log(`TOTAL:  ${c.length}`)
+      console.log(sep)
     }
     
     console.log('\n' + '='.repeat(60))

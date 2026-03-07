@@ -68,7 +68,7 @@ describe('LoggerService', () => {
     (LoggerService as any).instance = undefined;
     
     // Setup winston mock return value
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     winstonLogger = (winston.createLogger as jest.Mock)().debug ? (winston.createLogger as jest.Mock)() : {
         debug: jest.fn(),
         info: jest.fn(),

@@ -30,52 +30,57 @@ export async function priceLookupIntent(
   }
 
   try {
-    // 1. Construir filtros base
-    const whereClause: any = {
-      isCurrent: true,
-      product: {
-        OR: [
-          { name: { contains: searchTerm, mode: 'insensitive' } },
-          { nameEs: { contains: searchTerm, mode: 'insensitive' } },
-        ],
-      },
-    };
+    const rawTerms = Array.isArray(params.searchTerms)
+      ? (params.searchTerms as string[])
+      : [params.searchTerm as string];
 
-    // Filtro opcional por proveedor si viene en params
-    if (params.supplierName) {
-      whereClause.supplier = {
-        name: { contains: params.supplierName, mode: 'insensitive' },
+    const terms = rawTerms
+      .map(t => cleanSearchTerm(String(t || '')))
+      .filter(t => t.length > 0);
+
+    // Fallback if cleaning removed everything but we had a searchTerm
+    if (terms.length === 0 && searchTerm) {
+      terms.push(searchTerm);
+    }
+
+    // Handle multiple terms
+    if (terms.length > 1) {
+      const multiResults = await Promise.all(
+        terms.map(async term => ({
+          query: term,
+          items: await runSingleLookup(term, prisma),
+        }))
+      );
+      
+      return {
+        intent: 'price_lookup',
+        confidence,
+        language,
+        data: {
+          type: 'price_lookup_multi',
+          queries: terms,
+          results: multiResults,
+        },
+        sources: [],
       };
     }
 
-    // 2. Ejecutar consulta principal de precios
-    const prices = await prisma.productPrice.findMany({
-      where: whereClause,
-      // Ordenamos por fecha primero, pero reordenaremos en memoria
-      orderBy: { effectiveDate: 'desc' },
-      include: {
-        product: true,
-        supplier: true,
-      },
-      take: 50, // Aumentamos límite para permitir mejor agrupación
-    });
+    // Handle single term (backward compatible)
+    const singleTerm = terms[0] || searchTerm;
+    const items = await runSingleLookup(singleTerm, prisma);
 
-    // 3. Manejo de resultados vacíos: Búsqueda de sugerencias (MUST 1)
-    if (prices.length === 0) {
-      // Buscar productos similares que quizás no tengan precio activo o proveedor específico
+    // Manejo de resultados vacíos: sugerencias
+    if (items.length === 0) {
       const suggestions = await prisma.product.findMany({
         where: {
           isActive: true,
-          OR: [
-            { name: { contains: searchTerm, mode: 'insensitive' } },
-            { nameEs: { contains: searchTerm, mode: 'insensitive' } },
-          ],
+          name: { contains: singleTerm, mode: 'insensitive' },
         },
-        select: { name: true, nameEs: true },
+        select: { name: true },
         take: 3,
       });
 
-      const suggestionList = suggestions.map(s => language === 'en' ? s.name : (s.nameEs || s.name));
+      const suggestionList = suggestions.map(s => s.name);
 
       return {
         intent: 'price_lookup',
@@ -83,7 +88,7 @@ export async function priceLookupIntent(
         language,
         data: {
           type: 'price_lookup',
-          query: searchTerm,
+          query: singleTerm,
           items: [],
           suggestions: suggestionList
         },
@@ -91,63 +96,10 @@ export async function priceLookupIntent(
       };
     }
 
-    // 4. Agrupación y Ordenamiento (MUST 2)
-    // Agrupar por Producto
-    const groupedByProduct = prices.reduce((acc, price) => {
-      const prodId = price.productId;
-      if (!acc[prodId]) {
-        acc[prodId] = [];
-      }
-      acc[prodId].push(price);
-      return acc;
-    }, {} as Record<string, typeof prices>);
-
-    // Aplanar lista pero ordenada por producto y luego por precio
-    const sortedPrices: typeof prices = [];
-    
-    Object.values(groupedByProduct).forEach(group => {
-      // Ordenar proveedores dentro del producto: SellPrice ASC, luego CostPrice ASC
-      group.sort((a, b) => {
-        const priceA = a.sellPrice ? Number(a.sellPrice) : (Number(a.costPrice) || Infinity);
-        const priceB = b.sellPrice ? Number(b.sellPrice) : (Number(b.costPrice) || Infinity);
-        return priceA - priceB;
-      });
-      sortedPrices.push(...group);
-    });
-
-    // 5. Mapeo final con priceType explícito (MUST 3 / AJUSTE 1)
-    const items = sortedPrices.map((p) => {
-      const sellPrice = p.sellPrice != null ? Number(p.sellPrice) : null;
-      const costPrice = Number(p.costPrice);
-      
-      // Lógica de displayPrice
-      let displayPrice = costPrice;
-      let displayPriceType: 'sell' | 'cost' = 'cost';
-
-      if (sellPrice !== null) {
-        displayPrice = sellPrice;
-        displayPriceType = 'sell';
-      }
-
-      return {
-        productId: p.productId,
-        productName: p.product.name,
-        productNameEs: p.product.nameEs, // Útil para respuestas en español
-        supplierId: p.supplierId,
-        supplierName: p.supplier.name,
-        costPrice: costPrice,
-        sellPrice: sellPrice,
-        displayPrice: displayPrice,
-        displayPriceType: displayPriceType,
-        currency: p.currency,
-        effectiveDate: p.effectiveDate.toISOString(),
-      };
-    });
-
-    const sources: ChatSource[] = sortedPrices.map((p) => ({
-      type: 'product_price',
-      id: p.id,
-      label: `${p.product.name} - ${p.supplier.name}`,
+    const sources: ChatSource[] = items.map((p, idx) => ({
+      type: 'price_version',
+      id: `lookup-${idx}`, // Synthetic ID since we don't return raw DB objects from helper
+      label: `${p.productName} - ${p.supplierName}`,
     }));
 
     return {
@@ -156,7 +108,7 @@ export async function priceLookupIntent(
       language,
       data: {
         type: 'price_lookup',
-        query: searchTerm,
+        query: singleTerm,
         items,
       },
       sources,
@@ -165,4 +117,58 @@ export async function priceLookupIntent(
     logger.error(`[PriceLookup] Error executing query: ${error}`);
     throw error;
   }
+}
+
+async function runSingleLookup(
+  term: string,
+  prismaClient: typeof prisma
+): Promise<Array<{
+  productName: string;
+  nameEs: string | null;
+  supplierName: string;
+  costPrice: number;
+  sellPrice: null;
+  currency: string;
+  effectiveDate: string;
+}>> {
+  const words = term.split(/\s+/).map(w => w.trim()).filter(w => w.length > 1);
+  const buildWordFilter = (word: string) => ({
+    OR: [
+      { name: { equals: word, mode: 'insensitive' as const } },
+      { name: { startsWith: word + ' ', mode: 'insensitive' as const } },
+      { name: { contains: ' ' + word + ' ', mode: 'insensitive' as const } },
+      { name: { endsWith: ' ' + word, mode: 'insensitive' as const } },
+      { nameEs: { equals: word, mode: 'insensitive' as const } },
+      { nameEs: { startsWith: word + ' ', mode: 'insensitive' as const } },
+      { nameEs: { contains: ' ' + word + ' ', mode: 'insensitive' as const } },
+      { nameEs: { endsWith: ' ' + word, mode: 'insensitive' as const } },
+    ],
+  });
+  const productFilter = words.length <= 1
+    ? buildWordFilter(words[0] ?? term)
+    : { AND: words.map(buildWordFilter) };
+
+  const prices = await prismaClient.priceVersion.findMany({
+    where: {
+      priceList: { isCurrent: true },
+      price: { gt: 0 },
+      product: productFilter,
+    },
+    include: {
+      priceList: { include: { supplier: true } },
+      product: true,
+    },
+    orderBy: { price: 'asc' },
+    take: 10,
+  });
+
+  return prices.map(p => ({
+    productName: p.product.name,
+    nameEs: p.product.nameEs,
+    supplierName: p.priceList.supplier.name,
+    costPrice: Number(p.price),
+    sellPrice: null,
+    currency: p.currency,
+    effectiveDate: p.validFrom.toISOString(),
+  }));
 }

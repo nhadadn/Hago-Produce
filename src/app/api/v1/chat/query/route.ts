@@ -47,8 +47,8 @@ function isRateLimited(key: RateLimitKey): boolean {
 }
 
 function normalizeLanguage(language?: string | null): ChatLanguage {
-  if (language === 'en') return 'en';
-  return 'es';
+  if (language === 'es') return 'es';
+  return 'en';
 }
 
 function getCacheKey(message: string, language: ChatLanguage, userId?: string): string {
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       intent: executionResult.intent,
       confidence: executionResult.confidence,
       language: executionResult.language,
-      sources: executionResult.sources,
+      sources: executionResult.sources || [],
     };
 
     saveToCache(cacheKey, result);

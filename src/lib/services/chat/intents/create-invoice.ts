@@ -155,7 +155,7 @@ async function extractInvoiceParams(
         unitPrice: it.unit_price ? Number(it.unit_price) : undefined,
         description: it.description ? String(it.description) : undefined,
       }))
-      .filter((it) => it.productName && it.quantity > 0);
+      .filter((it: any) => it.productName && it.quantity > 0);
 
     return {
       customerName,
@@ -299,10 +299,9 @@ export async function createInvoiceIntent(
     });
 
     sources.push({
-      name: product.name,
+      label: product.name,
       type: 'product',
       id: product.id,
-      relevance: 1,
     });
   }
 

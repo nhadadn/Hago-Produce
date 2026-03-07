@@ -36,7 +36,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export default function ProductPricesPage() {
+import { Suspense } from "react";
+
+function ProductPricesContent() {
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
@@ -240,133 +242,102 @@ export default function ProductPricesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full flex-col space-y-4 p-8">
+      <div className="flex items-center justify-between space-y-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Precios</h1>
+          <h2 className="text-2xl font-bold tracking-tight">Product Prices</h2>
           <p className="text-muted-foreground">
-            Gestión de precios por producto y proveedor
+            Manage your product prices and suppliers
           </p>
         </div>
-        {canEdit && (
-          <div className="flex gap-2">
-            <Button onClick={() => setIsBulkModalOpen(true)} variant="outline">
-              <Upload className="mr-2 h-4 w-4" /> Importar Masivo
-            </Button>
-            <Button onClick={handleCreate}>
-              <Plus className="mr-2 h-4 w-4" /> Nuevo Precio
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex gap-4">
-          <Select value={filterProduct} onValueChange={(v) => { setFilterProduct(v); setPage(1); }}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por Producto" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los productos</SelectItem>
-              {products.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={filterSupplier} onValueChange={(v) => { setFilterSupplier(v); setPage(1); }}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por Proveedor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los proveedores</SelectItem>
-              {suppliers.map((s) => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="limit" className="text-sm text-muted-foreground">Registros por página</label>
-          <select
-            id="limit"
-            value={limit}
-            onChange={handleLimitChange}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+        <div className="flex items-center space-x-2">
+          {canEdit && (
+            <>
+              <Button onClick={() => setIsBulkModalOpen(true)} variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Bulk Update
+              </Button>
+              <Button onClick={() => setIsModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Price
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {isLoading ? (
-        renderSkeleton()
-      ) : (
+      <div className="flex items-center space-x-2">
+        <Select
+          value={filterProduct}
+          onValueChange={setFilterProduct}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter Product" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Products</SelectItem>
+            {products.map((p: any) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filterSupplier}
+          onValueChange={setFilterSupplier}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter Supplier" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Suppliers</SelectItem>
+            {suppliers.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="h-full flex-1 flex-col space-y-8 md:flex">
         <ProductPricesTable
           prices={prices}
-          onEdit={handleEdit}
+          onEdit={(price) => {
+            setSelectedPrice(price);
+            setIsModalOpen(true);
+          }}
           onDelete={handleDelete}
-          isLoading={false}
+          isLoading={isLoading}
           canEdit={canEdit}
+        />
+      </div>
+
+      {isModalOpen && (
+        <ProductPriceModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedPrice(undefined);
+          }}
+          onSubmit={handleSubmit}
+          initialData={selectedPrice}
         />
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="text-sm text-muted-foreground">
-          Página {Math.min(page, Math.max(totalPages, 1))} de {Math.max(totalPages, 1)} ({total} registros)
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handlePrev}
-            disabled={page <= 1}
-            className="px-3 py-1.5 rounded-md border text-sm disabled:opacity-50"
-          >
-            ← Anterior
-          </button>
-          {paginationRange.map((p, idx) =>
-            typeof p === "number" ? (
-              <button
-                key={`${p}-${idx}`}
-                type="button"
-                onClick={() => setPage(p)}
-                className={[
-                  "px-3 py-1.5 rounded-md border text-sm",
-                  p === page ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
-                ].join(" ")}
-                disabled={p === page}
-              >
-                {p}
-              </button>
-            ) : (
-              <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">…</span>
-            )
-          )}
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={page >= totalPages || totalPages === 0}
-            className="px-3 py-1.5 rounded-md border text-sm disabled:opacity-50"
-          >
-            Siguiente →
-          </button>
-        </div>
-      </div>
-
-      <ProductPriceModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit}
-        initialData={selectedPrice}
-      />
-
-      <ProductPricesBulkUpdateModal
-        isOpen={isBulkModalOpen}
-        onClose={() => setIsBulkModalOpen(false)}
-        onSuccess={loadPrices}
-      />
+      {isBulkModalOpen && (
+        <ProductPricesBulkUpdateModal
+          isOpen={isBulkModalOpen}
+          onClose={() => setIsBulkModalOpen(false)}
+          onSuccess={loadPrices}
+        />
+      )}
     </div>
+  );
+}
+
+export default function ProductPricesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProductPricesContent />
+    </Suspense>
   );
 }

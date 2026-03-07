@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { getAuthenticatedUser, unauthorizedResponse } from '@/lib/auth/middleware';
 import { subDays, subHours, format, startOfHour, endOfHour, eachHourOfInterval, eachDayOfInterval } from 'date-fns';
+import { logger } from '@/lib/infrastructure/logger.service';
 
 export async function GET(request: Request) {
   try {

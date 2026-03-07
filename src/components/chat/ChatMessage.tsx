@@ -1,6 +1,8 @@
 import { ChatLanguage, ChatSource } from '@/lib/chat/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { PriceListRenderer, InvoiceRenderer, BalanceRenderer } from './renderers';
+import React from 'react';
 
 export type ChatMessageRole = 'user' | 'assistant';
 
@@ -9,11 +11,34 @@ export interface ChatMessageItem {
   role: ChatMessageRole;
   content: string;
   sources?: ChatSource[];
+  timestamp?: string;
 }
 
 interface ChatMessageProps {
   message: ChatMessageItem;
   language: ChatLanguage;
+}
+
+function detectAndRender(
+  content: string,
+  language: 'en' | 'es',
+  role: string
+): React.ReactNode | null {
+  if (role !== 'assistant') return null
+  const firstLine = content.split('\n')[0] ?? ''
+  if (firstLine.startsWith('🏆') || firstLine.startsWith('🔍')) {
+    return <PriceListRenderer content={content} language={language} />
+  }
+  if (firstLine.startsWith('📋')) {
+    return <InvoiceRenderer content={content} language={language} />
+  }
+  if (
+    firstLine.startsWith('💰') ||
+    firstLine.startsWith('⚠️')
+  ) {
+    return <BalanceRenderer content={content} language={language} />
+  }
+  return null
 }
 
 export function ChatMessage({ message, language }: ChatMessageProps) {
@@ -32,7 +57,12 @@ export function ChatMessage({ message, language }: ChatMessageProps) {
           'bg-muted text-foreground': !isUser,
         })}
       >
-        <p className="whitespace-pre-line leading-relaxed">{message.content}</p>
+        {detectAndRender(message.content, language, message.role) 
+          ?? ( 
+          <p className="text-sm leading-relaxed whitespace-pre-wrap"> 
+            {message.content} 
+          </p> 
+        )}
         {!isUser && message.sources && message.sources.length > 0 && (
           <div className="mt-3 border-t pt-2">
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -48,7 +78,11 @@ export function ChatMessage({ message, language }: ChatMessageProps) {
           </div>
         )}
       </div>
+      {message.timestamp && (
+        <span className="text-[10px] text-muted-foreground mt-0.5 block">
+          {message.timestamp}
+        </span>
+      )}
     </div>
   );
 }
-

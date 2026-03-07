@@ -121,6 +121,22 @@ export async function analyzeIntent(message: string, language: ChatLanguage = 'e
     }
   }
 
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const aiDetected = await (classifyChatIntentWithOpenAI as unknown as (
+        message: string,
+        language: ChatLanguage,
+        context?: unknown
+      ) => Promise<DetectedIntent>)(message, normalizedLanguage, context);
+
+      if (aiDetected.confidence >= 0.75) {
+        return aiDetected;
+      }
+    } catch (error) {
+      console.error('[CHAT_INTENT_OPENAI_ERROR]', error);
+    }
+  }
+
   const isPrice =
     includesKeyword(lower, PRICE_KEYWORDS_ES) || includesKeyword(lower, PRICE_KEYWORDS_EN);
 
@@ -137,11 +153,9 @@ export async function analyzeIntent(message: string, language: ChatLanguage = 'e
   const isCustomerBalance =
     includesKeyword(lower, CUSTOMER_BALANCE_KEYWORDS_ES) ||
     includesKeyword(lower, CUSTOMER_BALANCE_KEYWORDS_EN);
-  /*
   const isInventorySummary =
     includesKeyword(lower, INVENTORY_SUMMARY_KEYWORDS_ES) ||
     includesKeyword(lower, INVENTORY_SUMMARY_KEYWORDS_EN);
-  */
   const isOverdueInvoices =
     includesKeyword(lower, OVERDUE_INVOICES_KEYWORDS_ES) ||
     includesKeyword(lower, OVERDUE_INVOICES_KEYWORDS_EN);
@@ -201,7 +215,6 @@ export async function analyzeIntent(message: string, language: ChatLanguage = 'e
 
   // Check for customer balance (simple keyword match is usually safe here as it doesn't require complex entity extraction often, 
   // but ideally should also move to AI. Leaving as is for now per specific instructions).
-  /*
   if (isCustomerBalance) {
     return {
       intent: 'customer_balance',
@@ -212,9 +225,7 @@ export async function analyzeIntent(message: string, language: ChatLanguage = 'e
       },
     };
   }
-  */
 
-  /*
   if (isInventorySummary) {
     return {
       intent: 'inventory_summary',
@@ -225,20 +236,16 @@ export async function analyzeIntent(message: string, language: ChatLanguage = 'e
       },
     };
   }
-  */
 
-  if (!process.env.OPENAI_API_KEY) {
-    return {
-      intent: 'price_lookup',
-      confidence: 0.5,
-      params: {
-        searchTerm: message,
-        language: normalizedLanguage,
-      },
-    };
-  }
-
-  const aiDetected = await classifyChatIntentWithOpenAI(message, normalizedLanguage);
-  return aiDetected;
+  return { 
+    intent: 'clarification_needed', 
+    confidence: 0.0, 
+    params: { 
+      question: language === 'es' 
+        ? 'No pude entender tu solicitud. ¿Podrías ser más específico?' 
+        : 'I could not understand your request. Could you be more specific?', 
+      candidates: [] 
+    } 
+  }; 
 }
 

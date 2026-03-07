@@ -72,7 +72,7 @@ export async function extractPricesFromPdf(
       detectedSupplierName = await detectSupplier(cleanText)
       logger.info(`[PDF_EXTRACTOR] Detected supplier: ${detectedSupplierName}`)
     } catch (error) {
-      logger.warn('[PDF_EXTRACTOR] Supplier detection failed, defaulting to UNKNOWN', error)
+      logger.warn('[PDF_EXTRACTOR] Supplier detection failed, defaulting to UNKNOWN', undefined, error)
       // No lanzamos error aquí, seguimos con default template
     }
 
