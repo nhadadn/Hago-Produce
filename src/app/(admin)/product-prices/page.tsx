@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { ProductPricesTable } from "@/components/product-prices/ProductPricesTable";
 import { ProductPriceModal } from "@/components/product-prices/ProductPriceModal";
 import { ProductPricesBulkUpdateModal } from "@/components/product-prices/ProductPricesBulkUpdateModal";
@@ -27,14 +27,6 @@ import { fetchSuppliers } from "@/lib/api/suppliers";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { clientLogger as logger } from "@/lib/logger/client-logger";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 import { Suspense } from "react";
 
@@ -194,53 +186,6 @@ function ProductPricesContent() {
     return pages;
   }, [page, totalPages]);
 
-  const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLimit = Number(e.target.value);
-    setLimit(newLimit);
-    setPage(1);
-  };
-
-  const handlePrev = () => {
-    if (page > 1) setPage(page - 1);
-  };
-
-  const handleNext = () => {
-    if (page < totalPages) setPage(page + 1);
-  };
-
-  const renderSkeleton = () => {
-    const rows = Array.from({ length: 8 });
-    const cols = canEdit ? 7 : 6;
-    return (
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Producto</TableHead>
-              <TableHead>Proveedor</TableHead>
-              <TableHead>Costo</TableHead>
-              <TableHead>Venta</TableHead>
-              <TableHead>Fecha Efectiva</TableHead>
-              <TableHead>Estado</TableHead>
-              {canEdit && <TableHead className="text-right">Acciones</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((_, idx) => (
-              <TableRow key={idx}>
-                {Array.from({ length: cols }).map((__, cidx) => (
-                  <TableCell key={cidx}>
-                    <div className="h-4 w-full max-w-[180px] rounded bg-gray-200 dark:bg-gray-800 animate-pulse" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  };
-
   return (
     <div className="flex h-full flex-col space-y-4 p-8">
       <div className="flex items-center justify-between space-y-2">
@@ -309,6 +254,91 @@ function ProductPricesContent() {
           isLoading={isLoading}
           canEdit={canEdit}
         />
+
+        <div className="flex items-center justify-between px-2">
+          <div className="flex-1 text-sm text-muted-foreground">
+            Mostrando {(page - 1) * limit + 1} a {Math.min(page * limit, total)} de {total} registros
+          </div>
+          <div className="flex items-center space-x-6 lg:space-x-8">
+            <div className="flex items-center space-x-2">
+              <p className="text-sm font-medium">Filas por página</p>
+              <Select
+                value={`${limit}`}
+                onValueChange={(value) => {
+                  setLimit(Number(value));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={limit} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 25, 50, 100].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => setPage(1)}
+                disabled={page === 1}
+              >
+                <span className="sr-only">Ir a la primera página</span>
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <span className="sr-only">Página anterior</span>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {paginationRange.map((pageNumber, idx) => {
+                if (pageNumber === '...') {
+                  return <span key={idx} className="px-2 text-muted-foreground">...</span>;
+                }
+                return (
+                  <Button
+                    key={idx}
+                    variant={pageNumber === page ? "default" : "outline"}
+                    className="h-8 w-8 p-0"
+                    onClick={() => setPage(Number(pageNumber))}
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                <span className="sr-only">Página siguiente</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => setPage(totalPages)}
+                disabled={page === totalPages}
+              >
+                <span className="sr-only">Ir a la última página</span>
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {isModalOpen && (
