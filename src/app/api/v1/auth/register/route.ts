@@ -32,18 +32,20 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await hashPassword(password);
-    
-    // Default role is MANAGEMENT unless specified (careful with allowing ADMIN creation freely)
-    // For MVP/Phase 1A, we might want to restrict role creation or just allow it for seeding/dev.
-    // The schema default is MANAGEMENT.
-    
+
+    // Only allow safe roles via public registration — never allow ADMIN or ACCOUNTING escalation
+    const ALLOWED_REGISTER_ROLES = [Role.MANAGEMENT, Role.CUSTOMER]
+    const safeRole = role && ALLOWED_REGISTER_ROLES.includes(role as Role)
+      ? (role as Role)
+      : Role.MANAGEMENT
+
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         firstName,
         lastName,
-        role: role as Role || Role.MANAGEMENT,
+        role: safeRole,
       },
     });
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/db';
 import { verifyToken, generateAccessToken } from '@/lib/auth/jwt';
 import { refreshSchema } from '@/lib/validation/auth';
 import { logger } from '@/lib/logger/logger.service';
@@ -25,8 +26,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // In a real app, we should check if the refresh token is in a whitelist or blacklist in DB
-    // For now, we just trust the signature and expiration
+    // Check if the refresh token has been revoked (e.g. via logout)
+    const isBlacklisted = await prisma.tokenBlacklist.findUnique({
+      where: { token: refreshToken },
+    });
+    if (isBlacklisted) {
+      return NextResponse.json(
+        { success: false, error: { code: 'TOKEN_REVOKED', message: 'Token revocado' } },
+        { status: 401 }
+      );
+    }
 
     const tokenPayload = { userId: decoded.userId, email: decoded.email, role: decoded.role };
     const newAccessToken = generateAccessToken(tokenPayload);
