@@ -4,6 +4,9 @@ import { formatResponse } from '@/lib/services/chat/openai-client';
 import { DetectedIntent, QueryExecutionResult } from '@/lib/chat/types';
 
 jest.mock('@/lib/db', () => ({
+  priceVersion: {
+    findMany: jest.fn(),
+  },
   productPrice: {
     findMany: jest.fn(),
   },
@@ -19,6 +22,10 @@ jest.mock('@/lib/db', () => ({
   },
 }));
 
+jest.mock('@/lib/services/chat/intents', () => ({
+  analyzeIntent: jest.fn(),
+}));
+
 const prisma = jest.requireMock('@/lib/db');
 
 describe('RAG chat intents end-to-end', () => {
@@ -30,17 +37,21 @@ describe('RAG chat intents end-to-end', () => {
   });
 
   it('detects price_lookup intent for "precio de piña" and returns items', async () => {
-    (prisma.productPrice.findMany as jest.Mock).mockResolvedValue([
+    (analyzeIntent as jest.Mock).mockResolvedValue({
+      intent: 'price_lookup',
+      confidence: 0.9,
+      params: { searchTerm: 'Pineapple' }
+    });
+
+    (prisma.priceVersion.findMany as jest.Mock).mockResolvedValue([
       {
         id: 'pp-1',
-        productId: 'p-1',
-        supplierId: 's-1',
-        costPrice: 10,
-        sellPrice: 15,
+        price: 10,
         currency: 'MXN',
         effectiveDate: new Date('2024-01-01'),
         product: { id: 'p-1', name: 'Pineapple', nameEs: 'Piña' },
-        supplier: { id: 's-1', name: 'Proveedor A' },
+        priceList: { supplier: { id: 's-1', name: 'Proveedor A' } },
+        validFrom: new Date('2024-01-01'),
       },
     ]);
 
@@ -56,17 +67,21 @@ describe('RAG chat intents end-to-end', () => {
   });
 
   it('detects best_supplier intent for "mejor proveedor de almendras"', async () => {
-    (prisma.productPrice.findMany as jest.Mock).mockResolvedValue([
+    (analyzeIntent as jest.Mock).mockResolvedValue({
+      intent: 'best_supplier',
+      confidence: 0.9,
+      params: { searchTerm: 'Almonds' }
+    });
+
+    (prisma.priceVersion.findMany as jest.Mock).mockResolvedValue([
       {
         id: 'pp-2',
-        productId: 'p-2',
-        supplierId: 's-2',
-        costPrice: 8,
-        sellPrice: 12,
+        price: 8,
         currency: 'MXN',
         effectiveDate: new Date('2024-01-01'),
         product: { id: 'p-2', name: 'Almonds', nameEs: 'Almendras' },
-        supplier: { id: 's-2', name: 'Proveedor B' },
+        priceList: { supplier: { id: 's-2', name: 'Proveedor B' } },
+        validFrom: new Date('2024-01-01'),
       },
     ]);
 
@@ -80,6 +95,12 @@ describe('RAG chat intents end-to-end', () => {
   });
 
   it('detects product_info intent for "información del producto mango"', async () => {
+    (analyzeIntent as jest.Mock).mockResolvedValue({
+      intent: 'product_info',
+      confidence: 0.9,
+      params: { productName: 'Mango' }
+    });
+
     (prisma.product.findMany as jest.Mock).mockResolvedValue([
       {
         id: 'p-3',
@@ -88,17 +109,7 @@ describe('RAG chat intents end-to-end', () => {
         category: 'Fruta',
         unit: 'kg',
         sku: 'MANGO-001',
-        prices: [
-          {
-            id: 'pp-3',
-            supplierId: 's-3',
-            supplier: { id: 's-3', name: 'Proveedor C' },
-            costPrice: 5,
-            sellPrice: 9,
-            currency: 'MXN',
-            effectiveDate: new Date('2024-01-01'),
-          },
-        ],
+        prices: [],
       },
     ]);
 
@@ -112,6 +123,12 @@ describe('RAG chat intents end-to-end', () => {
   });
 
   it('detects overdue_invoices intent for "facturas vencidas"', async () => {
+    (analyzeIntent as jest.Mock).mockResolvedValue({
+      intent: 'overdue_invoices',
+      confidence: 0.9,
+      params: {}
+    });
+
     (prisma.invoice.findMany as jest.Mock).mockResolvedValue([
       {
         id: 'inv-1',
@@ -150,9 +167,11 @@ describe('RAG chat intents end-to-end', () => {
     (global as any).fetch = fetchMock;
 
     const executionResult: QueryExecutionResult = {
-      intent: 'price_lookup',
-      data: { items: [] },
+      intent: 'clarification_needed',
+      data: { reply: 'Hola' },
       sources: [],
+      confidence: 1,
+      language: 'es',
     };
 
     const historyMessages = [
@@ -160,10 +179,10 @@ describe('RAG chat intents end-to-end', () => {
       { role: 'assistant' as const, content: 'Hola, ¿en qué te ayudo?' },
     ];
 
-    await formatResponse('price_lookup', 'es', executionResult, [
+    await formatResponse('clarification_needed', 'es', executionResult, [
       { role: 'system', content: 'Historial' },
       ...historyMessages,
-      { role: 'user', content: 'precio de manzana' },
+      { role: 'user', content: 'Hola de nuevo' },
     ]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);

@@ -21,6 +21,7 @@ model User {
   password  String
   firstName String?  @map("first_name")
   lastName  String?  @map("last_name")
+  phone     String?  @unique
   isActive  Boolean  @default(true) @map("is_active")
   role      Role     @default(MANAGEMENT)
   customerId String? @map("customer_id")

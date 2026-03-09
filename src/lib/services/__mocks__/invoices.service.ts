@@ -1,17 +1,37 @@
 import { jest } from '@jest/globals';
 
 export const InvoicesService = jest.fn().mockImplementation(() => ({
-  create: jest.fn().mockResolvedValue({
+  create: jest.fn<any>().mockResolvedValue({
     id: 'inv-1',
-    number: 'INV-2024-0001',
-    total: 56.5,
+    number: 'INV-2024-001',
+    total: 100,
     createdAt: new Date(),
     items: [],
-    subtotal: 50,
-    taxAmount: 6.5
+    subtotal: 90,
+    taxAmount: 10,
   }),
-  findFirst: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  findById: jest.fn(),
+  update: jest.fn<any>().mockResolvedValue({
+    id: 'inv-1',
+    number: 'INV-2024-001',
+    total: 100,
+    createdAt: new Date(),
+    items: [],
+    subtotal: 90,
+    taxAmount: 10,
+  }),
+  getById: jest.fn<any>().mockResolvedValue({
+    id: 'inv-1',
+    number: 'INV-2024-001',
+    total: 100,
+    createdAt: new Date(),
+    items: [],
+    subtotal: 90,
+    taxAmount: 10,
+    customer: { name: 'Cliente Test', email: 'test@example.com' },
+  }),
+  findFirst: jest.fn<any>(),
+  delete: jest.fn<any>(),
+  findById: jest.fn<any>(),
 }));
+
+export const invoicesService = new (InvoicesService as any)();

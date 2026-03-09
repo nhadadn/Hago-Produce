@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Plus, Upload, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { ProductPricesTable } from "@/components/product-prices/ProductPricesTable";
 import { ProductPriceModal } from "@/components/product-prices/ProductPriceModal";
-import { ProductPricesBulkUpdateModal } from "@/components/product-prices/ProductPricesBulkUpdateModal";
 import {
   fetchProductPrices,
   createProductPrice,
@@ -27,6 +26,7 @@ import { fetchSuppliers } from "@/lib/api/suppliers";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { clientLogger as logger } from "@/lib/logger/client-logger";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 import { Suspense } from "react";
 
@@ -39,7 +39,6 @@ function ProductPricesContent() {
   const [prices, setPrices] = useState<ProductPrice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [selectedPrice, setSelectedPrice] = useState<ProductPrice | undefined>(undefined);
   
   const [filterProduct, setFilterProduct] = useState<string>("all");
@@ -198,10 +197,10 @@ function ProductPricesContent() {
         <div className="flex items-center space-x-2">
           {canEdit && (
             <>
-              <Button onClick={() => setIsBulkModalOpen(true)} variant="outline">
+              <Link href="/admin/imports" className={buttonVariants({ variant: "outline" })}>
                 <Upload className="mr-2 h-4 w-4" />
                 Bulk Update
-              </Button>
+              </Link>
               <Button onClick={() => setIsModalOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Price
@@ -353,13 +352,7 @@ function ProductPricesContent() {
         />
       )}
 
-      {isBulkModalOpen && (
-        <ProductPricesBulkUpdateModal
-          isOpen={isBulkModalOpen}
-          onClose={() => setIsBulkModalOpen(false)}
-          onSuccess={loadPrices}
-        />
-      )}
+
     </div>
   );
 }

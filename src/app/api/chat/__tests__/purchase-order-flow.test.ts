@@ -34,6 +34,10 @@ jest.mock('@/lib/db', () => ({
       create: jest.fn(),
       update: jest.fn(),
     },
+    botDecision: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+    },
   },
 }));
 
@@ -41,6 +45,13 @@ jest.mock('@/lib/utils/rate-limit', () => ({
   isRateLimited: jest.fn(() => false),
   createRateLimitResponse: jest.requireActual('@/lib/utils/rate-limit').createRateLimitResponse,
 }));
+
+// Mock global crypto
+Object.defineProperty(global, 'crypto', {
+  value: {
+    randomUUID: () => 'uuid-123',
+  },
+});
 
 import { getAuthenticatedUser } from '@/lib/auth/middleware';
 import { analyzeIntent } from '@/lib/services/chat/intents';

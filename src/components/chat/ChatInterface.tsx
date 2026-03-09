@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChatLanguage } from '@/lib/chat/types';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { ChatMessage, ChatMessageItem } from '@/components/chat/ChatMessage';
+import { QuickSuggestions } from '@/components/chat/QuickSuggestions';
 import { sendChatMessage } from '@/lib/api/chat';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -66,35 +67,6 @@ export function ChatInterface() {
     }
   };
 
-  const quickActions = [
-    {
-      icon: '💰',
-      label: language === 'en' ? 'Apple prices' : 'Precios manzana',
-      query: language === 'en' ? 'price of apple' : 'precio de manzana',
-    },
-    {
-      icon: '🏆',
-      label: language === 'en' ? 'Best supplier' : 'Mejor proveedor',
-      query: language === 'en'
-        ? 'best price for grapefruit'
-        : 'mejor precio de toronja',
-    },
-    {
-      icon: '📋',
-      label: language === 'en' ? 'Invoices' : 'Facturas',
-      query: language === 'en'
-        ? 'show recent invoices'
-        : 'mostrar facturas recientes',
-    },
-    {
-      icon: '⚠️',
-      label: language === 'en' ? 'Overdue' : 'Vencidas',
-      query: language === 'en'
-        ? 'overdue invoices'
-        : 'facturas vencidas',
-    },
-  ];
-
   const errorTitle = language === 'en' ? 'There was a problem' : 'Ocurrió un problema';
 
   return (
@@ -140,7 +112,7 @@ export function ChatInterface() {
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto bg-muted/10 px-4 py-3">
-        {messages.length === 0 && (
+        {messages.filter(m => m.role === 'assistant').length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-6 py-8">
             <div className="text-center space-y-1">
               <p className="text-sm font-medium">
@@ -153,19 +125,21 @@ export function ChatInterface() {
                   ? 'Ask me about prices, invoices or balances'
                   : 'Pregúntame sobre precios, facturas o saldos'}
               </p>
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mt-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--hago-primary-800))] animate-pulse" />
+                <span>
+                  {language === 'en'
+                    ? 'Ready to answer your questions'
+                    : 'Listo para responder tus preguntas'}
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
-              {quickActions.map((action) => (
-                <button
-                  key={action.label}
-                  onClick={() => handleSend(action.query)}
-                  className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs text-left hover:bg-[hsl(var(--hago-primary-50))] hover:border-[hsl(var(--hago-primary-800))]/30 transition-colors">
-                  <span>{action.icon}</span>
-                  <span className="text-muted-foreground">{action.label}</span>
-                </button>
-              ))}
-            </div>
+            <QuickSuggestions
+              language={language}
+              onSelect={(query) => handleSend(query)}
+              disabled={isLoading}
+            />
           </div>
         )}
         {messages.map((message) => (
@@ -174,7 +148,7 @@ export function ChatInterface() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="space-y-3 border-t bg-background px-4 py-3">
+      <div className="space-y-3 border-t bg-background px-4 py-3 shadow-[0_-1px_4px_rgba(0,0,0,0.04)]">
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />

@@ -4,6 +4,16 @@ import { ChatIntent, ChatLanguage } from '@/lib/chat/types';
 // Unmock the client to test real implementation
 jest.unmock('@/lib/services/chat/openai-client');
 
+// Mock logger
+jest.mock('@/lib/logger/logger.service', () => ({
+  logger: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 // Mock global fetch
 global.fetch = jest.fn();
 
@@ -27,11 +37,11 @@ describe('OpenAI Client', () => {
       const result = await classifyChatIntentWithOpenAI('some message', 'en');
 
       expect(result).toEqual({
-        intent: 'price_lookup',
-        confidence: 0.5,
+        intent: 'clarification_needed',
+        confidence: 0.0,
         params: {
-          searchTerm: 'some message',
-          language: 'en',
+          question: 'Could you please rephrase? I am experiencing technical difficulties.',
+          candidates: []
         },
       });
       expect(global.fetch).not.toHaveBeenCalled();
@@ -145,7 +155,7 @@ describe('OpenAI Client', () => {
       const result = await formatResponse('price_lookup', 'en', mockExecutionResult);
 
       // Fallback for price_lookup with no items
-      expect(result).toBe('No prices found for the requested product.');
+      expect(result).toBe("No prices found for '' in our current price list.");
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
@@ -206,7 +216,7 @@ describe('OpenAI Client', () => {
 
       const result = await formatResponse('price_lookup', 'en', mockExecutionResult);
 
-      expect(result).toBe('No prices found for the requested product.');
+      expect(result).toBe("No prices found for '' in our current price list.");
     });
 
     it('should use fallback if response content is empty', async () => {
@@ -228,7 +238,7 @@ describe('OpenAI Client', () => {
 
       const result = await formatResponse('price_lookup', 'en', mockExecutionResult);
 
-      expect(result).toBe('No prices found for the requested product.');
+      expect(result).toBe("No prices found for '' in our current price list.");
     });
   });
 
@@ -243,12 +253,14 @@ describe('OpenAI Client', () => {
       const result = await formatResponse('price_lookup', 'en', {
         success: true,
         data: {
+          query: 'Apple',
           items: [
-            { productName: 'Apple', supplierName: 'SupA', sellPrice: 10, currency: 'USD' },
+            { productName: 'Apple', supplierName: 'SupA', costPrice: 10, currency: 'USD', effectiveDate: '2024-01-01' },
           ],
         },
       });
-      expect(result).toContain('Apple - SupA: 10 USD');
+      expect(result).toContain('Prices for Apple');
+      expect(result).toContain('#1  Apple  ·  SupA  ·  $10.00 USD');
     });
 
     it('price_lookup: should handle no items', async () => {
@@ -256,7 +268,7 @@ describe('OpenAI Client', () => {
         success: true,
         data: { items: [] },
       });
-      expect(result).toBe('No prices found for the requested product.');
+      expect(result).toBe("No prices found for '' in our current price list.");
     });
 
     it('price_lookup: should handle no items in spanish', async () => {
@@ -264,43 +276,49 @@ describe('OpenAI Client', () => {
         success: true,
         data: { items: [] },
       });
-      expect(result).toBe('No se encontraron precios para el producto solicitado.');
+      expect(result).toBe("No encontré precios para '' en nuestra lista de precios actual.");
     });
 
     it('price_lookup: should handle spanish', async () => {
       const result = await formatResponse('price_lookup', 'es', {
         success: true,
         data: {
+          query: 'Manzana',
           items: [
-            { productName: 'Manzana', supplierName: 'SupA', sellPrice: 10, currency: 'USD' },
+            { productName: 'Manzana', supplierName: 'SupA', costPrice: 10, currency: 'USD', effectiveDate: '2024-01-01' },
           ],
         },
       });
-      expect(result).toContain('Manzana - SupA: 10 USD');
+      expect(result).toContain('Precios para Manzana');
+      expect(result).toContain('#1  Manzana  ·  SupA  ·  $10.00 USD');
     });
 
     it('best_supplier: should return best supplier', async () => {
       const result = await formatResponse('best_supplier', 'en', {
         success: true,
         data: {
+          query: 'Apple',
           items: [
-            { productName: 'Apple', supplierName: 'SupA', costPrice: 5, currency: 'USD' },
+            { rank: 1, productName: 'Apple', supplierName: 'SupA', costPrice: 5, currency: 'USD', effectiveDate: '2024-01-01' },
           ],
         },
       });
-      expect(result).toContain('Best supplier for Apple is SupA');
+      expect(result).toContain('Best prices for Apple');
+      expect(result).toContain('#1  Apple  ·  SupA  ·  $5.00 USD');
     });
 
     it('best_supplier: should return best supplier in spanish', async () => {
       const result = await formatResponse('best_supplier', 'es', {
         success: true,
         data: {
+          query: 'Manzana',
           items: [
-            { productName: 'Manzana', supplierName: 'SupA', costPrice: 5, currency: 'USD' },
+            { rank: 1, productName: 'Manzana', supplierName: 'SupA', costPrice: 5, currency: 'USD', effectiveDate: '2024-01-01' },
           ],
         },
       });
-      expect(result).toContain('El mejor proveedor para Manzana es SupA');
+      expect(result).toContain('Mejores precios para Manzana');
+      expect(result).toContain('#1  Manzana  ·  SupA  ·  $5.00 USD');
     });
 
     it('best_supplier: should handle no items', async () => {
@@ -308,7 +326,7 @@ describe('OpenAI Client', () => {
         success: true,
         data: { items: [] },
       });
-      expect(result).toContain('No supplier data found');
+      expect(result).toContain("No suppliers found for '' in our current price list.");
     });
 
     it('best_supplier: should handle no items in spanish', async () => {
@@ -316,7 +334,7 @@ describe('OpenAI Client', () => {
         success: true,
         data: { items: [] },
       });
-      expect(result).toContain('No se encontraron proveedores para este producto');
+      expect(result).toContain("No encontré proveedores para '' en nuestra lista de precios actual.");
     });
 
     it('invoice_status: should return status', async () => {

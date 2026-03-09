@@ -25,10 +25,10 @@ describe('create-order intent', () => {
 
   it('returns pending order without creating invoice', async () => {
     const message = 'Quiero 5 kg de manzana para el cliente ACME.';
-    (prisma.customer.findMany as jest.Mock).mockResolvedValue([
+    (prisma.customer.findMany as any).mockResolvedValue([
       { id: 'cust-1', name: 'ACME', preferredChannel: 'email' },
-    ]);
-    (prisma.product.findMany as jest.Mock).mockResolvedValue([
+    ] as any);
+    (prisma.product.findMany as any).mockResolvedValue([
       {
         id: 'prod-1',
         name: 'Manzana',
@@ -43,7 +43,7 @@ describe('create-order intent', () => {
           },
         ],
       },
-    ]);
+    ] as any);
 
     const result = await createOrderIntent(
       { rawMessage: message },

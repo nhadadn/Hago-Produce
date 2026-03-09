@@ -7,6 +7,7 @@ export interface User {
   lastName?: string;
   role: Role;
   isActive: boolean;
+  phone?: string | null;
   createdAt: string;
 }
 
@@ -105,4 +106,24 @@ export async function deleteUser(id: string): Promise<void> {
     const error = await res.json();
     throw new Error(error.error?.message || 'Error al eliminar usuario');
   }
+}
+
+export async function updateUserPhone(id: string, phone: string | null): Promise<User> {
+  const token = localStorage.getItem('accessToken');
+  const res = await fetch(`/api/v1/users/${id}/phone`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ phone }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || 'Error al actualizar teléfono');
+  }
+
+  const result = await res.json();
+  return result.data;
 }

@@ -55,7 +55,11 @@ describe('POST /api/v1/bot/webhook/whatsapp', () => {
   });
 
   it('requires signature in production', async () => {
-    process.env.NODE_ENV = 'production';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      writable: true,
+      configurable: true,
+    });
 
     const body = 'From=whatsapp%3A%2B5215555550000&Body=Hola';
     const req = new NextRequest('http://localhost/api/v1/bot/webhook/whatsapp', {
@@ -72,8 +76,20 @@ describe('POST /api/v1/bot/webhook/whatsapp', () => {
     expect((whatsAppService.sendMessage as jest.Mock)).not.toHaveBeenCalled();
   });
 
+  afterEach(() => {
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'test',
+      writable: true,
+      configurable: true,
+    });
+  });
+
   it('processes message in development without signature', async () => {
-    process.env.NODE_ENV = 'test';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'test',
+      writable: true,
+      configurable: true,
+    });
 
     const body = 'From=whatsapp%3A%2B5215555550000&Body=Hola';
     const req = new NextRequest('http://localhost/api/v1/bot/webhook/whatsapp', {
@@ -91,7 +107,11 @@ describe('POST /api/v1/bot/webhook/whatsapp', () => {
   });
 
   it('rate limits and sends notification', async () => {
-    process.env.NODE_ENV = 'test';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'test',
+      writable: true,
+      configurable: true,
+    });
     (isRateLimited as jest.Mock).mockReturnValueOnce(true);
 
     const body = 'From=whatsapp%3A%2B5215555550000&Body=Hola';

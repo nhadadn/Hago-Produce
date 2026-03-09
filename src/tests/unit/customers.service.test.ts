@@ -10,6 +10,7 @@ jest.mock('@/lib/db', () => ({
     create: jest.fn(),
     update: jest.fn(),
   },
+  $transaction: jest.fn((callback) => callback(prisma)),
 }));
 
 describe('CustomerService', () => {
@@ -132,6 +133,8 @@ describe('CustomerService', () => {
       // Mock getByTaxId -> null
       (prisma.customer.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.customer.create as jest.Mock).mockResolvedValue({ id: '1', ...data });
+      // Mock user create for transaction
+      (prisma as any).user = { create: jest.fn().mockResolvedValue({}) };
 
       const result = await CustomerService.create(data);
 

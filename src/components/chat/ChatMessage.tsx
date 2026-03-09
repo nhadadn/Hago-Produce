@@ -46,7 +46,7 @@ export function ChatMessage({ message, language }: ChatMessageProps) {
 
   return (
     <div
-      className={cn('flex w-full gap-2', {
+      className={cn('flex w-full gap-2 message-animate-in', {
         'justify-end': isUser,
         'justify-start': !isUser,
       })}

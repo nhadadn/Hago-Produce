@@ -31,7 +31,7 @@ describe('create-purchase-order intent', () => {
       } as any;
     });
 
-    jest.spyOn(prisma.purchaseOrder, 'findUnique').mockImplementation((args: any) => {
+    jest.spyOn(prisma.purchaseOrder, 'findUnique').mockImplementation(((args: any) => {
       if (args.where.id === 'po-123') {
         return Promise.resolve({
           id: 'po-123',
@@ -50,11 +50,11 @@ describe('create-purchase-order intent', () => {
         } as any);
       }
       return Promise.resolve(null);
-    });
+    }) as any);
     // Mock Audit and Notification logs to avoid DB connection errors
     // Use any cast because property access on prisma client mock might be tricky with types
-    (prisma as any).auditLog = { create: jest.fn().mockResolvedValue({}) };
-    (prisma as any).notificationLog = { create: jest.fn().mockResolvedValue({}) };
+    (prisma as any).auditLog = { create: jest.fn<any>().mockResolvedValue({} as any) };
+    (prisma as any).notificationLog = { create: jest.fn<any>().mockResolvedValue({} as any) };
   });
 
   describe('extractPurchaseOrderParams', () => {
@@ -82,7 +82,7 @@ describe('create-purchase-order intent', () => {
 
     it('finds best suppliers and generates pending orders', async () => {
       // Mock Prisma Product lookup
-      jest.spyOn(prisma.product, 'findMany').mockImplementation(async (args: any) => {
+      jest.spyOn(prisma.product, 'findMany').mockImplementation((async (args: any) => {
         // Safe check for where clause structure
         const where = args?.where;
         if (!where || !where.OR) return [];
@@ -116,7 +116,7 @@ describe('create-purchase-order intent', () => {
           }] as any;
         }
         return [];
-      });
+      }) as any);
 
       const params = {
         items: [

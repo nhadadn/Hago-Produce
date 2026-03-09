@@ -5,6 +5,9 @@ import { commandHandler } from '@/lib/services/bot/command-handler.service';
 import { isRateLimited, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import prisma from '@/lib/db';
 import { logger } from '@/lib/logger/logger.service';
+import { findUserByWhatsAppNumber } from '@/lib/services/bot/utils/user-lookup';
+import { processChatRequest } from '@/lib/services/chat/chat-processor';
+import { convertWebToWhatsApp } from '@/lib/services/bot/utils/whatsapp-formatter';
 
 /**
  * POST /api/v1/bot/webhook/whatsapp
@@ -141,16 +144,43 @@ export async function POST(req: NextRequest) {
         intent = commandResult.intent;
         confidence = commandResult.confidence;
       } else {
-        // Usar el servicio de consultas del bot para procesar el mensaje
-        const botQueryService = new BotQueryService();
-        const queryResult = await botQueryService.executeQuery({
-          query: messageText!,
-          language: 'es',
-        });
+        // TAREA 1: Unificación de Pipeline de Chat
+        // Intentar identificar al usuario por su número de teléfono
+        const userContext = await findUserByWhatsAppNumber(fromNumber);
 
-        response = queryResult.response;
-        intent = queryResult.intent;
-        confidence = queryResult.confidence;
+        if (userContext) {
+          // Si encontramos usuario, usamos el pipeline unificado (mismo que web)
+          // Usamos el número de teléfono como sessionId para mantener historial persistente por número
+          const chatResult = await processChatRequest({
+            userId: userContext.userId,
+            sessionId: `wa_${fromNumber}`,
+            message: messageText!,
+            platform: 'whatsapp',
+            context: {
+              customerId: userContext.customerId
+            }
+          });
+
+          response = chatResult.reply;
+          intent = chatResult.intent;
+          confidence = chatResult.confidence;
+        } else {
+          // ONBOARDING FLOW for unknown numbers
+          logger.warn(`[WHATSAPP_WEBHOOK] Unknown user: ${fromNumber}`);
+          
+          response = `👋 *Welcome to HAGO PRODUCE!*
+          
+We don't recognize this phone number in our system.
+
+To access your account, please contact our support team to register your number:
+📞 +1 (555) 123-4567
+📧 support@hagoproduce.com
+
+_If you are an existing customer, please provide your account number._`;
+
+          intent = 'unknown_user';
+          confidence = 1.0;
+        }
       }
     } catch (error) {
       logger.error('[BOT_QUERY_ERROR]', error);

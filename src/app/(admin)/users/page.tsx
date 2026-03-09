@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UsersTable } from '@/components/users/UsersTable';
 import { UserModal } from '@/components/users/UserModal';
 import { UserForm } from '@/components/users/UserForm';
+import { UserPhoneEditDialog } from '@/components/users/UserPhoneEditDialog';
 import { fetchUsers, createUser, updateUser, deleteUser, User, UserFilters } from '@/lib/api/users';
 import { Plus, Search } from 'lucide-react';
 import { clientLogger as logger } from '@/lib/logger/client-logger';
@@ -26,6 +27,7 @@ export default function UsersPage() {
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isPhoneOpen, setIsPhoneOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
 
   // Search debounce
@@ -71,6 +73,11 @@ export default function UsersPage() {
   const handleEdit = (user: User) => {
     setSelectedUser(user);
     setIsFormOpen(true);
+  };
+
+  const handleEditPhone = (user: User) => {
+    setSelectedUser(user);
+    setIsPhoneOpen(true);
   };
 
   const handleDeleteClick = (user: User) => {
@@ -155,6 +162,7 @@ export default function UsersPage() {
       <UsersTable 
         users={users} 
         onEdit={handleEdit} 
+        onEditPhone={handleEditPhone}
         onDelete={handleDeleteClick} 
         isLoading={loading}
       />
@@ -194,6 +202,13 @@ export default function UsersPage() {
           isEditing={!!selectedUser}
         />
       </UserModal>
+
+      <UserPhoneEditDialog
+        user={selectedUser || null}
+        isOpen={isPhoneOpen}
+        onClose={() => setIsPhoneOpen(false)}
+        onSuccess={loadUsers}
+      />
 
       {/* Delete Confirmation Modal */}
       <UserModal

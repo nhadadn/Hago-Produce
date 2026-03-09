@@ -34,12 +34,13 @@ describe('WhatsAppService', () => {
 
   it('validateWebhookSignature: valid returns true', async () => {
     const { whatsAppService } = await import('@/lib/services/bot/whatsapp.service');
-    expect(whatsAppService.validateWebhookSignature('valid', 'http://x', 'body', 'token')).toBe(true);
+    // Mock implementation of validateRequest expects signature === 'valid'
+    expect((whatsAppService.validateWebhookSignature as any)({} as any, 'http://x', 'body', 'valid')).toBe(true);
   });
 
   it('validateWebhookSignature: invalid returns false', async () => {
     const { whatsAppService } = await import('@/lib/services/bot/whatsapp.service');
-    expect(whatsAppService.validateWebhookSignature('invalid', 'http://x', 'body', 'token')).toBe(false);
+    expect((whatsAppService.validateWebhookSignature as any)({} as any, 'http://x', 'body', 'token')).toBe(false);
   });
 
   it('sendMessage: returns SID on success', async () => {

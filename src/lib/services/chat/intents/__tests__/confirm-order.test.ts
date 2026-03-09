@@ -69,17 +69,17 @@ describe('confirm-order intent', () => {
       sendChannel: 'email'
     };
 
-    (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.customer.findUnique as any).mockResolvedValue({
       id: 'cust-1',
       name: 'ACME',
       email: 'acme@example.com'
-    });
+    } as any);
     
     // Setup invoice create mock if needed
-    (prisma.invoice.create as jest.Mock).mockResolvedValue({
+    (prisma.invoice.create as any).mockResolvedValue({
       id: 'inv-1',
       number: 'INV-2024-0001',
-    });
+    } as any);
 
     const result = await confirmOrderIntent({}, 'es', 1.0, { pendingOrder });
 
@@ -110,11 +110,11 @@ describe('confirm-order intent', () => {
     };
 
     // Mock customer found
-    (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.customer.findUnique as any).mockResolvedValue({
       id: 'cust-1',
       name: 'ACME',
       phone: '1234567890'
-    });
+    } as any);
 
     // Mock WhatsApp failure
     jest.spyOn(WhatsAppService.prototype, 'sendMessage').mockRejectedValue(new Error('WhatsApp API error'));

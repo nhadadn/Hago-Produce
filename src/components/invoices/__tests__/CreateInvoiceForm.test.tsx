@@ -34,23 +34,23 @@ global.ResizeObserver = class ResizeObserver {
 // Mock cmdk
 jest.mock('cmdk', () => {
   const Command = ({ children }: any) => <div>{children}</div>;
-  Command.displayName = 'Command';
+  (Command as any).displayName = 'Command';
   Command.Input = (props: any) => <input {...props} />;
-  Command.Input.displayName = 'CommandInput';
+  (Command.Input as any).displayName = 'CommandInput';
   Command.List = ({ children }: any) => <div>{children}</div>;
-  Command.List.displayName = 'CommandList';
+  (Command.List as any).displayName = 'CommandList';
   Command.Empty = ({ children }: any) => <div>{children}</div>;
-  Command.Empty.displayName = 'CommandEmpty';
+  (Command.Empty as any).displayName = 'CommandEmpty';
   Command.Group = ({ children }: any) => <div>{children}</div>;
-  Command.Group.displayName = 'CommandGroup';
+  (Command.Group as any).displayName = 'CommandGroup';
   Command.Item = ({ children, onSelect }: any) => (
     <div onClick={onSelect}>{children}</div>
   );
-  Command.Item.displayName = 'CommandItem';
+  (Command.Item as any).displayName = 'CommandItem';
   Command.Separator = ({ children }: any) => <div>{children}</div>;
-  Command.Separator.displayName = 'CommandSeparator';
+  (Command.Separator as any).displayName = 'CommandSeparator';
   Command.Loading = ({ children }: any) => <div>{children}</div>;
-  Command.Loading.displayName = 'CommandLoading';
+  (Command.Loading as any).displayName = 'CommandLoading';
   
   return { Command };
 });
@@ -61,8 +61,8 @@ const mockCustomers = [
 ];
 
 const mockProducts = [
-  { id: 'p1', name: 'Producto Uno', price: 100, sku: 'P001' },
-  { id: 'p2', name: 'Producto Dos', price: 200, sku: 'P002' },
+  { id: 'p1', name: 'Producto Uno', price: 100 as any, sku: 'P001' },
+  { id: 'p2', name: 'Producto Dos', price: 200 as any, sku: 'P002' },
 ];
 
 const mockInvoice: InvoiceWithDetails = {
@@ -72,24 +72,23 @@ const mockInvoice: InvoiceWithDetails = {
   issueDate: new Date('2023-01-01'),
   dueDate: new Date('2023-01-31'),
   status: InvoiceStatus.DRAFT,
-  subtotal: 100,
-  taxRate: 0.13,
-  taxAmount: 13,
-  total: 113,
+  subtotal: 100 as any,
+  taxRate: 0.13 as any,
+  taxAmount: 13 as any,
+  total: 113 as any,
   notes: 'Test notes',
   createdAt: new Date(),
   updatedAt: new Date(),
-  tenantId: 'tenant1',
+  preInvoiceId: null,
   items: [
     {
       id: 'item1',
       invoiceId: 'inv1',
       productId: 'p1',
-      quantity: 1,
-      unitPrice: 100,
+      quantity: 1 as any,
+      unitPrice: 100 as any,
+      totalPrice: 100 as any,
       description: 'Producto Uno',
-      createdAt: new Date(),
-      updatedAt: new Date(),
       product: { name: 'Producto Uno', sku: 'P001' },
     },
   ],
@@ -104,7 +103,7 @@ describe('InvoiceForm', () => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     (useToast as jest.Mock).mockReturnValue(mockToast);
-    (fetchCustomers as jest.Mock).mockResolvedValue({ data: { data: mockCustomers } });
+    (fetchCustomers as jest.Mock).mockResolvedValue({ data: { customers: mockCustomers } });
     (fetchProducts as jest.Mock).mockResolvedValue({ data: mockProducts });
   });
 

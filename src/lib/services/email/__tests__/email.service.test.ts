@@ -44,17 +44,17 @@ describe('EmailService', () => {
 
   it('envía un email exitoso con Resend', async () => {
     const { Resend, __send } = await import('resend' as any);
-    (__send as jest.Mock).mockResolvedValue({ data: { id: 'resend-id-123' }, error: null });
+    (__send as any).mockResolvedValue({ data: { id: 'resend-id-123' }, error: null });
 
     const { sendEmail } = await import('@/lib/services/email.service');
 
     const result = await sendEmail('test@example.com', 'Asunto de prueba', '<p>Hola</p>');
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe('resend-id-123');
+    expect((result as any).messageId).toBe('resend-id-123');
     expect(result.attempts).toBe(1);
     expect((Resend as jest.Mock).mock.calls[0][0]).toBe('test-resend-key');
-    expect((__send as jest.Mock).mock.calls[0][0]).toMatchObject({
+    expect((__send as any).mock.calls[0][0]).toMatchObject({
       to: ['test@example.com'],
       subject: 'Asunto de prueba',
     });
@@ -62,7 +62,7 @@ describe('EmailService', () => {
 
   it('realiza reintentos cuando el envío falla y finalmente tiene éxito', async () => {
     const { __send } = await import('resend' as any);
-    (__send as jest.Mock)
+    (__send as any)
       .mockRejectedValueOnce(new Error('Fallo 1'))
       .mockRejectedValueOnce(new Error('Fallo 2'))
       .mockResolvedValueOnce({ data: { id: 'resend-id-final' }, error: null });
@@ -72,28 +72,28 @@ describe('EmailService', () => {
     const result = await sendEmail('retry@example.com', 'Reintentos', '<p>Contenido</p>');
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe('resend-id-final');
+    expect((result as any).messageId).toBe('resend-id-final');
     expect(result.attempts).toBe(3);
-    expect((__send as jest.Mock)).toHaveBeenCalledTimes(3);
+    expect((__send as any)).toHaveBeenCalledTimes(3);
   });
 
   it('retorna error después de agotar los reintentos', async () => {
     const { __send } = await import('resend' as any);
-    (__send as jest.Mock).mockRejectedValue(new Error('Error permanente'));
+    (__send as any).mockRejectedValue(new Error('Error permanente'));
 
     const { sendEmail } = await import('@/lib/services/email.service');
 
     const result = await sendEmail('fail@example.com', 'Falla', '<p>Contenido</p>');
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Error permanente');
+    expect((result as any).error).toBe('Error permanente');
     expect(result.attempts).toBe(3);
-    expect((__send as jest.Mock)).toHaveBeenCalledTimes(3);
+    expect((__send as any)).toHaveBeenCalledTimes(3);
   });
 
   it('usa templates HTML para factura', async () => {
     const { __send } = await import('resend' as any);
-    (__send as jest.Mock).mockResolvedValue({ data: { id: 'invoice-id' }, error: null });
+    (__send as any).mockResolvedValue({ data: { id: 'invoice-id' }, error: null });
 
     const { sendInvoiceEmail } = await import('@/lib/services/email.service');
 
@@ -102,7 +102,7 @@ describe('EmailService', () => {
 
     expect(result.success).toBe(true);
 
-    const args = (__send as jest.Mock).mock.calls[0][0];
+    const args = (__send as any).mock.calls[0][0];
     expect(args.html).toContain('Factura F-123');
     expect(args.html).toContain('Cliente Demo');
     expect(Array.isArray(args.attachments)).toBe(true);
@@ -111,7 +111,7 @@ describe('EmailService', () => {
 
   it('usa templates HTML para orden de compra', async () => {
     const { __send } = await import('resend' as any);
-    (__send as jest.Mock).mockResolvedValue({ data: { id: 'po-id' }, error: null });
+    (__send as any).mockResolvedValue({ data: { id: 'po-id' }, error: null });
 
     const { sendPurchaseOrderEmail } = await import('@/lib/services/email.service');
 
@@ -120,7 +120,7 @@ describe('EmailService', () => {
 
     expect(result.success).toBe(true);
 
-    const args = (__send as jest.Mock).mock.calls[0][0];
+    const args = (__send as any).mock.calls[0][0];
     expect(args.html).toContain('Orden de compra OC-999');
     expect(args.html).toContain('Proveedor Demo');
     expect(args.attachments[0].filename).toBe('Orden-OC-999.pdf');
@@ -128,7 +128,7 @@ describe('EmailService', () => {
 
   it('usa templates HTML para notificación', async () => {
     const { __send } = await import('resend' as any);
-    (__send as jest.Mock).mockResolvedValue({ data: { id: 'notif-id' }, error: null });
+    (__send as any).mockResolvedValue({ data: { id: 'notif-id' }, error: null });
 
     const { sendNotificationEmail } = await import('@/lib/services/email.service');
 
@@ -136,7 +136,7 @@ describe('EmailService', () => {
 
     expect(result.success).toBe(true);
 
-    const args = (__send as jest.Mock).mock.calls[0][0];
+    const args = (__send as any).mock.calls[0][0];
     expect(args.html).toContain('Aviso importante');
     expect(args.html).toContain('Mensaje de prueba');
   });
@@ -147,14 +147,14 @@ describe('EmailService', () => {
 
     const sgModule = await import('@sendgrid/mail');
     const { default: sg } = sgModule as any;
-    (sg.__send as jest.Mock).mockResolvedValue([{ headers: { 'x-message-id': 'sg-id-123' } }]);
+    (sg.__send as any).mockResolvedValue([{ headers: { 'x-message-id': 'sg-id-123' } }]);
 
     const { sendEmail } = await import('@/lib/services/email.service');
 
     const result = await sendEmail('sg@example.com', 'SG Asunto', '<p>Hola SG</p>');
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe('sg-id-123');
+    expect((result as any).messageId).toBe('sg-id-123');
     expect(sg.__setApiKey).toHaveBeenCalledWith('test-sendgrid-key');
     expect(sg.__send).toHaveBeenCalledTimes(1);
   });
@@ -165,7 +165,7 @@ describe('EmailService', () => {
 
     const sgModule = await import('@sendgrid/mail');
     const { default: sg } = sgModule as any;
-    (sg.__send as jest.Mock).mockResolvedValue([{ headers: { 'x-message-id': 'sg-attach-id' } }]);
+    (sg.__send as any).mockResolvedValue([{ headers: { 'x-message-id': 'sg-attach-id' } }]);
 
     const { sendEmail } = await import('@/lib/services/email.service');
 
@@ -173,7 +173,7 @@ describe('EmailService', () => {
     const result = await sendEmail('sg-att@example.com', 'SG Attach', 'Body', attachments);
 
     expect(result.success).toBe(true);
-    const args = (sg.__send as jest.Mock).mock.calls[0][0];
+    const args = (sg.__send as any).mock.calls[0][0];
     expect(args.attachments).toHaveLength(1);
     expect(args.attachments[0].filename).toBe('test.pdf');
     expect(args.attachments[0].content).toBe(Buffer.from('PDF').toString('base64'));
@@ -185,7 +185,7 @@ describe('EmailService', () => {
 
     const sgModule = await import('@sendgrid/mail');
     const { default: sg } = sgModule as any;
-    (sg.__send as jest.Mock)
+    (sg.__send as any)
       .mockRejectedValueOnce(new Error('SG Error 1'))
       .mockResolvedValueOnce([{ headers: { 'x-message-id': 'sg-retry-id' } }]);
 
@@ -194,20 +194,20 @@ describe('EmailService', () => {
     const result = await sendEmail('sg-fail@example.com', 'SG Fail', '<p>Fail</p>');
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe('sg-retry-id');
+    expect((result as any).messageId).toBe('sg-retry-id');
     expect(result.attempts).toBe(2);
   });
 
   it('maneja errores explícitos de Resend (campo error)', async () => {
     const { __send } = await import('resend' as any);
-    (__send as jest.Mock).mockResolvedValue({ data: null, error: { message: 'Resend API Error' } });
+    (__send as any).mockResolvedValue({ data: null, error: { message: 'Resend API Error' } });
 
     const { sendEmail } = await import('@/lib/services/email.service');
 
     const result = await sendEmail('resend-err@example.com', 'Error', '<p>Error</p>');
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Resend API Error');
+    expect((result as any).error).toBe('Resend API Error');
     expect(result.attempts).toBe(3); // Retries on error
   });
 
@@ -222,7 +222,7 @@ describe('EmailService', () => {
     const result = await sendEmail('mock@example.com', 'Mock', '<p>Mock</p>');
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toMatch(/^mock-email-/);
+    expect((result as any).messageId).toMatch(/^mock-email-/);
   });
 
   it('maneja errores en el proveedor Mock', async () => {
@@ -239,7 +239,7 @@ describe('EmailService', () => {
     const result = await sendEmail('mock-fail@example.com', 'Fail', 'Body');
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Mock Logger Error');
+    expect((result as any).error).toBe('Mock Logger Error');
     expect(result.attempts).toBe(3);
 
     loggerSpy.mockRestore();

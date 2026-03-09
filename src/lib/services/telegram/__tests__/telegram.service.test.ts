@@ -35,7 +35,7 @@ describe('TelegramService', () => {
       TELEGRAM_BOT_TOKEN: 'test-token',
       NODE_ENV: 'test',
     } as any;
-    (global as any).fetch = jest.fn().mockResolvedValue({
+    (global as any).fetch = jest.fn<any>().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, result: { message_id: 123 } }),
       status: 200,
@@ -52,7 +52,7 @@ describe('TelegramService', () => {
     const result = await sendMessage('12345', 'Hola desde tests');
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe('123');
+    expect((result as any).messageId).toBe('123');
     expect(result.attempts).toBe(1);
 
     expect(global.fetch).toHaveBeenCalledWith(
@@ -70,13 +70,13 @@ describe('TelegramService', () => {
     const result = await sendDocument('12345', buffer, 'test.pdf', 'Factura de prueba');
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe('123');
+    expect((result as any).messageId).toBe('123');
     expect(result.attempts).toBe(1);
     expect(global.fetch).toHaveBeenCalled();
   });
 
   it('realiza reintentos y finalmente retorna error', async () => {
-    (global as any).fetch = jest.fn().mockResolvedValue({
+    (global as any).fetch = jest.fn<any>().mockResolvedValue({
       ok: false,
       status: 500,
       json: async () => ({ ok: false }),
@@ -99,7 +99,7 @@ describe('TelegramService', () => {
 
     expect(result.success).toBe(false);
     expect(result.attempts).toBe(0);
-    expect(result.error).toMatch(/TELEGRAM_BOT_TOKEN/);
+    expect((result as any).error).toMatch(/TELEGRAM_BOT_TOKEN/);
   });
 
   it('vincula y obtiene telegramChatId de un cliente', async () => {
