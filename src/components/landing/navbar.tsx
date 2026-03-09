@@ -1,8 +1,19 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function Navbar() {
+  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+  const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setAdminLoggedIn(!!localStorage.getItem('accessToken'));
+    setCustomerLoggedIn(!!localStorage.getItem('customerAccessToken'));
+  }, []);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
@@ -25,14 +36,14 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <Link href="/login">
+          <Link href={adminLoggedIn ? '/dashboard' : '/login'}>
             <Button variant="ghost" className="text-sm font-medium hidden md:inline-flex">
-              Iniciar Sesión
+              {adminLoggedIn ? 'Dashboard' : 'Iniciar Sesión'}
             </Button>
           </Link>
-          <Link href="/portal/login">
+          <Link href={customerLoggedIn ? '/portal/dashboard' : '/portal/login'}>
             <Button className="text-sm font-medium bg-hago-primary-600 hover:bg-hago-primary-700 text-white">
-              Portal Clientes
+              {customerLoggedIn ? 'Mi Portal' : 'Portal Clientes'}
             </Button>
           </Link>
           <Button variant="ghost" size="icon" className="md:hidden">
