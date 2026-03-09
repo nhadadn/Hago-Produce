@@ -64,14 +64,16 @@ export function CustomerForm({ initialData, onSubmit, onCancel, isEditing = fals
         </div>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="email">Email / Usuario del portal *</Label>
+        <Input id="email" type="email" {...form.register('email')} />
+        {form.formState.errors.email && (
+          <p className="text-red-500 text-xs">{form.formState.errors.email.message}</p>
+        )}
+        <p className="text-muted-foreground text-xs">Este email será el usuario para acceder al portal de clientes</p>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" {...form.register('email')} />
-          {form.formState.errors.email && (
-            <p className="text-red-500 text-xs">{form.formState.errors.email.message}</p>
-          )}
-        </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Teléfono</Label>
           <Input id="phone" {...form.register('phone')} />
@@ -79,14 +81,13 @@ export function CustomerForm({ initialData, onSubmit, onCancel, isEditing = fals
             <p className="text-red-500 text-xs">{form.formState.errors.phone.message}</p>
           )}
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="address">Dirección</Label>
-        <Input id="address" {...form.register('address')} />
-        {form.formState.errors.address && (
-          <p className="text-red-500 text-xs">{form.formState.errors.address.message}</p>
-        )}
+        <div className="space-y-2">
+          <Label htmlFor="address">Dirección</Label>
+          <Input id="address" {...form.register('address')} />
+          {form.formState.errors.address && (
+            <p className="text-red-500 text-xs">{form.formState.errors.address.message}</p>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">

@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export function CustomerLoginForm() {
-  const [taxId, setTaxId] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +27,7 @@ export function CustomerLoginForm() {
       const res = await fetch('/api/v1/auth/customer-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tax_id: taxId, password }),
+        body: JSON.stringify({ emailOrUsername, password }),
       });
 
       const data = await res.json();
@@ -53,17 +54,19 @@ export function CustomerLoginForm() {
     <Card className="w-[350px]">
       <CardHeader>
         <CardTitle>Portal de Clientes</CardTitle>
-        <CardDescription>Ingresa tu Tax ID y contraseña.</CardDescription>
+        <CardDescription>Ingresa con tu usuario o correo electrónico.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="taxId">Tax ID</Label>
+              <Label htmlFor="emailOrUsername">Usuario o Email</Label>
               <Input
-                id="taxId"
-                value={taxId}
-                onChange={(e) => setTaxId(e.target.value)}
+                id="emailOrUsername"
+                type="text"
+                placeholder="usuario o correo@ejemplo.com"
+                value={emailOrUsername}
+                onChange={(e) => setEmailOrUsername(e.target.value)}
                 required
               />
             </div>
@@ -80,7 +83,7 @@ export function CustomerLoginForm() {
             {error && <div className="text-sm text-red-500 font-medium">{error}</div>}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-col gap-3">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
@@ -91,9 +94,14 @@ export function CustomerLoginForm() {
               'Ingresar'
             )}
           </Button>
+          <Link href="/" className="w-full">
+            <Button type="button" variant="ghost" className="w-full" disabled={isLoading}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Regresar al inicio
+            </Button>
+          </Link>
         </CardFooter>
       </form>
     </Card>
   );
 }
-

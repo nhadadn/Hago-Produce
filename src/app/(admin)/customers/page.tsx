@@ -29,7 +29,7 @@ export default function CustomersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
-  const [createdCredentials, setCreatedCredentials] = useState<{ taxId: string; password: string; isReset?: boolean } | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; username?: string | null; password: string; isReset?: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -96,21 +96,26 @@ export default function CustomersPage() {
       const result = await createCustomer(data);
       setIsFormOpen(false);
       loadCustomers();
-      setCreatedCredentials({ taxId: data.taxId, password: result.portalPassword });
+      setCreatedCredentials({ email: data.email, username: result.username, password: result.portalPassword });
     }
   };
 
   const handleResetPassword = async (customer: Customer) => {
     try {
       const result = await resetPortalPassword(customer.id);
-      setCreatedCredentials({ taxId: result.taxId, password: result.portalPassword, isReset: true });
+      setCreatedCredentials({ email: result.email, username: result.username, password: result.portalPassword, isReset: true });
     } catch (error) {
       logger.error('Error resetting portal password:', error);
     }
   };
 
   const handleCopyCredentials = () => {
-    navigator.clipboard.writeText(`Tax ID: ${createdCredentials?.taxId}\nContraseña: ${createdCredentials?.password}`);
+    const lines = [
+      createdCredentials?.username ? `Usuario: ${createdCredentials.username}` : null,
+      `Email: ${createdCredentials?.email}`,
+      `Contraseña: ${createdCredentials?.password}`,
+    ].filter(Boolean).join('\n');
+    navigator.clipboard.writeText(lines);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -207,7 +212,10 @@ export default function CustomersPage() {
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="rounded-lg bg-muted p-4 font-mono text-sm space-y-2">
-              <div><span className="text-muted-foreground">Tax ID: </span><strong>{createdCredentials?.taxId}</strong></div>
+              {createdCredentials?.username && (
+                <div><span className="text-muted-foreground">Usuario: </span><strong>{createdCredentials.username}</strong></div>
+              )}
+              <div><span className="text-muted-foreground">Email: </span><strong>{createdCredentials?.email}</strong></div>
               <div><span className="text-muted-foreground">Contraseña: </span><strong>{createdCredentials?.password}</strong></div>
             </div>
             <Button className="w-full" onClick={handleCopyCredentials} variant="outline">

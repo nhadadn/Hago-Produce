@@ -12,6 +12,27 @@ function generateInitialPassword(): string {
   return password;
 }
 
+/** Generates a clean username from a customer name, e.g. "Juan García" → "juangarcia" */
+function generateUsernameBase(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove accents
+    .replace(/[^a-z0-9]/g, '')       // keep only alphanumeric
+    .slice(0, 20);
+}
+
+async function buildUniqueUsername(name: string): Promise<string> {
+  const base = generateUsernameBase(name) || 'cliente';
+  let candidate = base;
+  let attempt = 1;
+  while (await prisma.user.findUnique({ where: { username: candidate } })) {
+    candidate = `${base}${attempt}`;
+    attempt++;
+  }
+  return candidate;
+}
+
 export class CustomerService {
   static async getAll(filters: CustomerFilters) {
     const { page = 1, limit = 10, search, isActive } = filters;
@@ -42,7 +63,7 @@ export class CustomerService {
     ]);
 
     return {
-      data: customers,
+      customers,
       meta: {
         page,
         limit,
@@ -60,7 +81,7 @@ export class CustomerService {
     return prisma.customer.findUnique({ where: { taxId } });
   }
 
-  static async create(data: CustomerInput): Promise<{ customer: Awaited<ReturnType<typeof prisma.customer.create>>; portalPassword: string }> {
+  static async create(data: CustomerInput): Promise<{ customer: Awaited<ReturnType<typeof prisma.customer.create>>; portalPassword: string; username: string }> {
     const existing = await this.getByTaxId(data.taxId);
     if (existing) {
       throw new Error(`Customer with Tax ID ${data.taxId} already exists`);
@@ -68,18 +89,15 @@ export class CustomerService {
 
     const plainPassword = generateInitialPassword();
     const hashedPassword = await hashPassword(plainPassword);
-
-    // Email para el User: el del cliente si existe, sino un placeholder único
-    const userEmail = data.email && data.email.trim() !== ''
-      ? data.email
-      : `portal.${data.taxId.toLowerCase().replace(/[^a-z0-9]/g, '')}@noreply.hagoproduce.com`;
+    const username = await buildUniqueUsername(data.name);
 
     const customer = await prisma.$transaction(async (tx) => {
       const newCustomer = await tx.customer.create({ data });
 
       await tx.user.create({
         data: {
-          email: userEmail,
+          email: data.email,
+          username,
           password: hashedPassword,
           firstName: data.name,
           role: Role.CUSTOMER,
@@ -91,7 +109,7 @@ export class CustomerService {
       return newCustomer;
     });
 
-    return { customer, portalPassword: plainPassword };
+    return { customer, portalPassword: plainPassword, username };
   }
 
   static async update(id: string, data: CustomerUpdateInput) {
@@ -111,7 +129,7 @@ export class CustomerService {
     });
   }
 
-  static async resetPortalPassword(id: string): Promise<{ taxId: string; portalPassword: string }> {
+  static async resetPortalPassword(id: string): Promise<{ email: string; username: string | null; portalPassword: string }> {
     const customer = await prisma.customer.findUnique({ where: { id } });
     if (!customer) throw new Error('Customer not found');
 
@@ -127,23 +145,23 @@ export class CustomerService {
         where: { id: existingUser.id },
         data: { password: hashedPassword, isActive: true },
       });
-    } else {
-      const userEmail = customer.email && customer.email.trim() !== ''
-        ? customer.email
-        : `portal.${customer.taxId.toLowerCase().replace(/[^a-z0-9]/g, '')}@noreply.hagoproduce.com`;
-
-      await prisma.user.create({
-        data: {
-          email: userEmail,
-          password: hashedPassword,
-          firstName: customer.name,
-          role: Role.CUSTOMER,
-          customerId: customer.id,
-          isActive: true,
-        },
-      });
+      return { email: existingUser.email, username: existingUser.username, portalPassword: plainPassword };
     }
 
-    return { taxId: customer.taxId, portalPassword: plainPassword };
+    // Create user if it doesn't exist yet
+    const username = await buildUniqueUsername(customer.name);
+    await prisma.user.create({
+      data: {
+        email: customer.email!,
+        username,
+        password: hashedPassword,
+        firstName: customer.name,
+        role: Role.CUSTOMER,
+        customerId: customer.id,
+        isActive: true,
+      },
+    });
+
+    return { email: customer.email!, username, portalPassword: plainPassword };
   }
 }
