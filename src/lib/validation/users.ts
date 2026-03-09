@@ -7,6 +7,7 @@ export const createUserSchema = z.object({
   firstName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').optional(),
   lastName: z.string().min(2, 'El apellido debe tener al menos 2 caracteres').optional(),
   role: z.nativeEnum(Role).optional(),
+  phone: z.string().optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -15,6 +16,7 @@ export const updateUserSchema = z.object({
   lastName: z.string().min(2, 'El apellido debe tener al menos 2 caracteres').optional(),
   role: z.nativeEnum(Role).optional(),
   isActive: z.boolean().optional(),
+  phone: z.string().optional(),
 });
 
 export const userFilterSchema = z.object({

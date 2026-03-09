@@ -8,6 +8,7 @@ interface CreateUserData {
   firstName?: string;
   lastName?: string;
   role?: Role;
+  phone?: string;
 }
 
 interface UpdateUserData {
@@ -16,7 +17,8 @@ interface UpdateUserData {
   lastName?: string;
   role?: Role;
   isActive?: boolean;
-  password?: string; // Optional, usually handled separately but good to have
+  password?: string;
+  phone?: string;
 }
 
 interface UserFilters {
@@ -38,6 +40,7 @@ export class UserService {
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role || Role.MANAGEMENT,
+        phone: data.phone,
       },
       select: {
         id: true,
