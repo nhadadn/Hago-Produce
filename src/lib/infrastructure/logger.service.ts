@@ -121,8 +121,7 @@ export class LoggerService implements ILogger {
     // 2. Try Next.js Headers (if in App Router context)
     try {
       // Dynamic require to avoid build issues in non-server contexts if any
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { headers } = require('next/headers');
+      const { headers } = require('next/headers'); // eslint-disable-line
       const headerList = headers();
       return headerList.get('x-correlation-id') || undefined;
     } catch (e) {
