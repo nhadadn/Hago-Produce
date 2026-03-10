@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
           expires_in: 3600,
           customer: {
             id: customer.id,
+            email: user.email,
             company_name: customer.name,
             tax_id: customer.taxId,
           },

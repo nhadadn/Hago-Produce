@@ -38,6 +38,7 @@ export function CustomerLoginForm() {
 
       login(data.data.access_token, {
         id: data.data.customer.id,
+        email: data.data.customer.email,
         companyName: data.data.customer.company_name,
         taxId: data.data.customer.tax_id,
       });

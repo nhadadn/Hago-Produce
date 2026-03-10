@@ -18,6 +18,12 @@ export const refreshSchema = z.object({
 });
 
 export const customerLoginSchema = z.object({
-  emailOrUsername: z.string().min(1, 'Email o usuario requerido'),
+  emailOrUsername: z
+    .string()
+    .min(1, 'Email o usuario requerido')
+    .refine(
+      (val) => !val.includes('@') || z.string().email().safeParse(val).success,
+      'Formato de email inválido'
+    ),
   password: z.string().min(1, 'La contraseña es requerida'),
 });
