@@ -3,8 +3,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { es, TranslationKeys } from './translations/es';
 import { en } from './translations/en';
+import { fr } from './translations/fr';
 
-export type Language = 'es' | 'en';
+export type Language = 'es' | 'en' | 'fr';
 
 interface LanguageContextValue {
   language: Language;
@@ -25,7 +26,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as Language | null;
-    if (saved === 'en' || saved === 'es') {
+    if (saved === 'en' || saved === 'es' || saved === 'fr') {
       setLanguageState(saved);
     }
   }, []);
@@ -36,7 +37,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     document.cookie = `hago-language=${lang};path=/;max-age=31536000;samesite=lax`;
   };
 
-  const t = language === 'es' ? es : en;
+  const t = language === 'es' ? es : language === 'en' ? en : fr;
 
   return (
     <LanguageContext.Provider value={{ language, t, setLanguage }}>

@@ -2,6 +2,25 @@
 
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import type { Language } from '@/lib/i18n';
+
+const CYCLE: Record<Language, Language> = {
+  es: 'en',
+  en: 'fr',
+  fr: 'es',
+};
+
+const NEXT_LABEL: Record<Language, string> = {
+  es: 'EN',
+  en: 'FR',
+  fr: 'ES',
+};
+
+const ARIA_LABEL: Record<Language, string> = {
+  es: 'Switch to English',
+  en: 'Passer au français',
+  fr: 'Cambiar a Español',
+};
 
 export function LanguageToggle({ className }: { className?: string }) {
   const { language, setLanguage } = useLanguage();
@@ -10,11 +29,11 @@ export function LanguageToggle({ className }: { className?: string }) {
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+      onClick={() => setLanguage(CYCLE[language])}
       className={`text-xs font-semibold w-10 ${className ?? ''}`}
-      aria-label={language === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+      aria-label={ARIA_LABEL[language]}
     >
-      {language === 'es' ? 'EN' : 'ES'}
+      {NEXT_LABEL[language]}
     </Button>
   );
 }
