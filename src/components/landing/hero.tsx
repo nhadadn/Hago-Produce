@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, ShieldCheck, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useLanguage } from '@/lib/i18n';
 
 export function Hero() {
   const [adminLoggedIn, setAdminLoggedIn] = useState(false);
   const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     setAdminLoggedIn(!!localStorage.getItem('accessToken'));
@@ -21,16 +23,16 @@ export function Hero() {
 
       <div className="container px-4 md:px-6 mx-auto text-center">
         <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-hago-primary-100 text-hago-primary-800 hover:bg-hago-primary-200/80 mb-8">
-          Hago Produce v1.0 &mdash; Sistema de Gestión Integral
+          {t.landing.hero.badge}
         </div>
 
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900 mb-6 max-w-4xl mx-auto leading-tight">
-          Simplifica la Gestión de tu <span className="text-hago-primary-600">Negocio Agrícola</span>
+          {t.landing.hero.headline}{' '}
+          <span className="text-hago-primary-600">{t.landing.hero.headlineAccent}</span>
         </h1>
 
         <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-          Plataforma todo-en-uno para facturación, control de inventarios y reportes en tiempo real.
-          Diseñada específicamente para exportadores y productores.
+          {t.landing.hero.subheadline}
         </p>
 
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto text-left">
@@ -40,15 +42,15 @@ export function Hero() {
               <div className="w-12 h-12 bg-hago-primary-100 rounded-lg flex items-center justify-center mb-4">
                 <ShieldCheck className="w-6 h-6 text-hago-primary-700" />
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Portal Administrativo</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">{t.landing.hero.adminCard.title}</CardTitle>
               <CardDescription className="text-base mt-2 text-gray-600">
-                Acceso para personal interno. Gestión completa de operaciones, facturación y contabilidad.
+                {t.landing.hero.adminCard.description}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={adminLoggedIn ? '/dashboard' : '/login'} passHref>
                 <Button className="w-full h-12 text-base font-semibold bg-hago-primary-600 hover:bg-hago-primary-700 text-white shadow-md group">
-                  {adminLoggedIn ? 'Ir al Dashboard' : 'Iniciar Sesión'}
+                  {adminLoggedIn ? t.landing.hero.adminCard.goToDashboard : t.landing.hero.adminCard.login}
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
@@ -61,15 +63,15 @@ export function Hero() {
               <div className="w-12 h-12 bg-hago-secondary-100 rounded-lg flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-hago-secondary-700" />
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Portal de Clientes</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">{t.landing.hero.customerCard.title}</CardTitle>
               <CardDescription className="text-base mt-2 text-gray-600">
-                Acceso para clientes externos. Descarga de facturas, estados de cuenta y reportes.
+                {t.landing.hero.customerCard.description}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={customerLoggedIn ? '/portal/dashboard' : '/portal/login'} passHref>
                 <Button variant="outline" className="w-full h-12 text-base font-semibold border-gray-300 hover:bg-gray-50 text-gray-700 group">
-                  {customerLoggedIn ? 'Ir al Portal' : 'Acceso Clientes'}
+                  {customerLoggedIn ? t.landing.hero.customerCard.goToPortal : t.landing.hero.customerCard.login}
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>

@@ -10,6 +10,7 @@ import {
   PieChart
 } from "lucide-react";
 import { Role } from "@prisma/client";
+import type { TranslationKeys } from "@/lib/i18n/translations/es";
 
 export interface NavItem {
   title: string;
@@ -18,65 +19,67 @@ export interface NavItem {
   roles: Role[];
 }
 
-export const navigation: NavItem[] = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT, Role.CUSTOMER],
-  },
-  {
-    title: "Facturas",
-    href: "/invoices",
-    icon: FileText,
-    roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT],
-  },
-  {
-    title: "Mis Facturas",
-    href: "/my-invoices",
-    icon: FileText,
-    roles: [Role.CUSTOMER],
-  },
-  {
-    title: "Proveedores",
-    href: "/suppliers",
-    icon: Truck,
-    roles: [Role.ADMIN, Role.ACCOUNTING],
-  },
-  {
-    title: "Clientes",
-    href: "/customers",
-    icon: Contact,
-    roles: [Role.ADMIN, Role.ACCOUNTING],
-  },
-  {
-    title: "Productos",
-    href: "/products",
-    icon: Package,
-    roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT],
-  },
-  {
-    title: "Precios",
-    href: "/product-prices",
-    icon: DollarSign,
-    roles: [Role.ADMIN, Role.ACCOUNTING],
-  },
-  {
-    title: "Usuarios",
-    href: "/users",
-    icon: Users,
-    roles: [Role.ADMIN],
-  },
-  {
-    title: "Reportes",
-    href: "/reports",
-    icon: PieChart,
-    roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT],
-  },
-  {
-    title: "Configuración",
-    href: "/settings",
-    icon: Settings,
-    roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT, Role.CUSTOMER],
-  },
-];
+export function getNavigation(t: TranslationKeys): NavItem[] {
+  return [
+    {
+      title: t.nav.dashboard,
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT, Role.CUSTOMER],
+    },
+    {
+      title: t.nav.invoices,
+      href: "/invoices",
+      icon: FileText,
+      roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT],
+    },
+    {
+      title: t.nav.myInvoices,
+      href: "/my-invoices",
+      icon: FileText,
+      roles: [Role.CUSTOMER],
+    },
+    {
+      title: t.nav.suppliers,
+      href: "/suppliers",
+      icon: Truck,
+      roles: [Role.ADMIN, Role.ACCOUNTING],
+    },
+    {
+      title: t.nav.customers,
+      href: "/customers",
+      icon: Contact,
+      roles: [Role.ADMIN, Role.ACCOUNTING],
+    },
+    {
+      title: t.nav.products,
+      href: "/products",
+      icon: Package,
+      roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT],
+    },
+    {
+      title: t.nav.prices,
+      href: "/product-prices",
+      icon: DollarSign,
+      roles: [Role.ADMIN, Role.ACCOUNTING],
+    },
+    {
+      title: t.nav.users,
+      href: "/users",
+      icon: Users,
+      roles: [Role.ADMIN],
+    },
+    {
+      title: t.nav.reports,
+      href: "/reports",
+      icon: PieChart,
+      roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT],
+    },
+    {
+      title: t.nav.settings,
+      href: "/settings",
+      icon: Settings,
+      roles: [Role.ADMIN, Role.ACCOUNTING, Role.MANAGEMENT, Role.CUSTOMER],
+    },
+  ];
+}

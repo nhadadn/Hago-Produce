@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { useLanguage } from '@/lib/i18n';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -17,6 +19,7 @@ export function CustomerLoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useCustomerAuth();
   const router = useRouter();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,25 +57,25 @@ export function CustomerLoginForm() {
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Portal de Clientes</CardTitle>
-        <CardDescription>Ingresa con tu usuario o correo electrónico.</CardDescription>
+        <CardTitle>{t.auth.customerPortalTitle}</CardTitle>
+        <CardDescription>{t.auth.customerPortalDescription}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="emailOrUsername">Usuario o Email</Label>
+              <Label htmlFor="emailOrUsername">{t.auth.usernameOrEmailLabel}</Label>
               <Input
                 id="emailOrUsername"
                 type="text"
-                placeholder="usuario o correo@ejemplo.com"
+                placeholder={t.auth.usernamePlaceholder}
                 value={emailOrUsername}
                 onChange={(e) => setEmailOrUsername(e.target.value)}
                 required
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t.auth.passwordLabel}</Label>
               <Input
                 id="password"
                 type="password"
@@ -89,18 +92,19 @@ export function CustomerLoginForm() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Ingresando...
+                {t.auth.loggingIn}
               </>
             ) : (
-              'Ingresar'
+              t.auth.loginButton
             )}
           </Button>
           <Link href="/" className="w-full">
             <Button type="button" variant="ghost" className="w-full" disabled={isLoading}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Regresar al inicio
+              {t.common.backToHome}
             </Button>
           </Link>
+          <LanguageToggle />
         </CardFooter>
       </form>
     </Card>

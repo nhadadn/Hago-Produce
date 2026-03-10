@@ -3,23 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Home } from "lucide-react";
-
-const routeNameMap: Record<string, string> = {
-  dashboard: "Dashboard",
-  invoices: "Facturas",
-  suppliers: "Proveedores",
-  products: "Productos",
-  "product-prices": "Precios",
-  users: "Usuarios",
-  customers: "Clientes",
-  settings: "Configuración",
-  new: "Nuevo",
-  edit: "Editar",
-};
+import { useLanguage } from "@/lib/i18n";
 
 export function Breadcrumbs() {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const segments = pathname.split("/").filter(Boolean);
+
+  const routeNameMap: Record<string, string> = {
+    dashboard: t.breadcrumbs.dashboard,
+    invoices: t.breadcrumbs.invoices,
+    suppliers: t.breadcrumbs.suppliers,
+    products: t.breadcrumbs.products,
+    "product-prices": t.breadcrumbs["product-prices"],
+    users: t.breadcrumbs.users,
+    customers: t.breadcrumbs.customers,
+    settings: t.breadcrumbs.settings,
+    new: t.breadcrumbs.new,
+    edit: t.breadcrumbs.edit,
+    detail: t.breadcrumbs.detail,
+    reports: t.breadcrumbs.reports,
+    chat: t.breadcrumbs.chat,
+    imports: t.breadcrumbs.imports,
+  };
 
   return (
     <nav className="flex items-center text-sm text-muted-foreground">
@@ -28,18 +34,18 @@ export function Breadcrumbs() {
         className="flex items-center hover:text-foreground transition-colors"
       >
         <Home className="h-4 w-4" />
-        <span className="sr-only">Dashboard</span>
+        <span className="sr-only">{t.breadcrumbs.dashboard}</span>
       </Link>
       {segments.map((segment, index) => {
         const path = `/${segments.slice(0, index + 1).join("/")}`;
         const isLast = index === segments.length - 1;
-        
+
         // Try to get a friendly name, fallback to segment
         let name = routeNameMap[segment] || segment;
-        
+
         // If it looks like a UUID, replace with "Detalle" or shorten it
         if (segment.match(/^[0-9a-fA-F-]{36}$/)) {
-            name = "Detalle";
+          name = t.breadcrumbs.detail;
         }
 
         return (
