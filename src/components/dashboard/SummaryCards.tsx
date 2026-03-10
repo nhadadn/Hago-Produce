@@ -1,34 +1,39 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, FileText, Users, Truck } from "lucide-react";
-
-const summaryData = [
-  {
-    title: "Total Facturado",
-    value: "$125,231.89",
-    description: "+20.1% desde el mes pasado",
-    icon: DollarSign,
-  },
-  {
-    title: "Facturas Pendientes",
-    value: "12",
-    description: "4 vencen hoy",
-    icon: FileText,
-  },
-  {
-    title: "Clientes Activos",
-    value: "24",
-    description: "+2 nuevos este mes",
-    icon: Users,
-  },
-  {
-    title: "Proveedores",
-    value: "8",
-    description: "Activos en la plataforma",
-    icon: Truck,
-  },
-];
+import { useLanguage } from "@/lib/i18n";
 
 export function SummaryCards() {
+  const { t } = useLanguage();
+
+  const summaryData = [
+    {
+      title: t.dashboard.totalBilled,
+      value: "$125,231.89",
+      description: t.dashboard.sinceLastMonth,
+      icon: DollarSign,
+    },
+    {
+      title: t.dashboard.pendingInvoices,
+      value: "12",
+      description: t.dashboard.dueTodayCount,
+      icon: FileText,
+    },
+    {
+      title: t.dashboard.activeCustomers,
+      value: "24",
+      description: t.dashboard.newThisMonth,
+      icon: Users,
+    },
+    {
+      title: t.dashboard.suppliers,
+      value: "8",
+      description: t.dashboard.activeOnPlatform,
+      icon: Truck,
+    },
+  ];
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {summaryData.map((item) => {

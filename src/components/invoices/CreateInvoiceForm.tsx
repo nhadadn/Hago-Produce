@@ -21,6 +21,7 @@ import { Customer, InvoiceStatus } from '@prisma/client';
 import type { Product } from '@/lib/api/products';
 import { InvoiceItemsTable } from './InvoiceItemsTable';
 import { CustomerSelect } from './CustomerSelect';
+import { useLanguage } from '@/lib/i18n';
 
 const DRAFT_STORAGE_KEY = 'invoice-create-draft';
 
@@ -32,6 +33,7 @@ interface InvoiceFormProps {
 export default function InvoiceForm({ initialData, isEditing = false }: InvoiceFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -132,7 +134,7 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'No se pudieron cargar los datos necesarios.',
+          description: t.invoices.errorLoadingData,
         });
       } finally {
         setLoadingData(false);
@@ -157,15 +159,15 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
       if (isEditing && initialData) {
         await updateInvoice(initialData.id, { ...data, status: InvoiceStatus.DRAFT });
         toast({
-          title: 'Factura actualizada',
-          description: 'La factura se ha actualizado correctamente.',
+          title: t.invoices.invoiceUpdatedTitle,
+          description: t.invoices.invoiceUpdatedDesc,
         });
       } else {
         await createInvoice({ ...data, status: InvoiceStatus.DRAFT });
         window.localStorage.removeItem(DRAFT_STORAGE_KEY);
         toast({
-          title: 'Borrador guardado',
-          description: 'La factura en borrador se ha guardado correctamente.',
+          title: t.invoices.draftSavedTitle,
+          description: t.invoices.draftSavedDesc,
         });
       }
       router.push('/invoices');
@@ -173,25 +175,25 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'No se pudo guardar la factura.',
+        description: error.message || t.invoices.errorSaving,
       });
     }
-  }, [isEditing, initialData, router, toast]);
+  }, [isEditing, initialData, router, toast, t]);
 
   const handleSubmitSend = useCallback(async (data: CreateInvoiceInput) => {
     try {
       if (isEditing && initialData) {
         await updateInvoice(initialData.id, { ...data, status: InvoiceStatus.SENT });
         toast({
-          title: 'Factura actualizada',
-          description: 'La factura se ha actualizado y enviado correctamente.',
+          title: t.invoices.invoiceUpdatedTitle,
+          description: t.invoices.invoiceUpdatedSentDesc,
         });
       } else {
         await createInvoice({ ...data, status: InvoiceStatus.SENT });
         window.localStorage.removeItem(DRAFT_STORAGE_KEY);
         toast({
-          title: 'Factura enviada',
-          description: 'La factura se ha creado y enviado correctamente.',
+          title: t.invoices.invoiceSentTitle,
+          description: t.invoices.invoiceSentDesc,
         });
       }
       router.push('/invoices');
@@ -199,24 +201,24 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'No se pudo procesar la factura.',
+        description: error.message || t.invoices.errorProcessing,
       });
     }
-  }, [isEditing, initialData, router, toast]);
+  }, [isEditing, initialData, router, toast, t]);
 
-  const onSubmitDraft = form.handleSubmit(handleSubmitDraft, (errors) => {
+  const onSubmitDraft = form.handleSubmit(handleSubmitDraft, () => {
     toast({
       variant: 'destructive',
-      title: 'Error de validación',
-      description: 'Por favor complete todos los campos requeridos (Cliente y Productos).',
+      title: t.invoices.validationErrorTitle,
+      description: t.invoices.validationErrorDesc,
     });
   });
 
-  const onSubmitSend = form.handleSubmit(handleSubmitSend, (errors) => {
+  const onSubmitSend = form.handleSubmit(handleSubmitSend, () => {
     toast({
       variant: 'destructive',
-      title: 'Error de validación',
-      description: 'Por favor complete todos los campos requeridos (Cliente y Productos).',
+      title: t.invoices.validationErrorTitle,
+      description: t.invoices.validationErrorDesc,
     });
   });
 
@@ -235,8 +237,8 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
             JSON.stringify(values),
           );
           toast({
-            title: 'Borrador guardado',
-            description: 'Se guardó el borrador localmente.',
+            title: t.invoices.draftSavedTitle,
+            description: t.invoices.draftSavedLocalDesc,
           });
         }
       }
@@ -251,7 +253,7 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
     return () => window.removeEventListener('keydown', handler);
   }, [form, onSubmitSend, onSubmitDraft, isEditing, toast]);
 
-  if (loadingData) return <div>Cargando datos...</div>;
+  if (loadingData) return <div>{t.invoices.loadingData}</div>;
 
   const selectedCustomer = customers.find(
     (c) => c.id === form.watch('customerId'),
@@ -264,7 +266,7 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label>Cliente</Label>
+                <Label>{t.invoices.customer}</Label>
                 <CustomerSelect
                   customers={customers}
                   value={form.watch('customerId')}
@@ -274,14 +276,14 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Fecha Emisión</Label>
+                  <Label>{t.invoices.issueDate}</Label>
                   <Input
                     type="date"
                     {...form.register('issueDate', { valueAsDate: true })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Fecha Vencimiento</Label>
+                  <Label>{t.invoices.dueDate}</Label>
                   <Input
                     type="date"
                     {...form.register('dueDate', { valueAsDate: true })}
@@ -306,20 +308,20 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
           <div className="space-y-4">
             <Card className="p-4 space-y-4">
               <div className="space-y-2">
-                <Label>Notas</Label>
+                <Label>{t.invoices.notes}</Label>
                 <Input
-                  placeholder="Notas internas o términos de pago"
+                  placeholder={t.invoices.notesPlaceholder}
                   {...form.register('notes')}
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
+                  <span>{t.invoices.subtotal}</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span>Impuestos (%):</span>
+                  <span>{t.invoices.taxes}</span>
                   <Input
                     type="number"
                     step="0.01"
@@ -328,11 +330,11 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
                   />
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Impuestos:</span>
+                  <span>{t.invoices.taxAmount}</span>
                   <span>{formatCurrency(taxAmount)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Total:</span>
+                  <span>{t.invoices.totalLabel}</span>
                   <span>{formatCurrency(total)}</span>
                 </div>
               </div>
@@ -345,8 +347,8 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
                   disabled={form.formState.isSubmitting}
                 >
                   {form.formState.isSubmitting
-                    ? isEditing ? 'Guardando...' : 'Guardando borrador...'
-                    : isEditing ? 'Guardar cambios' : 'Guardar como borrador'}
+                    ? isEditing ? t.invoices.savingChanges : t.invoices.savingDraft
+                    : isEditing ? t.invoices.saveChanges : t.invoices.saveAsDraft}
                 </Button>
                 <Button
                   type="button"
@@ -354,30 +356,30 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
                   disabled={form.formState.isSubmitting}
                 >
                   {form.formState.isSubmitting
-                    ? isEditing ? 'Enviando...' : 'Enviando factura...'
-                    : isEditing ? 'Actualizar y Enviar' : 'Enviar ahora'}
+                    ? isEditing ? t.common.sending : t.invoices.sendingInvoice
+                    : isEditing ? t.invoices.updateAndSend : t.invoices.sendNow}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => router.back()}
                 >
-                  Cancelar
+                  {t.common.cancel}
                 </Button>
               </div>
             </Card>
 
             <Card className="p-4 space-y-4">
-              <h3 className="text-lg font-semibold">Vista previa</h3>
+              <h3 className="text-lg font-semibold">{t.invoices.preview}</h3>
               <div className="space-y-1 text-sm">
                 <div className="font-medium">
-                  {selectedCustomer ? selectedCustomer.name : 'Selecciona un cliente'}
+                  {selectedCustomer ? selectedCustomer.name : t.invoices.selectCustomer}
                 </div>
                 <div className="text-muted-foreground">
-                  Emisión: {form.watch('issueDate')?.toString()}
+                  {t.invoices.issuance}: {form.watch('issueDate')?.toString()}
                 </div>
                 <div className="text-muted-foreground">
-                  Vencimiento: {form.watch('dueDate')?.toString()}
+                  {t.invoices.dueLabel}: {form.watch('dueDate')?.toString()}
                 </div>
               </div>
               <div className="border-t pt-2 space-y-1 text-sm">
@@ -391,7 +393,7 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
                       className="flex justify-between"
                     >
                       <span>
-                        {product ? product.name : 'Producto sin seleccionar'} x{' '}
+                        {product ? product.name : t.invoices.noProductSelected} x{' '}
                         {item.quantity || 0}
                       </span>
                       <span>{formatCurrency(lineTotal)}</span>
@@ -400,12 +402,12 @@ export default function InvoiceForm({ initialData, isEditing = false }: InvoiceF
                 })}
                 {items.length === 0 && (
                   <div className="text-muted-foreground">
-                    Agrega al menos un producto para ver la vista previa.
+                    {t.invoices.addProductPrompt}
                   </div>
                 )}
               </div>
               <div className="border-t pt-2 flex justify-between font-semibold">
-                <span>Total factura</span>
+                <span>{t.invoices.totalInvoice}</span>
                 <span>{formatCurrency(total)}</span>
               </div>
             </Card>

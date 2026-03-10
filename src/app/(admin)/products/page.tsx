@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { ProductsTable } from "@/components/products/ProductsTable";
 import { ProductModal } from "@/components/products/ProductModal";
 import {
@@ -24,10 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLanguage } from "@/lib/i18n";
 
 export default function ProductsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<ProductFilters>({
@@ -49,7 +51,7 @@ export default function ProductsPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar los productos",
+        description: t.products.errorLoad,
         variant: "destructive",
       });
     } finally {
@@ -76,19 +78,19 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este producto?")) return;
+    if (!confirm(t.products.confirmDelete)) return;
 
     try {
       await deleteProduct(id);
       toast({
-        title: "Éxito",
-        description: "Producto eliminado correctamente",
+        title: t.products.success,
+        description: t.products.successDelete,
       });
       loadProducts();
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo eliminar el producto",
+        description: t.products.errorDelete,
         variant: "destructive",
       });
     }
@@ -100,14 +102,14 @@ export default function ProductsPage() {
       if (selectedProduct) {
         await updateProduct(selectedProduct.id, data);
         toast({
-          title: "Éxito",
-          description: "Producto actualizado correctamente",
+          title: t.products.success,
+          description: t.products.successUpdate,
         });
       } else {
         await createProduct(data);
         toast({
-          title: "Éxito",
-          description: "Producto creado correctamente",
+          title: t.products.success,
+          description: t.products.successCreate,
         });
       }
       setIsModalOpen(false);
@@ -115,7 +117,7 @@ export default function ProductsPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo guardar el producto",
+        description: t.products.errorCreate,
         variant: "destructive",
       });
     } finally {
@@ -126,10 +128,10 @@ export default function ProductsPage() {
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Productos</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t.products.title}</h2>
         <div className="flex items-center space-x-2">
           <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Nuevo Producto
+            <Plus className="mr-2 h-4 w-4" /> {t.products.newProduct}
           </Button>
         </div>
       </div>
@@ -137,13 +139,12 @@ export default function ProductsPage() {
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar productos..."
+            placeholder={t.products.searchPlaceholder}
             value={filters.search}
             onChange={handleSearch}
             className="pl-8"
           />
         </div>
-        {/* TODO: Add category filter dropdown */}
         <Select
           value={filters.category || "all"}
           onValueChange={(value) =>
@@ -155,10 +156,10 @@ export default function ProductsPage() {
           }
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Categoría" />
+            <SelectValue placeholder={t.products.categoryPlaceholder} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="all">{t.products.allCategories}</SelectItem>
             {PRODUCT_CATEGORIES.map((category) => (
               <SelectItem key={category} value={category}>
                 {category}

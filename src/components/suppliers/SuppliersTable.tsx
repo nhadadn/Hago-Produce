@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Table,
   TableBody,
@@ -9,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Edit, Trash2, Ban, CheckCircle } from "lucide-react"
 import { Supplier } from "@/lib/api/suppliers"
+import { useLanguage } from "@/lib/i18n"
 
 interface SuppliersTableProps {
   suppliers: Supplier[];
@@ -18,12 +21,14 @@ interface SuppliersTableProps {
 }
 
 export function SuppliersTable({ suppliers, onEdit, onDelete, isLoading }: SuppliersTableProps) {
+  const { t } = useLanguage();
+
   if (isLoading) {
-    return <div className="text-center p-8">Cargando proveedores...</div>;
+    return <div className="text-center p-8">{t.suppliers.loadingSuppliers}</div>;
   }
 
   if (suppliers.length === 0) {
-    return <div className="text-center p-8 border rounded-lg">No se encontraron proveedores.</div>;
+    return <div className="text-center p-8 border rounded-lg">{t.suppliers.noSuppliers}</div>;
   }
 
   return (
@@ -31,12 +36,12 @@ export function SuppliersTable({ suppliers, onEdit, onDelete, isLoading }: Suppl
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Contacto</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Teléfono</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+            <TableHead>{t.suppliers.name}</TableHead>
+            <TableHead>{t.suppliers.contact}</TableHead>
+            <TableHead>{t.suppliers.email}</TableHead>
+            <TableHead>{t.suppliers.phone}</TableHead>
+            <TableHead>{t.suppliers.status}</TableHead>
+            <TableHead className="text-right">{t.suppliers.actionsHeader}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -51,11 +56,11 @@ export function SuppliersTable({ suppliers, onEdit, onDelete, isLoading }: Suppl
               <TableCell>
                 {supplier.isActive ? (
                   <span className="flex items-center text-hago-primary-700 text-sm">
-                    <CheckCircle className="w-4 h-4 mr-1" /> Activo
+                    <CheckCircle className="w-4 h-4 mr-1" /> {t.common.active}
                   </span>
                 ) : (
                   <span className="flex items-center text-hago-error text-sm">
-                    <Ban className="w-4 h-4 mr-1" /> Inactivo
+                    <Ban className="w-4 h-4 mr-1" /> {t.common.inactive}
                   </span>
                 )}
               </TableCell>
