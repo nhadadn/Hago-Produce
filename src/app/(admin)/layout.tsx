@@ -1,11 +1,6 @@
-import dynamic from 'next/dynamic';
 import { AdminShell } from "@/components/layout/AdminShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-
-const FloatingChatAssistant = dynamic(
-  () => import('@/components/chat/FloatingChatAssistant').then(m => m.FloatingChatAssistant),
-  { ssr: false }
-);
+import { FloatingChatAssistant } from "@/components/chat/FloatingChatAssistant";
 
 export default function AdminLayout({
   children,
