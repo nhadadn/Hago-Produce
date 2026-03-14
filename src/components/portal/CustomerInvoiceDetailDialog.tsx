@@ -15,6 +15,7 @@ import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { InvoiceStatus } from '@prisma/client';
 import { CustomerDownloadPDFButton } from './CustomerDownloadPDFButton';
 import { CustomerPDFPreview } from './CustomerPDFPreview';
+import { useLanguage } from '@/lib/i18n/useLanguage';
 
 interface Props {
   invoiceId: string | null;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function CustomerInvoiceDetailDialog({ invoiceId, open, onOpenChange }: Props) {
+  const { t } = useLanguage();
   const [invoice, setInvoice] = useState<InvoiceWithDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -76,13 +78,13 @@ export function CustomerInvoiceDetailDialog({ invoiceId, open, onOpenChange }: P
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Detalle de factura</DialogTitle>
+          <DialogTitle>{t.common.detail}</DialogTitle>
         </DialogHeader>
 
         {loading ? (
-          <p className="text-sm text-muted-foreground">Cargando...</p>
+          <p className="text-sm text-muted-foreground">{t.common.loading}</p>
         ) : !invoice ? (
-          <p className="text-sm text-muted-foreground">Factura no encontrada.</p>
+          <p className="text-sm text-muted-foreground">{t.invoices.changeStatus.invoiceNotFound}</p>
         ) : (
           <div className="space-y-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -90,17 +92,17 @@ export function CustomerInvoiceDetailDialog({ invoiceId, open, onOpenChange }: P
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl font-semibold tracking-tight">{invoice.number}</h2>
                   <Badge className={cn(getStatusColor(invoice.status), 'uppercase')} variant="secondary">
-                    {invoice.status}
+                    {t.invoices.statusLabels[invoice.status as keyof typeof t.invoices.statusLabels] || invoice.status}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{invoice.customer?.name}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <CustomerDownloadPDFButton invoiceId={invoice.id} variant="outline" size="sm">
-                  Descargar PDF
+                  {t.portal.downloadPdf}
                 </CustomerDownloadPDFButton>
                 <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
-                  Ver PDF
+                  {t.invoices.preview}
                 </Button>
               </div>
             </div>
@@ -108,17 +110,17 @@ export function CustomerInvoiceDetailDialog({ invoiceId, open, onOpenChange }: P
             <div className="grid gap-6 lg:grid-cols-3">
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Items</CardTitle>
+                  <CardTitle>{t.nav.products}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="border-b text-xs uppercase text-muted-foreground">
                         <tr>
-                          <th className="py-2 text-left font-medium">Producto</th>
-                          <th className="py-2 text-right font-medium">Cantidad</th>
-                          <th className="py-2 text-right font-medium">Precio unitario</th>
-                          <th className="py-2 text-right font-medium">Total línea</th>
+                          <th className="py-2 text-left font-medium">{t.products.name}</th>
+                          <th className="py-2 text-right font-medium">{t.dashboard.amount}</th>
+                          <th className="py-2 text-right font-medium">{t.prices.sellPrice}</th>
+                          <th className="py-2 text-right font-medium">{t.dashboard.amount}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -149,27 +151,27 @@ export function CustomerInvoiceDetailDialog({ invoiceId, open, onOpenChange }: P
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Totales</CardTitle>
+                  <CardTitle>{t.invoices.totalLabel}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-muted-foreground">{t.invoices.subtotal}</span>
                     <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Impuesto ({(totals.taxRate * 100).toFixed(2)}%)</span>
+                    <span className="text-muted-foreground">{t.invoices.taxAmount} ({(totals.taxRate * 100).toFixed(2)}%)</span>
                     <span className="font-medium">{formatCurrency(totals.taxAmount)}</span>
                   </div>
                   <div className="flex justify-between text-base font-semibold pt-2 border-t mt-2">
-                    <span>Total</span>
+                    <span>{t.invoices.totalLabel}</span>
                     <span>{formatCurrency(totals.total)}</span>
                   </div>
                   <div className="mt-4 space-y-1 text-xs text-muted-foreground">
                     <div>
-                      <span className="font-medium">Emisión:</span> {formatDate(invoice.issueDate as unknown as string)}
+                      <span className="font-medium">{t.invoices.issuance}:</span> {formatDate(invoice.issueDate as unknown as string)}
                     </div>
                     <div>
-                      <span className="font-medium">Vencimiento:</span> {formatDate(invoice.dueDate as unknown as string)}
+                      <span className="font-medium">{t.invoices.dueLabel}:</span> {formatDate(invoice.dueDate as unknown as string)}
                     </div>
                   </div>
                 </CardContent>

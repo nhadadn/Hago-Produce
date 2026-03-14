@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const { customer, portalPassword } = await CustomerService.create(validation.data);
-      return NextResponse.json({ success: true, data: { customer, portalPassword } }, { status: 201 });
+      const { customer, portalPassword, username } = await CustomerService.create(validation.data);
+      return NextResponse.json({ success: true, data: { customer, portalPassword, username } }, { status: 201 });
     } catch (error: any) {
       if (error.message.includes('already exists')) {
         return NextResponse.json({ success: false, error: { code: 'DUPLICATE_ENTRY', message: error.message } }, { status: 409 });

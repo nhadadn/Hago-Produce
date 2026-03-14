@@ -18,6 +18,12 @@ export const refreshSchema = z.object({
 });
 
 export const customerLoginSchema = z.object({
-  tax_id: z.string().min(1, 'El Tax ID es requerido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  emailOrUsername: z
+    .string()
+    .min(1, 'Email o usuario requerido')
+    .refine(
+      (val) => !val.includes('@') || z.string().email().safeParse(val).success,
+      'Formato de email inválido'
+    ),
+  password: z.string().min(1, 'La contraseña es requerida'),
 });

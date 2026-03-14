@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/lib/api/products";
 import { Edit, Trash, Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/i18n";
 
 interface ProductsTableProps {
   products: Product[];
@@ -28,12 +29,14 @@ export function ProductsTable({
   onDelete,
   userRole,
 }: ProductsTableProps) {
+  const { t } = useLanguage();
+
   if (isLoading) {
-    return <div>Cargando productos...</div>;
+    return <div>{t.products.loadingProducts}</div>;
   }
 
   if (products.length === 0) {
-    return <div className="text-center py-4">No se encontraron productos.</div>;
+    return <div className="text-center py-4">{t.products.noProducts}</div>;
   }
 
   return (
@@ -41,13 +44,13 @@ export function ProductsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Nombre (ES)</TableHead>
-            <TableHead>Categoría</TableHead>
-            <TableHead>Unidad</TableHead>
-            <TableHead>SKU</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+            <TableHead>{t.products.name}</TableHead>
+            <TableHead>{t.products.nameEs}</TableHead>
+            <TableHead>{t.products.category}</TableHead>
+            <TableHead>{t.products.unit}</TableHead>
+            <TableHead>{t.products.sku}</TableHead>
+            <TableHead>{t.products.status}</TableHead>
+            <TableHead className="text-right">{t.common.actions}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -55,17 +58,23 @@ export function ProductsTable({
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.nameEs || "-"}</TableCell>
-              <TableCell>{product.category || "-"}</TableCell>
-              <TableCell>{product.unit}</TableCell>
+              <TableCell>
+                {product.category 
+                  ? t.products.categories[product.category as keyof typeof t.products.categories] || product.category 
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                {t.products.units[product.unit as keyof typeof t.products.units] || product.unit}
+              </TableCell>
               <TableCell>{product.sku || "-"}</TableCell>
               <TableCell>
                 {product.isActive ? (
                   <Badge variant="outline" className="bg-hago-primary-50 text-hago-primary-700 border-hago-primary-100">
-                    <Check className="w-3 h-3 mr-1" /> Activo
+                    <Check className="w-3 h-3 mr-1" /> {t.common.active}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="bg-hago-error/10 text-hago-error border-hago-error/20">
-                    <X className="w-3 h-3 mr-1" /> Inactivo
+                    <X className="w-3 h-3 mr-1" /> {t.common.inactive}
                   </Badge>
                 )}
               </TableCell>

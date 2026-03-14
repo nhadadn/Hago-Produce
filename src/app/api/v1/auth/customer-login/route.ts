@@ -24,11 +24,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { tax_id, password } = validation.data;
+    const { emailOrUsername, password } = validation.data;
 
-    const customer = await prisma.customer.findUnique({
-      where: { taxId: tax_id },
+    // Accept either email or username
+    const isEmail = emailOrUsername.includes('@');
+    const user = await prisma.user.findFirst({
+      where: isEmail
+        ? { email: emailOrUsername, role: Role.CUSTOMER, isActive: true }
+        : { username: emailOrUsername, role: Role.CUSTOMER, isActive: true },
     });
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_CREDENTIALS',
+            message: 'Credenciales inválidas',
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    const customer = user.customerId
+      ? await prisma.customer.findUnique({ where: { id: user.customerId } })
+      : null;
 
     if (!customer) {
       return NextResponse.json(
@@ -53,27 +74,6 @@ export async function POST(req: NextRequest) {
           },
         },
         { status: 403 }
-      );
-    }
-
-    const user = await prisma.user.findFirst({
-      where: {
-        customerId: customer.id,
-        role: Role.CUSTOMER,
-        isActive: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_CREDENTIALS',
-            message: 'Credenciales inválidas',
-          },
-        },
-        { status: 401 }
       );
     }
 
@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
           expires_in: 3600,
           customer: {
             id: customer.id,
+            email: user.email,
             company_name: customer.name,
             tax_id: customer.taxId,
           },
@@ -131,4 +132,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

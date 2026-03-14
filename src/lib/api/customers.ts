@@ -49,7 +49,7 @@ export async function fetchCustomers(filters: CustomerFilters): Promise<Customer
   return res.json();
 }
 
-export async function createCustomer(data: CustomerInput): Promise<{ customer: Customer; portalPassword: string }> {
+export async function createCustomer(data: CustomerInput): Promise<{ customer: Customer; portalPassword: string; username: string }> {
   const res = await fetch('/api/v1/customers', {
     method: 'POST',
     headers: getHeaders(),
@@ -95,7 +95,7 @@ export async function updateCustomer(id: string, data: CustomerUpdateInput): Pro
   return result.data;
 }
 
-export async function resetPortalPassword(id: string): Promise<{ taxId: string; portalPassword: string }> {
+export async function resetPortalPassword(id: string): Promise<{ email: string; username: string | null; portalPassword: string }> {
   const res = await fetch(`/api/v1/customers/${id}/reset-portal-password`, {
     method: 'POST',
     headers: getHeaders(),

@@ -5,6 +5,8 @@ import { CircleUser, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { useLanguage } from "@/lib/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +22,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-white px-4 lg:h-[60px] lg:px-6">
@@ -30,12 +33,13 @@ export function Header({ onMenuClick }: HeaderProps) {
         onClick={onMenuClick}
       >
         <Menu className="h-5 w-5" />
-        <span className="sr-only">Abrir menú</span>
+        <span className="sr-only">{t.header.openMenu}</span>
       </Button>
       <div className="w-full flex-1">
         <Breadcrumbs />
       </div>
       <div className="flex items-center gap-4">
+        <LanguageToggle />
         {user && (
           <span className="text-sm font-medium hidden md:inline-block">
             {user.name || user.email}
@@ -45,19 +49,19 @@ export function Header({ onMenuClick }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
               <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Menú de usuario</span>
+              <span className="sr-only">{t.header.myAccount}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+            <DropdownMenuLabel>{t.header.myAccount}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/settings">Configuración</Link>
+              <Link href="/settings">{t.header.settings}</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
-              Cerrar sesión
+              {t.header.logout}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

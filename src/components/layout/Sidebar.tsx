@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { navigation } from "@/config/navigation";
+import { getNavigation } from "@/config/navigation";
+import { useLanguage } from "@/lib/i18n";
 import { Role } from "@prisma/client";
 
 interface SidebarProps {
@@ -21,11 +22,14 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
+
+  const navigation = getNavigation(t);
 
   // If no user is loaded yet (or not logged in), we might show nothing or a loading state.
   // But usually this component is part of a protected layout.
   // For safety, we filter assuming user might be null.
-  const filteredNavItems = user 
+  const filteredNavItems = user
     ? navigation.filter((item) => item.roles.includes(user.role as Role))
     : [];
 
@@ -58,7 +62,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={onClose}
           >
             <X className="h-5 w-5" />
-            <span className="sr-only">Cerrar menú</span>
+            <span className="sr-only">{t.header.closeMenu}</span>
           </Button>
         </div>
 
@@ -67,7 +71,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-              
+
               return (
                 <Link
                   key={item.href}
@@ -91,15 +95,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             })}
           </nav>
         </div>
-        
+
         <div className="border-t border-hago-primary-800 p-4">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start gap-2 border-hago-primary-700 bg-transparent text-hago-primary-100 hover:bg-hago-primary-800 hover:text-white" 
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2 border-hago-primary-700 bg-transparent text-hago-primary-100 hover:bg-hago-primary-800 hover:text-white"
             onClick={() => logout()}
           >
             <LogOut className="h-4 w-4" />
-            Cerrar Sesión
+            {t.common.logout}
           </Button>
         </div>
       </div>

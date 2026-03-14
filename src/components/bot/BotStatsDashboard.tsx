@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useEffect, useState, useCallback } from 'react';
+import { useLanguage } from '@/lib/i18n/useLanguage';
 import {
   Card,
   CardContent,
@@ -61,6 +64,8 @@ const STATUS_COLORS = {
 };
 
 export default function BotStatsDashboard() {
+  const { t } = useLanguage();
+  const tb = t.botApiKeys;
   const [stats, setStats] = useState<BotSystemStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,15 +172,15 @@ export default function BotStatsDashboard() {
 
   // Prepare Pie Chart Data
   const keyStatusData = stats ? [
-    { name: 'Activas', value: stats.activeKeys, color: STATUS_COLORS.active },
-    { name: 'Revocadas', value: stats.revokedKeys, color: STATUS_COLORS.revoked },
+    { name: tb.statsPieActive, value: stats.activeKeys, color: STATUS_COLORS.active },
+    { name: tb.statsPieRevoked, value: stats.revokedKeys, color: STATUS_COLORS.revoked },
   ].filter(d => d.value > 0) : [];
 
   if (loading && !stats) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Cargando estadísticas del bot...</p>
+        <p className="text-muted-foreground">{tb.statsLoading}</p>
       </div>
     );
   }
@@ -184,10 +189,10 @@ export default function BotStatsDashboard() {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4 text-destructive">
         <AlertTriangle className="h-12 w-12" />
-        <p className="text-lg font-medium">Error al cargar datos</p>
+        <p className="text-lg font-medium">{tb.statsError}</p>
         <p className="text-sm text-muted-foreground">{error}</p>
         <Button onClick={fetchStats} variant="outline">
-          Reintentar
+          {tb.statsRetry}
         </Button>
       </div>
     );
@@ -197,26 +202,26 @@ export default function BotStatsDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Panel de Control de Bots</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{tb.statsTitle}</h2>
           <p className="text-muted-foreground">
-            Monitoreo en tiempo real de claves API y rendimiento del sistema.
+            {tb.statsSubtitle}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Seleccionar periodo" />
+              <SelectValue placeholder={tb.statsSelectPeriod} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="24h">Últimas 24 Horas</SelectItem>
-              <SelectItem value="7d">Últimos 7 Días</SelectItem>
-              <SelectItem value="30d">Últimos 30 Días</SelectItem>
+              <SelectItem value="24h">{tb.stats24h}</SelectItem>
+              <SelectItem value="7d">{tb.stats7d}</SelectItem>
+              <SelectItem value="30d">{tb.stats30d}</SelectItem>
             </SelectContent>
           </Select>
 
           <Button variant="outline" size="sm" onClick={exportToCSV}>
             <Download className="mr-2 h-4 w-4" />
-            Exportar CSV
+            {tb.exportCsv}
           </Button>
 
           <Button
@@ -224,7 +229,7 @@ export default function BotStatsDashboard() {
             size="sm"
             onClick={fetchStats}
             disabled={loading}
-            title="Actualizar ahora"
+            title={tb.statsRefresh}
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -233,7 +238,7 @@ export default function BotStatsDashboard() {
       
       {lastUpdated && (
         <div className="text-xs text-right text-muted-foreground">
-            Actualizado: {lastUpdated.toLocaleTimeString()}
+            {tb.statsUpdated} {lastUpdated.toLocaleTimeString()}
         </div>
       )}
 
@@ -241,56 +246,56 @@ export default function BotStatsDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Claves</CardTitle>
+            <CardTitle className="text-sm font-medium">{tb.statsTotalKeys}</CardTitle>
             <Key className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats ? formatNumber(stats.totalKeys) : '-'}</div>
-            <p className="text-xs text-muted-foreground">Registradas en sistema</p>
+            <p className="text-xs text-muted-foreground">{tb.statsTotalKeysSub}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Claves Activas</CardTitle>
+            <CardTitle className="text-sm font-medium">{tb.statsActiveKeys}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats ? formatNumber(stats.activeKeys) : '-'}</div>
-            <p className="text-xs text-muted-foreground">En uso actualmente</p>
+            <p className="text-xs text-muted-foreground">{tb.statsActiveKeysSub}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Solicitudes</CardTitle>
+            <CardTitle className="text-sm font-medium">{tb.statsRequests}</CardTitle>
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats ? formatNumber(stats.totalRequests) : '-'}</div>
-            <p className="text-xs text-muted-foreground">En el periodo seleccionado</p>
+            <p className="text-xs text-muted-foreground">{tb.statsRequestsSub}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tasa de Éxito</CardTitle>
+            <CardTitle className="text-sm font-medium">{tb.statsSuccessRate}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats ? formatPercent(stats.successRate) : '-'}</div>
-            <p className="text-xs text-muted-foreground">Solicitudes completadas</p>
+            <p className="text-xs text-muted-foreground">{tb.statsSuccessRateSub}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tiempo Promedio</CardTitle>
+            <CardTitle className="text-sm font-medium">{tb.statsAvgTime}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats ? `${Math.round(stats.avgResponseTime)}ms` : '-'}</div>
-            <p className="text-xs text-muted-foreground">Latencia estimada</p>
+            <p className="text-xs text-muted-foreground">{tb.statsAvgTimeSub}</p>
           </CardContent>
         </Card>
       </div>
@@ -301,8 +306,8 @@ export default function BotStatsDashboard() {
         {/* Requests Over Time - Line Chart */}
         <Card className="col-span-4 lg:col-span-4">
           <CardHeader>
-            <CardTitle>Solicitudes ({timeRange})</CardTitle>
-            <CardDescription>Volumen de peticiones en el tiempo</CardDescription>
+            <CardTitle>{tb.statsChartReqsTitle} ({timeRange})</CardTitle>
+            <CardDescription>{tb.statsChartReqsDesc}</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
             <div className="h-[300px] w-full">
@@ -327,10 +332,10 @@ export default function BotStatsDashboard() {
                     contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                     labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="count" 
-                    name="Solicitudes"
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    name={tb.statsChartReqsLine}
                     stroke="#2563eb" 
                     strokeWidth={2} 
                     activeDot={{ r: 8 }} 
@@ -344,8 +349,8 @@ export default function BotStatsDashboard() {
         {/* Requests by Status - Bar Chart */}
         <Card className="col-span-4 lg:col-span-3">
           <CardHeader>
-            <CardTitle>Códigos de Respuesta HTTP</CardTitle>
-            <CardDescription>Distribución de códigos de estado</CardDescription>
+            <CardTitle>{tb.statsChartHttpTitle}</CardTitle>
+            <CardDescription>{tb.statsChartHttpDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
@@ -365,7 +370,7 @@ export default function BotStatsDashboard() {
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                   />
-                  <Bar dataKey="count" name="Cantidad" radius={[0, 4, 4, 0]}>
+                  <Bar dataKey="count" name={tb.statsChartCountBar} radius={[0, 4, 4, 0]}>
                     {(stats?.requestsByStatus || []).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
@@ -379,8 +384,8 @@ export default function BotStatsDashboard() {
         {/* Key Status Distribution - Pie Chart */}
         <Card className="col-span-4 lg:col-span-3">
             <CardHeader>
-                <CardTitle>Estado de Claves</CardTitle>
-                <CardDescription>Proporción de claves activas vs revocadas</CardDescription>
+                <CardTitle>{tb.statsChartStatusTitle}</CardTitle>
+                <CardDescription>{tb.statsChartStatusDesc}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="h-[250px] w-full flex justify-center">
@@ -410,8 +415,8 @@ export default function BotStatsDashboard() {
         {/* Top Keys - Bar Chart */}
         <Card className="col-span-4 lg:col-span-4">
           <CardHeader>
-            <CardTitle>Top 5 Claves API Más Usadas</CardTitle>
-            <CardDescription>Claves con mayor volumen de peticiones</CardDescription>
+            <CardTitle>{tb.statsChartTopTitle}</CardTitle>
+            <CardDescription>{tb.statsChartTopDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[250px] w-full">
@@ -434,7 +439,7 @@ export default function BotStatsDashboard() {
                   <Tooltip 
                      contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                   />
-                  <Bar dataKey="requests" name="Solicitudes" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="requests" name={tb.statsChartReqsLine} fill="#8884d8" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

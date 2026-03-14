@@ -1,7 +1,17 @@
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-change-me';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret || secret.length < 16) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('[AUTH] JWT_SECRET must be set and at least 16 characters in production')
+    }
+    return 'dev-secret-minimum-16-chars-local'
+  }
+  return secret
+}
+const JWT_SECRET = getJwtSecret();
 const ACCESS_TOKEN_EXPIRES_IN = '1h';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
 

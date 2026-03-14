@@ -74,14 +74,24 @@ export function useAuth() {
     // Router push handled in component
   };
 
-  const logout = () => {
-    localStorage.removeItem('accessToken');
-    setAuthState({
-      user: null,
-      accessToken: null,
-      isLoading: false,
-    });
-    router.push('/login');
+  const logout = async () => {
+    const token = localStorage.getItem('refreshToken')
+    try {
+      await fetch('/api/v1/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+        body: JSON.stringify({ refreshToken: token }),
+      })
+    } catch {
+      // Best effort — clear client state regardless
+    }
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    setAuthState({ user: null, accessToken: null, isLoading: false })
+    router.push('/login')
   };
 
   return {

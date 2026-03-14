@@ -20,6 +20,7 @@ import { CustomerInvoiceFilters } from "./CustomerInvoiceFilters";
 import { CustomerDownloadPDFButton } from "./CustomerDownloadPDFButton";
 import { CustomerInvoiceDetailDialog } from "./CustomerInvoiceDetailDialog";
 import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
+import { useLanguage } from "@/lib/i18n";
 
 export function CustomerInvoicesTable() {
   const [invoices, setInvoices] = useState<InvoiceWithDetails[]>([]);
@@ -32,6 +33,7 @@ export function CustomerInvoicesTable() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Reset selection when page or filters change
@@ -120,7 +122,7 @@ export function CustomerInvoicesTable() {
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-4 bg-muted/50 p-4 rounded-lg animate-in fade-in slide-in-from-top-2">
           <span className="text-sm font-medium">
-            {selectedIds.length} facturas seleccionadas
+            {t.portal.invoicesSelected.replace('{n}', String(selectedIds.length))}
           </span>
           <BulkDownloadButton
             selectedIds={selectedIds}
@@ -131,7 +133,7 @@ export function CustomerInvoicesTable() {
             size="sm"
             onClick={() => setSelectedIds([])}
           >
-            Deseleccionar todo
+            {t.portal.deselectAll}
           </Button>
         </div>
       )}
@@ -147,15 +149,15 @@ export function CustomerInvoicesTable() {
                     selectedIds.length === invoices.length
                   }
                   onCheckedChange={handleSelectAll}
-                  aria-label="Seleccionar todo"
+                  aria-label={t.portal.selectAll}
                 />
               </TableHead>
-              <TableHead>Número</TableHead>
-              <TableHead>Emisión</TableHead>
-              <TableHead>Vencimiento</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead>{t.portal.number}</TableHead>
+              <TableHead>{t.portal.issuance}</TableHead>
+              <TableHead>{t.portal.dueDate}</TableHead>
+              <TableHead>{t.portal.total}</TableHead>
+              <TableHead>{t.portal.status}</TableHead>
+              <TableHead className="text-right">{t.common.actions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -168,7 +170,7 @@ export function CustomerInvoicesTable() {
             ) : invoices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  No se encontraron facturas.
+                  {t.portal.noInvoices}
                 </TableCell>
               </TableRow>
             ) : (
@@ -190,7 +192,7 @@ export function CustomerInvoicesTable() {
                       onCheckedChange={(checked) =>
                         handleSelect(invoice.id, !!checked)
                       }
-                      aria-label={`Seleccionar factura ${invoice.number}`}
+                      aria-label={t.portal.selectInvoice.replace('{number}', invoice.number)}
                     />
                   </TableCell>
                   <TableCell className="font-medium">{invoice.number}</TableCell>
@@ -199,7 +201,7 @@ export function CustomerInvoicesTable() {
                   <TableCell>{formatCurrency(Number(invoice.total))}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(invoice.status)} variant="secondary">
-                      {invoice.status}
+                      {t.invoices.statusLabels[invoice.status as keyof typeof t.invoices.statusLabels] || invoice.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -209,7 +211,7 @@ export function CustomerInvoicesTable() {
                       size="sm"
                       stopPropagation
                     >
-                      PDF
+                      {t.portal.downloadPdf}
                     </CustomerDownloadPDFButton>
                   </TableCell>
                 </TableRow>
@@ -221,15 +223,17 @@ export function CustomerInvoicesTable() {
 
       <div className="flex justify-center gap-2">
         <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          Anterior
+          {t.common.previous}
         </Button>
-        <div className="flex items-center text-sm text-muted-foreground">Página {page} de {totalPages || 1}</div>
+        <div className="flex items-center text-sm text-muted-foreground">
+          {t.common.page} {page} {t.common.of} {totalPages || 1}
+        </div>
         <Button
           variant="outline"
           disabled={page >= totalPages}
           onClick={() => setPage((p) => p + 1)}
         >
-          Siguiente
+          {t.common.next}
         </Button>
       </div>
 
@@ -244,4 +248,3 @@ export function CustomerInvoicesTable() {
     </div>
   );
 }
-

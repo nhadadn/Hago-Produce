@@ -6,6 +6,7 @@ import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider, useF
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { useLanguage, zodErrorToKey } from "@/lib/i18n"
 
 const Form = FormProvider
 
@@ -139,7 +140,13 @@ const FormMessage = React.forwardRef<
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message) : children
+  const { t } = useLanguage()
+  const message = error?.message
+  const translatedMessage =
+    typeof message === "string"
+      ? (zodErrorToKey[message] ? t.validation[zodErrorToKey[message]] : message)
+      : message
+  const body = error ? translatedMessage : children
 
   if (!body) {
     return null
@@ -151,7 +158,9 @@ const FormMessage = React.forwardRef<
       id={formMessageId}
       className={cn("text-sm font-medium text-destructive", className)}
       {...props}
-    />
+    >
+      {body}
+    </p>
   )
 })
 FormMessage.displayName = "FormMessage"

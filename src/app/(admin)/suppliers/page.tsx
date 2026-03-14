@@ -14,16 +14,18 @@ import { Plus, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { clientLogger as logger } from '@/lib/logger/client-logger';
+import { useLanguage } from '@/lib/i18n';
 
 export default function SuppliersPage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  
+  const { t } = useLanguage();
+
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<SupplierFilters>({ page: 1, limit: 10 });
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -108,18 +110,18 @@ export default function SuppliersPage() {
     }
   };
 
-  if (authLoading || !user) return <div className="p-8">Cargando...</div>;
+  if (authLoading || !user) return <div className="p-8">{t.common.loading}</div>;
   if (user.role !== Role.ADMIN && user.role !== Role.ACCOUNTING) return null;
 
   return (
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Proveedores</h1>
-          <p className="text-muted-foreground">Gestión de proveedores y contactos.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t.suppliers.title}</h1>
+          <p className="text-muted-foreground">{t.suppliers.subtitle}</p>
         </div>
         <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" /> Nuevo Proveedor
+          <Plus className="mr-2 h-4 w-4" /> {t.suppliers.newSupplier}
         </Button>
       </div>
 
@@ -127,8 +129,8 @@ export default function SuppliersPage() {
       <div className="flex items-center space-x-4">
         <div className="relative w-72">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar por nombre, email..." 
+          <Input
+            placeholder={t.suppliers.searchPlaceholder}
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -136,41 +138,41 @@ export default function SuppliersPage() {
         </div>
         <Select onValueChange={(val) => setFilters(prev => ({ ...prev, isActive: val === 'ALL' ? undefined : val === 'ACTIVE', page: 1 }))}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Estado" />
+            <SelectValue placeholder={t.suppliers.allStatuses} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Todos</SelectItem>
-            <SelectItem value="ACTIVE">Activos</SelectItem>
-            <SelectItem value="INACTIVE">Inactivos</SelectItem>
+            <SelectItem value="ALL">{t.common.all}</SelectItem>
+            <SelectItem value="ACTIVE">{t.suppliers.activeOnly}</SelectItem>
+            <SelectItem value="INACTIVE">{t.suppliers.inactiveOnly}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <SuppliersTable 
-        suppliers={suppliers} 
-        onEdit={handleEdit} 
+      <SuppliersTable
+        suppliers={suppliers}
+        onEdit={handleEdit}
         onDelete={handleDeleteClick}
         isLoading={loading}
       />
 
       {/* Pagination */}
       <div className="flex justify-end space-x-2">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           disabled={filters.page === 1}
           onClick={() => setFilters(prev => ({ ...prev, page: (prev.page || 1) - 1 }))}
         >
-          Anterior
+          {t.common.previous}
         </Button>
         <div className="flex items-center text-sm text-muted-foreground">
-          Página {filters.page} de {totalPages}
+          {t.common.page} {filters.page} {t.common.of} {totalPages}
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           disabled={filters.page === totalPages}
           onClick={() => setFilters(prev => ({ ...prev, page: (prev.page || 1) + 1 }))}
         >
-          Siguiente
+          {t.common.next}
         </Button>
       </div>
 
@@ -178,7 +180,7 @@ export default function SuppliersPage() {
       <SupplierModal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={selectedSupplier ? "Editar Proveedor" : "Nuevo Proveedor"}
+        title={selectedSupplier ? t.suppliers.editSupplier : t.suppliers.newSupplier}
       >
         <SupplierForm
           initialData={selectedSupplier}
@@ -192,14 +194,14 @@ export default function SuppliersPage() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogTitle>{t.suppliers.confirmDelete}</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro que deseas eliminar al proveedor {selectedSupplier?.name}? Esta acción no se puede deshacer.
+              {t.suppliers.confirmDeleteDesc.replace('{name}', selectedSupplier?.name || '')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>Eliminar</Button>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>{t.common.cancel}</Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>{t.common.delete}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

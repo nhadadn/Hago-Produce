@@ -22,10 +22,12 @@ import { fetchCustomers } from "@/lib/api/customers";
 import type { Customer } from "@prisma/client";
 import { DownloadPDFButton } from "@/components/invoices/DownloadPDFButton";
 import { clientLogger as logger } from "@/lib/logger/client-logger";
+import { useLanguage } from "@/lib/i18n";
 
 export default function InvoiceList() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [invoices, setInvoices] = useState<InvoiceWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,7 +152,7 @@ export default function InvoiceList() {
         {user?.role !== Role.CUSTOMER && (
           <Button onClick={() => router.push("/invoices/new")}>
             <Plus className="mr-2 h-4 w-4" />
-            Nueva Factura
+            {t.invoices.newInvoice}
           </Button>
         )}
       </div>
@@ -159,26 +161,26 @@ export default function InvoiceList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Número</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Fecha Emisión</TableHead>
-              <TableHead>Vencimiento</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead>{t.invoices.number}</TableHead>
+              <TableHead>{t.invoices.customer}</TableHead>
+              <TableHead>{t.invoices.issueDate}</TableHead>
+              <TableHead>{t.invoices.dueDate}</TableHead>
+              <TableHead>{t.invoices.total}</TableHead>
+              <TableHead>{t.common.status}</TableHead>
+              <TableHead className="text-right">{t.common.actions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  Cargando facturas...
+                  {t.invoices.loadingInvoices}
                 </TableCell>
               </TableRow>
             ) : invoices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  No se encontraron facturas.
+                  {t.invoices.noInvoices}
                 </TableCell>
               </TableRow>
             ) : (
@@ -199,7 +201,7 @@ export default function InvoiceList() {
                   <TableCell>{formatCurrency(Number(invoice.total))}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(invoice.status)} variant="secondary">
-                      {invoice.status}
+                      {t.invoices.statusLabels[invoice.status as keyof typeof t.invoices.statusLabels] || invoice.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right space-x-1">
@@ -211,7 +213,7 @@ export default function InvoiceList() {
                         router.push(`/invoices/${invoice.id}`);
                       }}
                     >
-                      Ver
+                      {t.invoices.view}
                     </Button>
                     {user?.role !== Role.CUSTOMER &&
                       invoice.status === InvoiceStatus.DRAFT && (
@@ -223,7 +225,7 @@ export default function InvoiceList() {
                             router.push(`/invoices/${invoice.id}/edit`);
                           }}
                         >
-                          Editar
+                          {t.invoices.edit}
                         </Button>
                       )}
                     <DownloadPDFButton
@@ -232,7 +234,7 @@ export default function InvoiceList() {
                       size="sm"
                       stopPropagation
                     >
-                      PDF
+                      {t.invoices.pdf}
                     </DownloadPDFButton>
                   </TableCell>
                 </TableRow>
@@ -248,17 +250,17 @@ export default function InvoiceList() {
           disabled={page <= 1}
           onClick={() => setPage(p => p - 1)}
         >
-          Anterior
+          {t.common.previous}
         </Button>
         <div className="flex items-center text-sm text-muted-foreground">
-          Página {page} de {totalPages || 1}
+          {t.common.page} {page} {t.common.of} {totalPages || 1}
         </div>
         <Button
           variant="outline"
           disabled={page >= totalPages}
           onClick={() => setPage(p => p + 1)}
         >
-          Siguiente
+          {t.common.next}
         </Button>
       </div>
     </div>

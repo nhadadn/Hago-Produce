@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Table,
   TableBody,
@@ -8,87 +10,93 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/i18n";
 
-const recentInvoices = [
+const recentInvoicesData = [
   {
     invoice: "INV001",
-    status: "Pagado",
+    statusKey: "PAID" as const,
     total: "$250.00",
-    method: "Transferencia",
     customer: "Fresh Market",
   },
   {
     invoice: "INV002",
-    status: "Pendiente",
+    statusKey: "PENDING" as const,
     total: "$150.00",
-    method: "Tarjeta",
     customer: "Super Valu",
   },
   {
     invoice: "INV003",
-    status: "Pagado",
+    statusKey: "PAID" as const,
     total: "$350.00",
-    method: "Transferencia",
     customer: "Organic Foods",
   },
   {
     invoice: "INV004",
-    status: "Vencido",
+    statusKey: "OVERDUE" as const,
     total: "$450.00",
-    method: "Cheque",
     customer: "Green Grocer",
   },
   {
     invoice: "INV005",
-    status: "Pagado",
+    statusKey: "PAID" as const,
     total: "$550.00",
-    method: "Transferencia",
     customer: "Whole Foods",
   },
 ];
 
-const getStatusVariant = (status: string) => {
-  switch (status) {
-    case "Pagado":
-      return "default"; // Green
-    case "Pendiente":
-      return "secondary"; // Amber
-    case "Vencido":
-      return "destructive"; // Red
+const getStatusVariant = (statusKey: string): "default" | "secondary" | "destructive" | "outline" => {
+  switch (statusKey) {
+    case "PAID":
+      return "default";
+    case "PENDING":
+      return "secondary";
+    case "OVERDUE":
+      return "destructive";
     default:
       return "outline";
   }
 };
 
 export function RecentInvoices() {
+  const { t } = useLanguage();
+
   return (
     <Card className="col-span-3">
       <CardHeader>
-        <CardTitle>Facturas Recientes</CardTitle>
+        <CardTitle>{t.dashboard.recentInvoices}</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Factura</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead className="text-right">Monto</TableHead>
+              <TableHead className="w-[100px]">{t.dashboard.invoice}</TableHead>
+              <TableHead>{t.dashboard.status}</TableHead>
+              <TableHead>{t.dashboard.customer}</TableHead>
+              <TableHead className="text-right">{t.dashboard.amount}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentInvoices.map((invoice) => (
-              <TableRow key={invoice.invoice}>
-                <TableCell className="font-medium">{invoice.invoice}</TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(invoice.status)}>
-                    {invoice.status}
-                  </Badge>
+            {recentInvoicesData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8">
+                  {t.dashboard.noRecentInvoices}
                 </TableCell>
-                <TableCell>{invoice.customer}</TableCell>
-                <TableCell className="text-right">{invoice.total}</TableCell>
               </TableRow>
-            ))}
+            ) : (
+              recentInvoicesData.map((invoice) => (
+                <TableRow key={invoice.invoice}>
+                  <TableCell className="font-medium">{invoice.invoice}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(invoice.statusKey)}>
+                      {t.invoices.statusLabels[invoice.statusKey as keyof typeof t.invoices.statusLabels] || invoice.statusKey}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{invoice.customer}</TableCell>
+                  <TableCell className="text-right">{invoice.total}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </CardContent>

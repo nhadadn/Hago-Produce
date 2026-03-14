@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export interface CustomerSession {
   id: string;
+  email: string;
   companyName: string;
   taxId: string;
 }

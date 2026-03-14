@@ -8,10 +8,12 @@ import { InvoiceStatusDoughnut } from "@/components/portal/charts/InvoiceStatusD
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUpRight, ArrowDownRight, DollarSign, FileText, AlertCircle, ShoppingBag, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
 
 export function CustomerDashboardSummary() {
   const { customer } = useCustomerAuth();
   const { data, loading, error } = useCustomerDashboardData(customer?.id || "");
+  const { t } = useLanguage();
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -21,9 +23,9 @@ export function CustomerDashboardSummary() {
     return (
         <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
             <AlertTriangle className="h-12 w-12 text-destructive" />
-            <h2 className="text-lg font-semibold">Error al cargar el dashboard</h2>
+            <h2 className="text-lg font-semibold">{t.portal.errorTitle}</h2>
             <p className="text-muted-foreground">{error}</p>
-            <Button onClick={() => window.location.reload()}>Reintentar</Button>
+            <Button onClick={() => window.location.reload()}>{t.portal.retry}</Button>
         </div>
     );
   }
@@ -35,29 +37,30 @@ export function CustomerDashboardSummary() {
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Total Facturado (Mes)"
+          title={t.portal.totalBilledMonth}
           value={`$${data.summary.totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
           trend={data.summary.revenueGrowth}
+          trendLabel={t.portal.vsLastMonth}
           icon={DollarSign}
         />
         <KpiCard
-          title="Balance Pendiente"
+          title={t.portal.pendingBalance}
           value={`$${data.summary.pendingBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
           icon={FileText}
-          subtext="Facturas enviadas y vencidas"
+          subtext={t.portal.pendingBalanceSub}
         />
         <KpiCard
-          title="Facturas Vencidas"
+          title={t.portal.overdueInvoices}
           value={data.summary.overdueCount.toString()}
           icon={AlertCircle}
           variant="danger"
-          subtext={data.summary.overdueCount > 0 ? "Requiere atención inmediata" : "Al día"}
+          subtext={data.summary.overdueCount > 0 ? t.portal.overdueUrgent : t.portal.overdueOk}
         />
         <KpiCard
-          title="Total Órdenes"
+          title={t.portal.totalOrders}
           value={data.summary.totalInvoices.toString()}
           icon={ShoppingBag}
-          subtext="Histórico total"
+          subtext={t.portal.totalOrdersSub}
         />
       </div>
 
@@ -65,7 +68,7 @@ export function CustomerDashboardSummary() {
       <div className="grid gap-4 md:grid-cols-7">
         <Card className="col-span-4 shadow-sm">
             <CardHeader>
-                <CardTitle className="text-lg font-medium text-gray-800">Facturación Mensual</CardTitle>
+                <CardTitle className="text-lg font-medium text-gray-800">{t.portal.monthlyBilling}</CardTitle>
             </CardHeader>
             <CardContent className="pl-2 h-[350px]">
                 <RevenueBarChart data={data.revenueHistory} />
@@ -73,7 +76,7 @@ export function CustomerDashboardSummary() {
         </Card>
         <Card className="col-span-3 shadow-sm">
             <CardHeader>
-                <CardTitle className="text-lg font-medium text-gray-800">Estado de Facturas</CardTitle>
+                <CardTitle className="text-lg font-medium text-gray-800">{t.portal.invoiceStatus}</CardTitle>
             </CardHeader>
             <CardContent className="h-[350px] flex items-center justify-center">
                 <div className="w-full h-full max-w-[300px]">
@@ -86,9 +89,9 @@ export function CustomerDashboardSummary() {
   );
 }
 
-function KpiCard({ title, value, trend, icon: Icon, subtext, variant = "default" }: any) {
+function KpiCard({ title, value, trend, trendLabel, icon: Icon, subtext, variant = "default" }: any) {
     const isDanger = variant === 'danger' && parseInt(value) > 0;
-    
+
     return (
         <Card className="shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -110,7 +113,7 @@ function KpiCard({ title, value, trend, icon: Icon, subtext, variant = "default"
                                 {Math.abs(trend)}%
                             </span>
                         )}
-                        <span className="ml-1">vs mes anterior</span>
+                        <span className="ml-1">{trendLabel}</span>
                     </p>
                 ) : (
                     <p className="text-xs text-muted-foreground pt-1">{subtext}</p>

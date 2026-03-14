@@ -3,7 +3,11 @@
 import { useAuth } from "@/lib/hooks/useAuth";
 import { Role } from "@prisma/client";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
-import { IncomeChart } from "@/components/dashboard/IncomeChart";
+import dynamic from "next/dynamic";
+const IncomeChart = dynamic(
+  () => import("@/components/dashboard/IncomeChart").then(m => m.IncomeChart),
+  { ssr: false }
+);
 import { RecentInvoices } from "@/components/dashboard/RecentInvoices";
 import { CustomerDashboardSummary } from "@/components/portal/CustomerDashboardSummary";
 

@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Table,
   TableBody,
@@ -9,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit, Ban, CheckCircle, KeyRound } from "lucide-react";
 import { Customer } from "@prisma/client";
+import { useLanguage } from "@/lib/i18n";
 
 interface CustomersTableProps {
   customers: Customer[];
@@ -18,12 +21,14 @@ interface CustomersTableProps {
 }
 
 export function CustomersTable({ customers, onEdit, onResetPassword, isLoading }: CustomersTableProps) {
+  const { t } = useLanguage();
+
   if (isLoading) {
-    return <div className="text-center p-8">Cargando clientes...</div>;
+    return <div className="text-center p-8">{t.customers.loadingCustomers}</div>;
   }
 
   if (!customers || customers.length === 0) {
-    return <div className="text-center p-8 border rounded-lg">No se encontraron clientes.</div>;
+    return <div className="text-center p-8 border rounded-lg">{t.customers.noCustomers}</div>;
   }
 
   return (
@@ -31,12 +36,12 @@ export function CustomersTable({ customers, onEdit, onResetPassword, isLoading }
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>RFC / Tax ID</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Teléfono</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+            <TableHead>{t.customers.nameHeader}</TableHead>
+            <TableHead>{t.customers.taxIdHeader}</TableHead>
+            <TableHead>{t.customers.emailHeader}</TableHead>
+            <TableHead>{t.customers.phoneHeader}</TableHead>
+            <TableHead>{t.customers.statusHeader}</TableHead>
+            <TableHead className="text-right">{t.customers.actionsHeader}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -49,11 +54,11 @@ export function CustomersTable({ customers, onEdit, onResetPassword, isLoading }
               <TableCell>
                 {customer.isActive ? (
                   <span className="flex items-center text-hago-primary-700 text-sm">
-                    <CheckCircle className="w-4 h-4 mr-1" /> Activo
+                    <CheckCircle className="w-4 h-4 mr-1" /> {t.common.active}
                   </span>
                 ) : (
                   <span className="flex items-center text-hago-error text-sm">
-                    <Ban className="w-4 h-4 mr-1" /> Inactivo
+                    <Ban className="w-4 h-4 mr-1" /> {t.common.inactive}
                   </span>
                 )}
               </TableCell>
@@ -63,7 +68,7 @@ export function CustomersTable({ customers, onEdit, onResetPassword, isLoading }
                     variant="outline"
                     size="sm"
                     onClick={() => onResetPassword(customer)}
-                    title="Generar / Resetear acceso al portal"
+                    title={t.customers.generateResetAccess}
                   >
                     <KeyRound className="h-4 w-4" />
                   </Button>

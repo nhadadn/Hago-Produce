@@ -1,4 +1,7 @@
-import { useState, useEffect } from "react";
+'use client';
+
+import { useState, useEffect, useMemo } from "react";
+import { useLanguage } from "@/lib/i18n/useLanguage";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductPrice } from "@/lib/api/product-prices";
-import { productPriceSchema } from "@/lib/validation/product-price";
 import { fetchProducts } from "@/lib/api/products";
 import { fetchSuppliers } from "@/lib/api/suppliers";
 import { clientLogger as logger } from "@/lib/logger/client-logger";
@@ -46,12 +48,38 @@ export function ProductPriceModal({
   onSubmit,
   initialData,
 }: ProductPriceModalProps) {
+  const { t } = useLanguage();
+  const tp = t.prices;
   const [products, setProducts] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<z.infer<typeof productPriceSchema>>({
-    resolver: zodResolver(productPriceSchema) as any,
+  // Localized schema
+  const formSchema = useMemo(() => {
+    return z.object({
+      id: z.string().uuid().optional(),
+      productId: z
+        .string()
+        .min(1, t.validation.fieldRequired)
+        .uuid({ message: t.validation.invalidUuid }),
+      supplierId: z
+        .string()
+        .min(1, t.validation.fieldRequired)
+        .uuid({ message: t.validation.invalidUuid }),
+      costPrice: z.number().min(0, { message: t.validation.valueNonNegative }),
+      sellPrice: z.number().min(0, { message: t.validation.valueNonNegative }).optional(),
+      currency: z.string().default('USD'),
+      effectiveDate: z.coerce.date(),
+      isCurrent: z.boolean().default(true),
+      source: z.string().optional().default('manual'),
+    });
+  }, [t]);
+
+  type FormInput = z.input<typeof formSchema>;
+  type FormOutput = z.output<typeof formSchema>;
+
+  const form = useForm<FormInput, unknown, FormOutput>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       productId: "",
       supplierId: "",
@@ -106,7 +134,7 @@ export function ProductPriceModal({
     }
   }, [initialData, form, isOpen]);
 
-  const handleSubmit = async (values: z.infer<typeof productPriceSchema>) => {
+  const handleSubmit = async (values: FormOutput) => {
     setIsLoading(true);
     try {
       await onSubmit(values);
@@ -123,7 +151,7 @@ export function ProductPriceModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {initialData ? "Editar Precio" : "Nuevo Precio"}
+            {initialData ? tp.editPrice : tp.newPrice}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -133,7 +161,7 @@ export function ProductPriceModal({
               name="productId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Producto</FormLabel>
+                  <FormLabel>{tp.product}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -142,7 +170,7 @@ export function ProductPriceModal({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar producto" />
+                        <SelectValue placeholder={tp.selectProduct} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -163,7 +191,7 @@ export function ProductPriceModal({
               name="supplierId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Proveedor</FormLabel>
+                  <FormLabel>{tp.supplier}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -172,7 +200,7 @@ export function ProductPriceModal({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar proveedor" />
+                        <SelectValue placeholder={tp.selectSupplier} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -194,7 +222,7 @@ export function ProductPriceModal({
                 name="costPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Costo</FormLabel>
+                    <FormLabel>{tp.costPrice}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -214,7 +242,7 @@ export function ProductPriceModal({
                 name="sellPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Venta (Opcional)</FormLabel>
+                    <FormLabel>{tp.sellPriceOptional}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -237,14 +265,14 @@ export function ProductPriceModal({
                 name="currency"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Moneda</FormLabel>
+                    <FormLabel>{tp.currency}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Moneda" />
+                          <SelectValue placeholder={tp.currency} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -263,7 +291,7 @@ export function ProductPriceModal({
                 name="effectiveDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fecha Efectiva</FormLabel>
+                    <FormLabel>{tp.effectiveDate}</FormLabel>
                     <FormControl>
                       <Input
                         type="date"
@@ -289,7 +317,7 @@ export function ProductPriceModal({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Precio Actual</FormLabel>
+                    <FormLabel>{tp.currentPriceLabel}</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -297,10 +325,10 @@ export function ProductPriceModal({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
+                {t.common.cancel}
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Guardando..." : "Guardar"}
+                {isLoading ? t.common.saving : t.common.save}
               </Button>
             </DialogFooter>
           </form>

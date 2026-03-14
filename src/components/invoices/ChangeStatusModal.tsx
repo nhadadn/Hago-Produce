@@ -17,6 +17,7 @@ import { changeInvoiceStatus, fetchInvoice, InvoiceWithDetails } from '@/lib/api
 import { InvoiceStatus } from '@prisma/client';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatDate } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n';
 
 interface ChangeStatusModalProps {
   invoiceId: string;
@@ -32,6 +33,7 @@ export function ChangeStatusModal({ invoiceId, open, onClose }: ChangeStatusModa
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +50,7 @@ export function ChangeStatusModal({ invoiceId, open, onClose }: ChangeStatusModa
         }
       } catch (err: any) {
         if (!cancelled) {
-          setError(err?.message || 'No se pudo cargar la factura.');
+          setError(err?.message || t.invoices.changeStatus.invoiceNotFound);
         }
       } finally {
         if (!cancelled) {
@@ -115,15 +117,15 @@ export function ChangeStatusModal({ invoiceId, open, onClose }: ChangeStatusModa
       });
 
       toast({
-        title: 'Estado actualizado',
-        description: 'El estado de la factura se actualizó correctamente.',
+        title: t.invoices.changeStatus.successTitle,
+        description: t.invoices.changeStatus.successDesc,
       });
 
       onClose();
     } catch (err: any) {
       toast({
-        title: 'Error al cambiar estado',
-        description: err?.message || 'No se pudo cambiar el estado de la factura.',
+        title: t.invoices.changeStatus.errorTitle,
+        description: err?.message || t.invoices.changeStatus.errorDesc,
         variant: 'destructive',
       });
     } finally {
@@ -135,18 +137,18 @@ export function ChangeStatusModal({ invoiceId, open, onClose }: ChangeStatusModa
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Cambiar estado de factura</DialogTitle>
+          <DialogTitle>{t.invoices.changeStatus.modalTitle}</DialogTitle>
           <DialogDescription>
-            Selecciona el nuevo estado y revisa el cambio antes de confirmar.
+            {t.invoices.changeStatus.modalDescription}
           </DialogDescription>
         </DialogHeader>
 
         {loading ? (
-          <p className="text-sm text-muted-foreground">Cargando factura...</p>
+          <p className="text-sm text-muted-foreground">{t.invoices.changeStatus.loadingInvoice}</p>
         ) : error ? (
           <p className="text-sm text-destructive">{error}</p>
         ) : !invoice ? (
-          <p className="text-sm text-muted-foreground">Factura no encontrada.</p>
+          <p className="text-sm text-muted-foreground">{t.invoices.changeStatus.invoiceNotFound}</p>
         ) : (
           <div className="space-y-4">
             <div className="space-y-1">
@@ -161,70 +163,68 @@ export function ChangeStatusModal({ invoiceId, open, onClose }: ChangeStatusModa
                   variant="secondary"
                   className={cn(getStatusBadgeClass(invoice.status), 'uppercase')}
                 >
-                  {invoice.status}
+                  {t.invoices.statusLabels[invoice.status as keyof typeof t.invoices.statusLabels] || invoice.status}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Emisión {formatDate(invoice.issueDate as unknown as string)} · Vencimiento{' '}
+                {t.invoices.issuance} {formatDate(invoice.issueDate as unknown as string)} · {t.invoices.dueLabel}{' '}
                 {formatDate(invoice.dueDate as unknown as string)}
               </p>
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium">Nuevo estado</p>
+              <p className="text-sm font-medium">{t.invoices.changeStatus.newStatus}</p>
               <Select
                 value={selectedStatus || ''}
                 onValueChange={(value) => setSelectedStatus(value as InvoiceStatus)}
                 disabled={allowedStatuses.length === 0 || submitting}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un estado" />
+                  <SelectValue placeholder={t.invoices.changeStatus.selectStatus} />
                 </SelectTrigger>
                 <SelectContent>
                   {allowedStatuses.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status}
+                      {t.invoices.statusLabels[status as keyof typeof t.invoices.statusLabels] || status}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {allowedStatuses.length === 0 && (
                 <p className="text-xs text-muted-foreground">
-                  No hay transiciones de estado disponibles para esta factura.
+                  {t.invoices.changeStatus.noTransitions}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium">Razón del cambio (opcional)</p>
+              <p className="text-sm font-medium">{t.invoices.changeStatus.reason}</p>
               <Textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Motivo del cambio de estado (visible solo internamente)."
+                placeholder={t.invoices.changeStatus.reasonPlaceholder}
                 disabled={submitting}
               />
               <p className="text-xs text-muted-foreground">
-                Recomendado para cambios críticos, como marcar una factura como pagada o vencida.
+                {t.invoices.changeStatus.recommendedNote}
               </p>
             </div>
 
             <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
-              <p className="font-medium">Resumen del cambio</p>
+              <p className="font-medium">{t.invoices.changeStatus.changeSummary}</p>
               {selectedStatus ? (
                 <p>
-                  La factura
-                  <span className="font-semibold"> {invoice.number} </span>
-                  cambiará de
-                  <span className="font-semibold"> {invoice.status} </span>
-                  a
-                  <span className="font-semibold"> {selectedStatus} </span>.
+                  {t.invoices.changeStatus.summaryText
+                    .replace('{number}', invoice.number)
+                    .replace('{from}', t.invoices.statusLabels[invoice.status as keyof typeof t.invoices.statusLabels] || invoice.status)
+                    .replace('{to}', t.invoices.statusLabels[selectedStatus as keyof typeof t.invoices.statusLabels] || selectedStatus)}
                 </p>
               ) : (
-                <p>Selecciona un nuevo estado para ver el resumen del cambio.</p>
+                <p>{t.invoices.changeStatus.summarySelectPrompt}</p>
               )}
               {reason && (
                 <p className="text-xs text-muted-foreground">
-                  Razón proporcionada: {reason}
+                  {t.invoices.changeStatus.reasonProvided} {reason}
                 </p>
               )}
             </div>
@@ -233,18 +233,17 @@ export function ChangeStatusModal({ invoiceId, open, onClose }: ChangeStatusModa
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
-            Cancelar
+            {t.common.cancel}
           </Button>
           <Button
             type="button"
             onClick={handleConfirm}
             disabled={submitting || !invoice || !selectedStatus}
           >
-            {submitting ? 'Guardando...' : 'Confirmar cambio'}
+            {submitting ? t.invoices.changeStatus.saving : t.invoices.changeStatus.confirm}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
