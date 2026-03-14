@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productSchema, ProductInput } from "@/lib/validation/product";
+import { ProductInput } from "@/lib/validation/product";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,7 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Product } from "@/lib/api/products";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { z } from "zod";
 import {
   Select,
   SelectContent,
@@ -40,17 +41,7 @@ import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { PRODUCT_CATEGORIES } from "@/lib/validation/product";
-
-// Common units
-const PRODUCT_UNITS = [
-  { value: "unit", label: "Unidad" },
-  { value: "kg", label: "Kilogramo" },
-  { value: "lb", label: "Libra" },
-  { value: "box", label: "Caja" },
-  { value: "pallet", label: "Pallet" },
-  { value: "bunch", label: "Manojo" },
-  { value: "bag", label: "Bolsa" },
-] as const;
+import { useLanguage } from "@/lib/i18n/useLanguage";
 
 interface ProductFormProps {
   product?: Product;
@@ -65,6 +56,32 @@ export function ProductForm({
   isLoading,
   onCancel,
 }: ProductFormProps) {
+  const { t } = useLanguage();
+  const tp = t.products;
+
+  // Localized schema
+  const formSchema = useMemo(() => {
+    return z.object({
+      name: z.string().min(1, t.validation.nameRequired).max(255),
+      nameEs: z.string().max(255).optional().nullable(),
+      description: z.string().optional().nullable(),
+      category: z.string().optional().nullable(),
+      unit: z.string().min(1, t.validation.fieldRequired),
+      sku: z.string().optional().nullable(),
+      isActive: z.boolean(),
+    });
+  }, [t]);
+
+  const PRODUCT_UNITS = [
+    { value: "unit", label: tp.units.unit },
+    { value: "kg", label: tp.units.kg },
+    { value: "lb", label: tp.units.lb },
+    { value: "box", label: tp.units.box },
+    { value: "pallet", label: tp.units.pallet },
+    { value: "bunch", label: tp.units.bunch },
+    { value: "bag", label: tp.units.bag },
+  ];
+
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [unitOpen, setUnitOpen] = useState(false);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
@@ -73,7 +90,7 @@ export function ProductForm({
   const [newUnit, setNewUnit] = useState("");
   
   const form = useForm<ProductInput>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       nameEs: "",
@@ -111,9 +128,9 @@ export function ProductForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre</FormLabel>
+                <FormLabel>{tp.name}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nombre del producto" {...field} />
+                  <Input placeholder={tp.name} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -124,10 +141,10 @@ export function ProductForm({
             name="nameEs"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre (Español)</FormLabel>
+                <FormLabel>{tp.nameEs}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Nombre en español"
+                    placeholder={tp.nameEs}
                     {...field}
                     value={field.value || ""}
                   />
@@ -143,10 +160,10 @@ export function ProductForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descripción</FormLabel>
+              <FormLabel>{tp.description}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Descripción"
+                  placeholder={tp.description}
                   {...field}
                   value={field.value || ""}
                 />
@@ -162,7 +179,7 @@ export function ProductForm({
             name="category"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Categoría</FormLabel>
+                <FormLabel>{tp.category}</FormLabel>
                 <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -175,10 +192,8 @@ export function ProductForm({
                         )}
                       >
                         {field.value
-                          ? allCategories.find(
-                              (category) => category === field.value
-                            ) || field.value
-                          : "Seleccionar categoría"}
+                          ? tp.categories[field.value as keyof typeof tp.categories] || field.value
+                          : tp.selectCategory}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </FormControl>
@@ -186,12 +201,12 @@ export function ProductForm({
                   <PopoverContent className="w-[200px] p-0">
                     <Command>
                       <CommandInput 
-                        placeholder="Buscar categoría..." 
+                        placeholder={tp.searchCategory} 
                         onValueChange={(value) => setNewCategory(value)}
                       />
                       <CommandList>
                         <CommandEmpty className="p-2">
-                          <p className="text-sm text-muted-foreground mb-2">No encontrada.</p>
+                          <p className="text-sm text-muted-foreground mb-2">{tp.notFound}</p>
                           <Button
                             variant="outline"
                             size="sm"
@@ -205,7 +220,7 @@ export function ProductForm({
                             }}
                           >
                             <Plus className="mr-2 h-4 w-4" />
-                            Crear &quot;{newCategory}&quot;
+                            {t.common.create} &quot;{newCategory}&quot;
                           </Button>
                         </CommandEmpty>
                         <CommandGroup>
@@ -226,7 +241,7 @@ export function ProductForm({
                                     : "opacity-0"
                                 )}
                               />
-                              {category}
+                              {tp.categories[category as keyof typeof tp.categories] || category}
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -243,7 +258,7 @@ export function ProductForm({
             name="unit"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Unidad</FormLabel>
+                <FormLabel>{tp.unit}</FormLabel>
                 <Popover open={unitOpen} onOpenChange={setUnitOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -259,7 +274,7 @@ export function ProductForm({
                           ? allUnits.find(
                               (unit) => unit.value === field.value
                             )?.label || field.value
-                          : "Seleccionar unidad"}
+                          : tp.selectUnit}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </FormControl>
@@ -267,12 +282,12 @@ export function ProductForm({
                   <PopoverContent className="w-[200px] p-0">
                     <Command>
                       <CommandInput 
-                        placeholder="Buscar unidad..." 
+                        placeholder={tp.searchUnit} 
                         onValueChange={(value) => setNewUnit(value)}
                       />
                       <CommandList>
                         <CommandEmpty className="p-2">
-                          <p className="text-sm text-muted-foreground mb-2">No encontrada.</p>
+                          <p className="text-sm text-muted-foreground mb-2">{tp.notFound}</p>
                           <Button
                             variant="outline"
                             size="sm"
@@ -287,7 +302,7 @@ export function ProductForm({
                             }}
                           >
                             <Plus className="mr-2 h-4 w-4" />
-                            Crear &quot;{newUnit}&quot;
+                            {t.common.create} &quot;{newUnit}&quot;
                           </Button>
                         </CommandEmpty>
                         <CommandGroup>
@@ -327,10 +342,10 @@ export function ProductForm({
           name="sku"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>SKU</FormLabel>
+              <FormLabel>{tp.sku}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="SKU"
+                  placeholder={tp.sku}
                   {...field}
                   value={field.value || ""}
                 />
@@ -352,7 +367,7 @@ export function ProductForm({
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Activo</FormLabel>
+                <FormLabel>{t.common.active}</FormLabel>
               </div>
             </FormItem>
           )}
@@ -366,11 +381,11 @@ export function ProductForm({
               onClick={onCancel}
               disabled={isLoading}
             >
-              Cancelar
+              {t.common.cancel}
             </Button>
           )}
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Guardando..." : product ? "Actualizar" : "Crear"}
+            {isLoading ? t.common.saving : product ? t.common.update : t.common.create}
           </Button>
         </div>
       </form>

@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/useLanguage';
 
 interface InvoiceFiltersProps {
   searchInput: string;
@@ -39,13 +40,14 @@ export function InvoiceFilters({
   onStartDateChange,
   onEndDateChange,
 }: InvoiceFiltersProps) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por número o cliente..."
+            placeholder={t.invoices.searchPlaceholder}
             className="pl-8"
             value={searchInput}
             onChange={(e) => onSearchInputChange(e.target.value)}
@@ -57,13 +59,13 @@ export function InvoiceFilters({
           onValueChange={(value) => onStatusChange(value as InvoiceStatus | 'ALL')}
         >
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filtrar por estado" />
+            <SelectValue placeholder={t.invoices.filterByStatus} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Todos los estados</SelectItem>
+            <SelectItem value="ALL">{t.invoices.allStatuses}</SelectItem>
             {Object.values(InvoiceStatus).map((status) => (
               <SelectItem key={status} value={status}>
-                {status}
+                {t.invoices.statusLabels[status as keyof typeof t.invoices.statusLabels]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -74,10 +76,10 @@ export function InvoiceFilters({
           onValueChange={(value) => onCustomerChange(value as string | 'ALL')}
         >
           <SelectTrigger className="w-full sm:w-[220px]">
-            <SelectValue placeholder="Filtrar por cliente" />
+            <SelectValue placeholder={t.invoices.filterByCustomer} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Todos los clientes</SelectItem>
+            <SelectItem value="ALL">{t.invoices.allCustomers}</SelectItem>
             {customers && customers.length > 0 && customers.map((customer) => (
               <SelectItem key={customer.id} value={customer.id}>
                 {customer.name}
@@ -89,7 +91,7 @@ export function InvoiceFilters({
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2 flex-1">
-          <span className="text-sm font-medium whitespace-nowrap">Desde:</span>
+          <span className="text-sm font-medium whitespace-nowrap">{t.invoices.from}</span>
           <Input
             type="date"
             className="flex-1"
@@ -98,7 +100,7 @@ export function InvoiceFilters({
           />
         </div>
         <div className="flex items-center gap-2 flex-1">
-          <span className="text-sm font-medium whitespace-nowrap">Hasta:</span>
+          <span className="text-sm font-medium whitespace-nowrap">{t.invoices.to}</span>
           <Input
             type="date"
             className="flex-1"

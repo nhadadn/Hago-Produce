@@ -34,10 +34,10 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await hashPassword(password);
 
     // Only allow safe roles via public registration — never allow ADMIN or ACCOUNTING escalation
-    const ALLOWED_REGISTER_ROLES = [Role.MANAGEMENT, Role.CUSTOMER]
+    const ALLOWED_REGISTER_ROLES: Role[] = [Role.MANAGEMENT, Role.CUSTOMER];
     const safeRole = role && ALLOWED_REGISTER_ROLES.includes(role as Role)
       ? (role as Role)
-      : Role.MANAGEMENT
+      : Role.MANAGEMENT;
 
     const user = await prisma.user.create({
       data: {

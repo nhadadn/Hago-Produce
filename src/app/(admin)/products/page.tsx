@@ -162,7 +162,7 @@ export default function ProductsPage() {
             <SelectItem value="all">{t.products.allCategories}</SelectItem>
             {PRODUCT_CATEGORIES.map((category) => (
               <SelectItem key={category} value={category}>
-                {category}
+                {t.products.categories[category as keyof typeof t.products.categories] || category}
               </SelectItem>
             ))}
           </SelectContent>

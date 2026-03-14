@@ -33,24 +33,45 @@ global.ResizeObserver = class ResizeObserver {
 
 // Mock cmdk
 jest.mock('cmdk', () => {
-  const Command = ({ children }: any) => <div>{children}</div>;
-  (Command as any).displayName = 'Command';
-  Command.Input = (props: any) => <input {...props} />;
-  (Command.Input as any).displayName = 'CommandInput';
-  Command.List = ({ children }: any) => <div>{children}</div>;
-  (Command.List as any).displayName = 'CommandList';
-  Command.Empty = ({ children }: any) => <div>{children}</div>;
-  (Command.Empty as any).displayName = 'CommandEmpty';
-  Command.Group = ({ children }: any) => <div>{children}</div>;
-  (Command.Group as any).displayName = 'CommandGroup';
-  Command.Item = ({ children, onSelect }: any) => (
-    <div onClick={onSelect}>{children}</div>
-  );
-  (Command.Item as any).displayName = 'CommandItem';
-  Command.Separator = ({ children }: any) => <div>{children}</div>;
-  (Command.Separator as any).displayName = 'CommandSeparator';
-  Command.Loading = ({ children }: any) => <div>{children}</div>;
-  (Command.Loading as any).displayName = 'CommandLoading';
+  function Command({ children }: any) {
+    return <div>{children}</div>;
+  }
+
+  function CommandInput(props: any) {
+    return <input {...props} />;
+  }
+
+  function CommandList({ children }: any) {
+    return <div>{children}</div>;
+  }
+
+  function CommandEmpty({ children }: any) {
+    return <div>{children}</div>;
+  }
+
+  function CommandGroup({ children }: any) {
+    return <div>{children}</div>;
+  }
+
+  function CommandItem({ children, onSelect }: any) {
+    return <div onClick={onSelect}>{children}</div>;
+  }
+
+  function CommandSeparator({ children }: any) {
+    return <div>{children}</div>;
+  }
+
+  function CommandLoading({ children }: any) {
+    return <div>{children}</div>;
+  }
+
+  Command.Input = CommandInput;
+  Command.List = CommandList;
+  Command.Empty = CommandEmpty;
+  Command.Group = CommandGroup;
+  Command.Item = CommandItem;
+  Command.Separator = CommandSeparator;
+  Command.Loading = CommandLoading;
   
   return { Command };
 });

@@ -1,15 +1,15 @@
 import { z } from 'zod';
 
 export const PRODUCT_CATEGORIES = [
-  "Frutas",
-  "Verduras",
-  "Hortalizas",
-  "Legumbres",
-  "Tubérculos",
-  "Hierbas",
-  "Granos",
-  "Frutos Secos",
-  "Otros",
+  "fruits",
+  "vegetables",
+  "greens",
+  "legumes",
+  "tubers",
+  "herbs",
+  "grains",
+  "nuts",
+  "other",
 ] as const;
 
 export const productSchema = z.object({

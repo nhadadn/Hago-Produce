@@ -58,8 +58,14 @@ export function ProductsTable({
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.nameEs || "-"}</TableCell>
-              <TableCell>{product.category || "-"}</TableCell>
-              <TableCell>{product.unit}</TableCell>
+              <TableCell>
+                {product.category 
+                  ? t.products.categories[product.category as keyof typeof t.products.categories] || product.category 
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                {t.products.units[product.unit as keyof typeof t.products.units] || product.unit}
+              </TableCell>
               <TableCell>{product.sku || "-"}</TableCell>
               <TableCell>
                 {product.isActive ? (
