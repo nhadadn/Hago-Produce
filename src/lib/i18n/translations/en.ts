@@ -102,6 +102,7 @@ export const en: TranslationKeys = {
       learnMore: 'Learn more',
     },
     footer: {
+      brandDescription: 'B2B platform for comprehensive invoicing, purchase order management and business analytics for the fresh produce industry in Canada.',
       platformLabel: 'Platform',
       legalLabel: 'Legal',
       features: 'Features',

@@ -1,6 +1,11 @@
+'use client';
+
 import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n/useLanguage';
 
 export function Footer() {
+  const { t } = useLanguage();
+  const tf = t.landing.footer;
   const currentYear = new Date().getFullYear();
 
   return (
@@ -11,35 +16,34 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-bold text-white mb-3">Hago Produce</h3>
             <p className="text-sm text-hago-primary-200 leading-relaxed">
-              Plataforma B2B para la gestión integral de facturación, órdenes de compra
-              y análisis de negocio para la industria de productos frescos en Canadá.
+              {tf.brandDescription}
             </p>
           </div>
 
-          {/* Plataforma */}
+          {/* Platform */}
           <div>
             <h4 className="text-sm font-semibold text-hago-primary-100 uppercase tracking-wider mb-4">
-              Plataforma
+              {tf.platformLabel}
             </h4>
             <ul className="space-y-2">
               <li>
                 <Link href="#features" className="text-sm text-hago-primary-200 hover:text-white transition-colors">
-                  Características
+                  {tf.features}
                 </Link>
               </li>
               <li>
                 <Link href="/login" className="text-sm text-hago-primary-200 hover:text-white transition-colors">
-                  Portal Administrativo
+                  {tf.adminPortal}
                 </Link>
               </li>
               <li>
                 <Link href="/portal/login" className="text-sm text-hago-primary-200 hover:text-white transition-colors">
-                  Portal de Clientes
+                  {tf.customerPortal}
                 </Link>
               </li>
               <li>
                 <Link href="#contact" className="text-sm text-hago-primary-200 hover:text-white transition-colors">
-                  Contacto
+                  {tf.contact}
                 </Link>
               </li>
             </ul>
@@ -48,17 +52,17 @@ export function Footer() {
           {/* Legal */}
           <div>
             <h4 className="text-sm font-semibold text-hago-primary-100 uppercase tracking-wider mb-4">
-              Legal
+              {tf.legalLabel}
             </h4>
             <ul className="space-y-2">
               <li>
                 <Link href="#" className="text-sm text-hago-primary-200 hover:text-white transition-colors">
-                  Términos de Uso
+                  {tf.terms}
                 </Link>
               </li>
               <li>
                 <Link href="#" className="text-sm text-hago-primary-200 hover:text-white transition-colors">
-                  Política de Privacidad
+                  {tf.privacy}
                 </Link>
               </li>
             </ul>
@@ -67,7 +71,7 @@ export function Footer() {
 
         <div className="border-t border-hago-primary-800 pt-8">
           <p className="text-center text-xs text-hago-primary-300">
-            &copy; {currentYear} Hago Produce. Todos los derechos reservados.
+            &copy; {currentYear} Hago Produce. {tf.copyright}
           </p>
         </div>
       </div>

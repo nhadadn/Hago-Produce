@@ -102,6 +102,7 @@ export const fr: TranslationKeys = {
       learnMore: 'En savoir plus',
     },
     footer: {
+      brandDescription: 'Plateforme B2B pour la gestion complète de la facturation, des bons de commande et de l\'analyse d\'affaires pour l\'industrie des produits frais au Canada.',
       platformLabel: 'Plateforme',
       legalLabel: 'Légal',
       features: 'Fonctionnalités',

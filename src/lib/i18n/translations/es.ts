@@ -100,6 +100,7 @@ export const es = {
       learnMore: 'Más información',
     },
     footer: {
+      brandDescription: 'Plataforma B2B para la gestión integral de facturación, órdenes de compra y análisis de negocio para la industria de productos frescos en Canadá.',
       platformLabel: 'Plataforma',
       legalLabel: 'Legal',
       features: 'Características',
