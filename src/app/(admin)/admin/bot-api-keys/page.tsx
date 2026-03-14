@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es as esLocale, enCA, fr as frLocale } from "date-fns/locale";
 import { 
   Copy, 
   Trash2, 
@@ -51,6 +51,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BotStatsDashboard from "@/components/bot/BotStatsDashboard";
+import { useLanguage } from "@/lib/i18n/useLanguage";
 
 interface ApiKeyInfo {
   id: string;
@@ -66,6 +67,9 @@ interface ApiKeyInfo {
 
 export default function BotApiKeysPage() {
   const { toast } = useToast();
+  const { t, language } = useLanguage();
+  const tb = t.botApiKeys;
+  const dateLocale = language === 'fr' ? frLocale : language === 'en' ? enCA : esLocale;
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -118,14 +122,14 @@ export default function BotApiKeysPage() {
         toast({
           variant: "destructive",
           title: "Error",
-          description: data.error?.message || "Error al cargar las claves API",
+          description: data.error?.message || tb.errorLoad,
         });
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error de conexión al cargar las claves API",
+        description: tb.errorLoadConn,
       });
     } finally {
       setLoading(false);
@@ -160,21 +164,21 @@ export default function BotApiKeysPage() {
         setCreateForm({ name: "", description: "", rateLimit: 60, expiresAt: "" });
         fetchKeys();
         toast({
-          title: "Éxito",
-          description: "Clave API creada correctamente",
+          title: tb.successTitle,
+          description: tb.createdSuccess,
         });
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: data.error?.message || "Error al crear la clave API",
+          description: data.error?.message || tb.errorCreate,
         });
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error de conexión al crear la clave API",
+        description: tb.errorCreateConn,
       });
     } finally {
       setIsCreating(false);
@@ -218,21 +222,21 @@ export default function BotApiKeysPage() {
         setEditForm(null);
         fetchKeys();
         toast({
-          title: "Éxito",
-          description: "Clave API actualizada correctamente",
+          title: tb.successTitle,
+          description: tb.updatedSuccess,
         });
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: data.error?.message || "Error al actualizar la clave API",
+          description: data.error?.message || tb.errorUpdate,
         });
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error de conexión al actualizar la clave API",
+        description: tb.errorUpdateConn,
       });
     } finally {
       setIsEditing(false);
@@ -255,21 +259,21 @@ export default function BotApiKeysPage() {
         setRevokeId(null);
         fetchKeys();
         toast({
-          title: "Éxito",
-          description: "Clave API revocada correctamente",
+          title: tb.successTitle,
+          description: tb.revokedSuccess,
         });
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: data.error?.message || "Error al revocar la clave API",
+          description: data.error?.message || tb.errorRevoke,
         });
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error de conexión al revocar la clave API",
+        description: tb.errorRevokeConn,
       });
     } finally {
       setIsRevoking(false);
@@ -296,28 +300,28 @@ export default function BotApiKeysPage() {
         setIsNewKeyOpen(true);
         fetchKeys();
         toast({
-          title: "Éxito",
-          description: "Clave API rotada correctamente",
+          title: tb.successTitle,
+          description: tb.rotatedSuccess,
         });
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: data.error?.message || "Error al rotar la clave API",
+          description: data.error?.message || tb.errorRotate,
         });
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error de conexión al rotar la clave API",
+        description: tb.errorRotateConn,
       });
     } finally {
       setIsRotating(false);
     }
   };
 
-  const copyToClipboard = (text: string, description: string = "Copiado al portapapeles") => {
+  const copyToClipboard = (text: string, description: string = tb.copied) => {
     navigator.clipboard.writeText(text);
     toast({
       description,
@@ -374,25 +378,25 @@ export default function BotApiKeysPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Bot API Keys</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{tb.title}</h1>
           <p className="text-muted-foreground mt-1">
-            Gestiona las claves de acceso para los bots de WhatsApp y Telegram.
+            {tb.subtitle}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={exportToCSV}>
-            <Download className="mr-2 h-4 w-4" /> Exportar CSV
+            <Download className="mr-2 h-4 w-4" /> {tb.exportCsv}
           </Button>
           <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Nueva API Key
+            <Plus className="mr-2 h-4 w-4" /> {tb.newKey}
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="list">Listado</TabsTrigger>
-          <TabsTrigger value="stats">Estadísticas</TabsTrigger>
+          <TabsTrigger value="list">{tb.tabList}</TabsTrigger>
+          <TabsTrigger value="stats">{tb.tabStats}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="list" className="space-y-4">
@@ -400,7 +404,7 @@ export default function BotApiKeysPage() {
           <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <Input
-            placeholder="Buscar por nombre o descripción..."
+            placeholder={tb.searchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
@@ -411,12 +415,12 @@ export default function BotApiKeysPage() {
           onValueChange={(value: "all" | "active" | "revoked") => setStatusFilter(value)}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Estado" />
+            <SelectValue placeholder={tb.colStatus} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Activos</SelectItem>
-            <SelectItem value="revoked">Revocados</SelectItem>
+            <SelectItem value="all">{tb.statusAll}</SelectItem>
+            <SelectItem value="active">{tb.statusActive}</SelectItem>
+            <SelectItem value="revoked">{tb.statusRevoked}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -426,13 +430,13 @@ export default function BotApiKeysPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre / Descripción</TableHead>
-              <TableHead>Límite</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Creada / Expira</TableHead>
-              <TableHead>Último Uso</TableHead>
-              <TableHead>Reqs (24h)</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead>{tb.colNameDesc}</TableHead>
+              <TableHead>{tb.colLimit}</TableHead>
+              <TableHead>{tb.colStatus}</TableHead>
+              <TableHead>{tb.colCreatedExpires}</TableHead>
+              <TableHead>{tb.colLastUsed}</TableHead>
+              <TableHead>{tb.colReqs}</TableHead>
+              <TableHead className="text-right">{t.common.actions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -441,20 +445,20 @@ export default function BotApiKeysPage() {
                 <TableCell colSpan={7} className="h-24 text-center">
                   <div className="flex justify-center items-center gap-2">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    <span className="text-muted-foreground">Cargando...</span>
+                    <span className="text-muted-foreground">{t.common.loading}</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : keys.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  No hay claves API creadas.
+                  {tb.noKeys}
                 </TableCell>
               </TableRow>
             ) : filteredKeys.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  No se encontraron claves API con los filtros actuales.
+                  {tb.noResults}
                 </TableCell>
               </TableRow>
             ) : (
@@ -476,26 +480,26 @@ export default function BotApiKeysPage() {
                   <TableCell>{key.rateLimit}/min</TableCell>
                   <TableCell>
                     {key.isActive ? (
-                      <Badge className="bg-hago-primary-700 hover:bg-hago-primary-800">Activa</Badge>
+                      <Badge className="bg-hago-primary-700 hover:bg-hago-primary-800">{tb.badgeActive}</Badge>
                     ) : (
-                      <Badge variant="destructive">Revocada</Badge>
+                      <Badge variant="destructive">{tb.badgeRevoked}</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-sm">
                     <div className="flex flex-col">
-                      <span>{format(new Date(key.createdAt), "dd MMM yyyy", { locale: es })}</span>
+                      <span>{format(new Date(key.createdAt), "dd MMM yyyy", { locale: dateLocale })}</span>
                       {key.expiresAt && (
                          <span className="text-xs text-amber-600 flex items-center gap-1">
                            <Calendar className="h-3 w-3" />
-                           Exp: {format(new Date(key.expiresAt), "dd MMM yyyy", { locale: es })}
+                           Exp: {format(new Date(key.expiresAt), "dd MMM yyyy", { locale: dateLocale })}
                          </span>
                       )}
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {key.lastUsedAt 
-                      ? format(new Date(key.lastUsedAt), "dd MMM HH:mm", { locale: es })
-                      : "Nunca"}
+                    {key.lastUsedAt
+                      ? format(new Date(key.lastUsedAt), "dd MMM HH:mm", { locale: dateLocale })
+                      : tb.never}
                   </TableCell>
                   <TableCell>{key.requestCount}</TableCell>
                   <TableCell className="text-right">
@@ -503,8 +507,8 @@ export default function BotApiKeysPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => copyToClipboard(key.id, "ID copiado al portapapeles")}
-                        title="Copiar ID"
+                        onClick={() => copyToClipboard(key.id, tb.idCopied)}
+                        title={tb.copyId}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -513,7 +517,7 @@ export default function BotApiKeysPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => openEditModal(key)}
-                        title="Editar"
+                        title={tb.editKey}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -524,7 +528,7 @@ export default function BotApiKeysPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => setRotateId(key.id)}
-                            title="Rotar clave"
+                            title={tb.rotateKey}
                           >
                             <RefreshCw className="h-4 w-4" />
                           </Button>
@@ -533,7 +537,7 @@ export default function BotApiKeysPage() {
                             size="icon"
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => setRevokeId(key.id)}
-                            title="Revocar clave"
+                            title={tb.revokeKey}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -558,18 +562,18 @@ export default function BotApiKeysPage() {
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Crear Nueva API Key</DialogTitle>
+            <DialogTitle>{tb.createTitle}</DialogTitle>
             <DialogDescription>
-              Genera una nueva clave de acceso. Se mostrará solo una vez.
+              {tb.createDesc}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="create-name">Nombre <span className="text-destructive">*</span></Label>
+                <Label htmlFor="create-name">{tb.nameLabel} <span className="text-destructive">*</span></Label>
                 <Input
                   id="create-name"
-                  placeholder="Ej: Bot WhatsApp Producción"
+                  placeholder={tb.namePlaceholder}
                   value={createForm.name}
                   onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                   required
@@ -577,10 +581,10 @@ export default function BotApiKeysPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="create-description">Descripción</Label>
+                <Label htmlFor="create-description">{tb.descriptionLabel}</Label>
                 <Textarea
                   id="create-description"
-                  placeholder="Descripción del uso de esta clave..."
+                  placeholder={tb.descriptionPlaceholder}
                   value={createForm.description}
                   onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                   maxLength={200}
@@ -588,7 +592,7 @@ export default function BotApiKeysPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="create-rateLimit">Límite (req/min)</Label>
+                  <Label htmlFor="create-rateLimit">{tb.limitLabel}</Label>
                   <Input
                     id="create-rateLimit"
                     type="number"
@@ -600,7 +604,7 @@ export default function BotApiKeysPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="create-expiresAt">Expira (Opcional)</Label>
+                  <Label htmlFor="create-expiresAt">{tb.expiresLabel}</Label>
                   <Input
                     id="create-expiresAt"
                     type="date"
@@ -613,11 +617,11 @@ export default function BotApiKeysPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                Cancelar
+                {t.common.cancel}
               </Button>
               <Button type="submit" disabled={isCreating}>
                 {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Crear API Key
+                {tb.createButton}
               </Button>
             </DialogFooter>
           </form>
@@ -628,16 +632,16 @@ export default function BotApiKeysPage() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Editar API Key</DialogTitle>
+            <DialogTitle>{tb.editTitle}</DialogTitle>
             <DialogDescription>
-              Modifica los metadatos de la clave. No puedes ver ni cambiar el secreto.
+              {tb.editDesc}
             </DialogDescription>
           </DialogHeader>
           {editForm && (
             <form onSubmit={handleUpdate}>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-name">Nombre</Label>
+                  <Label htmlFor="edit-name">{tb.nameLabel}</Label>
                   <Input
                     id="edit-name"
                     value={editForm.name}
@@ -647,7 +651,7 @@ export default function BotApiKeysPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-description">Descripción</Label>
+                  <Label htmlFor="edit-description">{tb.descriptionLabel}</Label>
                   <Textarea
                     id="edit-description"
                     value={editForm.description}
@@ -656,7 +660,7 @@ export default function BotApiKeysPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-rateLimit">Límite (req/min)</Label>
+                  <Label htmlFor="edit-rateLimit">{tb.limitLabel}</Label>
                   <Input
                     id="edit-rateLimit"
                     type="number"
@@ -668,29 +672,29 @@ export default function BotApiKeysPage() {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                   <Label htmlFor="edit-status">Estado:</Label>
+                   <Label htmlFor="edit-status">{tb.statusLabel}</Label>
                    <Badge variant={editForm.isActive ? "default" : "destructive"}>
-                     {editForm.isActive ? "Activa" : "Revocada"}
+                     {editForm.isActive ? tb.badgeActive : tb.badgeRevoked}
                    </Badge>
                    {!editForm.isActive && (
-                     <Button 
-                        type="button" 
-                        variant="outline" 
+                     <Button
+                        type="button"
+                        variant="outline"
                         size="sm"
                         onClick={() => setEditForm({ ...editForm, isActive: true })}
                      >
-                       Reactivar
+                       {tb.reactivate}
                      </Button>
                    )}
                 </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
-                  Cancelar
+                  {t.common.cancel}
                 </Button>
                 <Button type="submit" disabled={isEditing}>
                   {isEditing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Guardar Cambios
+                  {tb.saveChanges}
                 </Button>
               </DialogFooter>
             </form>
@@ -704,10 +708,10 @@ export default function BotApiKeysPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-hago-primary-700">
               <Check className="h-5 w-5" />
-              API Key Generada Exitosamente
+              {tb.generatedTitle}
             </DialogTitle>
             <DialogDescription>
-              Copia y guarda esta clave ahora. <span className="font-bold text-destructive">No podrás verla nuevamente.</span>
+              {tb.generatedDesc} <span className="font-bold text-destructive">{tb.generatedWarning}</span>
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2 bg-muted p-4 rounded-md">
@@ -717,9 +721,9 @@ export default function BotApiKeysPage() {
             <Button
               size="sm"
               className="px-3"
-              onClick={() => newKey && copyToClipboard(newKey, "API Key copiada al portapapeles")}
+              onClick={() => newKey && copyToClipboard(newKey, tb.keyCopied)}
             >
-              <span className="sr-only">Copiar</span>
+              <span className="sr-only">{tb.copyButton}</span>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
@@ -730,7 +734,7 @@ export default function BotApiKeysPage() {
               className="w-full"
               onClick={() => setIsNewKeyOpen(false)}
             >
-              Entendido, ya la he guardado
+              {tb.understood}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -742,23 +746,23 @@ export default function BotApiKeysPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Revocar API Key
+              {tb.revokeTitle}
             </DialogTitle>
             <DialogDescription>
-              ¿Estás seguro que deseas revocar esta clave? Cualquier bot que la esté utilizando dejará de funcionar inmediatamente.
+              {tb.revokeDesc}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRevokeId(null)}>
-              Cancelar
+              {t.common.cancel}
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleRevoke}
               disabled={isRevoking}
             >
               {isRevoking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sí, revocar clave
+              {tb.confirmRevoke}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -770,22 +774,22 @@ export default function BotApiKeysPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <RefreshCw className="h-5 w-5" />
-              Rotar API Key
+              {tb.rotateTitle}
             </DialogTitle>
             <DialogDescription>
-              Esto generará una nueva clave secreta para este registro y revocará la anterior inmediatamente.
+              {tb.rotateDesc}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRotateId(null)}>
-              Cancelar
+              {t.common.cancel}
             </Button>
-            <Button 
+            <Button
               onClick={handleRotate}
               disabled={isRotating}
             >
               {isRotating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sí, rotar clave
+              {tb.confirmRotate}
             </Button>
           </DialogFooter>
         </DialogContent>
